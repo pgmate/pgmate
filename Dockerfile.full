@@ -1,0 +1,88 @@
+#
+# Base stage for building the React app
+#
+FROM node:18 as builder-frontend
+
+# Set working directory for the React app
+WORKDIR /app
+
+# Copy the monorepo files
+COPY . .
+
+# Navigate to the React app directory
+WORKDIR /app/app
+
+# Install dependencies and build the React app
+RUN npm install
+RUN npm run build
+
+
+
+
+#
+# Base stage for building the NestJS app
+#
+FROM node:18 as builder-backend
+
+# Set working directory for the NestJS app
+WORKDIR /api
+
+# Copy the monorepo files
+COPY . .
+
+# Navigate to the NestJS app directory
+WORKDIR /api/api
+
+# Install dependencies and build the NestJS app
+RUN npm install
+RUN npm run build
+
+
+
+
+#
+# Final image with PostgreSQL, Backend, and Frontend
+#
+FROM postgres:15 as production
+
+# Install Node.js for the backend
+RUN apt-get update && apt-get install -y \
+    curl supervisor \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs && apt-get clean
+
+# Set up PostgreSQL
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=postgres
+ENV POSTGRES_DB=postgres
+RUN mkdir -p /var/lib/postgresql/data && chown -R postgres:postgres /var/lib/postgresql/data
+
+# Working directory for the backend
+WORKDIR /app
+
+# Copy NestJS build files
+COPY --from=builder-backend /api/api/dist ./dist
+COPY --from=builder-backend /api/api/node_modules ./node_modules
+COPY --from=builder-backend /api/api/package.json ./
+
+# Copy React build files into the NestJS public directory
+COPY --from=builder-frontend /app/app/dist ./dist/public
+
+# Copy the migrations directory
+COPY --from=builder-backend /api/data/migrations ./migrations
+
+# Add the wait-for-postgres script
+COPY wait-for-postgres.sh /usr/local/bin/wait-for-postgres.sh
+RUN chmod +x /usr/local/bin/wait-for-postgres.sh
+
+# Install Supervisord to manage multiple processes
+RUN apt-get install -y supervisor
+
+# Copy Supervisord configuration
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Expose ports
+EXPOSE 5432 8080
+
+# Start Supervisor to manage both PostgreSQL and NestJS
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

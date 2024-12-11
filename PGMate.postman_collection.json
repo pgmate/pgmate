@@ -1,0 +1,256 @@
+{
+	"info": {
+		"_postman_id": "d934574a-5c95-46a4-b1a4-a01983442d35",
+		"name": "PGMate",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "142965"
+	},
+	"item": [
+		{
+			"name": "Schema",
+			"item": [
+				{
+					"name": "list-tables",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-pgmate-admin-secret",
+								"value": "{{PGMATE_ADMIN_SECRET}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"conn\": \"default\",\n    \"disableAnalyze\": true,\n    \"queries\": [\n        {\n            \"statement\": \"select table_schema, table_name, table_type from information_schema.tables;\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "localhost:8080/admin/v1/query"
+					},
+					"response": []
+				},
+				{
+					"name": "pg_dump::table::structure",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-pgmate-admin-secret",
+								"value": "{{PGMATE_ADMIN_SECRET}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"conn\": \"default\",\n    \"schema\": \"pgmate\",\n    \"tables\": [\"migrations\", \"connections\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "localhost:8080/admin/v1/pg_dump/tables"
+					},
+					"response": []
+				},
+				{
+					"name": "pg_dump::table::data",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-pgmate-admin-secret",
+								"value": "{{PGMATE_ADMIN_SECRET}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"conn\": \"c1\",\n    \"schema\": \"pgmate\",\n    \"tables\": [\"connections\"],\n    \"dataOnly\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "localhost:8080/admin/v1/pg_dump/tables"
+					},
+					"response": []
+				},
+				{
+					"name": "pg_dump::table::full",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-pgmate-admin-secret",
+								"value": "{{PGMATE_ADMIN_SECRET}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"conn\": \"c1\",\n    \"schema\": \"pgmate\",\n    \"tables\": [\"migrations\"],\n    \"withData\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "localhost:8080/admin/v1/pg_dump/tables"
+					},
+					"response": []
+				},
+				{
+					"name": "pg_dump::schema",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-pgmate-admin-secret",
+								"value": "{{PGMATE_ADMIN_SECRET}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"conn\": \"c1\",\n    \"schema\": \"pgmate\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "localhost:8080/admin/v1/pg_dump/schema"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Connections",
+			"item": [
+				{
+					"name": "connections::list",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-pgmate-admin-secret",
+								"value": "{{PGMATE_ADMIN_SECRET}}",
+								"type": "text"
+							}
+						],
+						"url": "localhost:8080/admin/v1/connections"
+					},
+					"response": []
+				},
+				{
+					"name": "connections::add",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-pgmate-admin-secret",
+								"value": "{{PGMATE_ADMIN_SECRET}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"c2\",\n    \"conn\": \"postgres://postgres:postgres@postgres:5432/template1\",\n    \"ssl\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "localhost:8080/admin/v1/connections"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "healthz",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": "localhost:8080/healthz"
+			},
+			"response": []
+		},
+		{
+			"name": "admin::status",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-pgmate-admin-secret",
+						"value": "{{PGMATE_ADMIN_SECRET}}",
+						"type": "text"
+					}
+				],
+				"url": "localhost:8080/admin/v1/status"
+			},
+			"response": []
+		},
+		{
+			"name": "query",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-pgmate-admin-secret",
+						"value": "{{PGMATE_ADMIN_SECRET}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"conn\": \"c1\",\n    \"queries\": [\n        {\n            \"statement\": \"select now()\"\n        },\n        {\n            \"statement\": \"select name, \\\"desc\\\", created_at from pgmate.connections where name ilike $1;\",\n            \"variables\": [\"c1\"]\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": "localhost:8080/admin/v1/query"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "PGMATE_ADMIN_SECRET",
+			"value": "pgmate",
+			"type": "string"
+		}
+	]
+}

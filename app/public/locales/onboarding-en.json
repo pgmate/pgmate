@@ -1,0 +1,17 @@
+{
+  "s1": {
+    "title": "Welcome Aboard!",
+    "cta": "Next"
+  },
+  "s2": {
+    "title": "What language do you speak?"
+  },
+  "s3": {
+    "title": "What language do you want to learn?"
+  },
+  "s4": {
+    "title": "You are good to go!",
+    "subtitle": "You are ready to start learning a new language 🔥.",
+    "cta": "Start Learning"
+  }
+}

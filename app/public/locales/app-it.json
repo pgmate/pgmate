@@ -1,0 +1,20 @@
+{
+  "welcome": "Benvenuto in BabelifyV2",
+  "langs": {
+    "en": "Inglese",
+    "it": "Italiano",
+    "sv": "Svedese",
+    "da": "Danese",
+    "de": "Tedesco",
+    "hu": "Ungerese",
+    "ru": "Russo",
+    "pl": "Polacco",
+    "es": "Spagnolo"
+  },
+  "tab": {
+    "read": "Libreria",
+    "translate": "Traduttore",
+    "learn": "Esercizi",
+    "profile": "Profilo"
+  }
+}

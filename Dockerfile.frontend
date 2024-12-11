@@ -1,0 +1,43 @@
+#
+# Base stage for building the React app
+#
+FROM node:21 as builder-frontend
+
+# Set working directory for the React app
+WORKDIR /app
+
+# Copy the monorepo files
+COPY . .
+
+# Navigate to the React app directory
+WORKDIR /app/app
+
+# Define build arguments
+ARG VITE_NODE_ENV
+ARG VITE_API_PREFIX
+
+# Pass the build argument as an environment variable
+ENV VITE_NODE_ENV=${NODE_ENV}
+ENV VITE_API_PREFIX=${VITE_API_PREFIX}
+
+# Install dependencies and build the React app
+RUN npm install
+RUN npm run build
+
+
+#
+# Final production stage
+#
+FROM pgmate-backend as production
+
+# Set working directory for the production container
+WORKDIR /app
+
+# Copy React build files into the NestJS public directory
+COPY --from=builder-frontend /app/app/dist ./dist/public
+
+# Expose the port that NestJS will run on
+EXPOSE 8080
+
+# Start the NestJS application
+CMD ["node", "dist/main"]

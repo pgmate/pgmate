@@ -1,0 +1,25 @@
+services:
+  api-full:
+    build:
+      context: .
+      dockerfile: Dockerfile.full
+      args:
+        NODE_ENV: production
+        VITE_API_PREFIX: "/"
+    ports:
+      - "${API_PORT:-8080}:8080"
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      NODE_ENV: production
+      PGSTRING: postgresql://postgres:postgres@localhost:5432/postgres
+      PGMATE_ADMIN_SECRET: ${PGMATE_ADMIN_SECRET:-pgmate}
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/healthz | grep -qE "(200|404)" || exit 1',
+        ]
+      interval: 1s
+      timeout: 1s
+      retries: 10

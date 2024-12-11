@@ -1,0 +1,17 @@
+{
+  "s1": {
+    "title": "Benvenuto!",
+    "cta": "Avanti"
+  },
+  "s2": {
+    "title": "Qual'é la tua lingua madre?"
+  },
+  "s3": {
+    "title": "Che lingua vuoi imparare?"
+  },
+  "s4": {
+    "title": "Ecco fatto!",
+    "subtitle": "Il tuo account é completo e sei pronto per iniziare 🔥.",
+    "cta": "Fine"
+  }
+}

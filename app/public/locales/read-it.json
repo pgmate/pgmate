@@ -1,0 +1,19 @@
+{
+  "import": "Importa",
+  "feed": {
+    "empty": "Non hai ancora origini RSS aggiunte al tuo profilo.",
+    "import": "Importa da feed RSS"
+  },
+  "library": {
+    "empty": "Non hai ancora salvato alcun articolo.",
+    "import": "Importa il tuo primo contenuto"
+  },
+  "bucket": {
+    "library": "Libreria",
+    "rss": "Feed",
+    "history": "Recenti",
+    "starred": "Preferiti",
+    "snoozed": "Futuri",
+    "archived": "Archivio"
+  }
+}

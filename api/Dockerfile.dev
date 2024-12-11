@@ -1,0 +1,60 @@
+# Use the official Node.js image as the base image
+FROM node:21
+
+# Install PostgreSQL clients and contrib packages for all versions
+RUN apt-get update && apt-get install -y wget gnupg && \
+    wget -qO - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
+    echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
+    apt-get update && apt-get install -y \
+        postgresql-client-9.6 postgresql-contrib-9.6 \
+        postgresql-client-10 postgresql-contrib-10 \
+        postgresql-client-11 postgresql-contrib-11 \
+        postgresql-client-12 postgresql-contrib-12 \
+        postgresql-client-13 postgresql-contrib-13 \
+        postgresql-client-14 postgresql-contrib-14 \
+        postgresql-client-15 postgresql-contrib-15 \
+        postgresql-client-16 postgresql-contrib-16 && \
+    # Create version-specific aliases for pgbench
+    ln -s /usr/lib/postgresql/9.6/bin/pgbench /usr/bin/pgbench-9.6 && \
+    ln -s /usr/lib/postgresql/10/bin/pgbench /usr/bin/pgbench-10 && \
+    ln -s /usr/lib/postgresql/11/bin/pgbench /usr/bin/pgbench-11 && \
+    ln -s /usr/lib/postgresql/12/bin/pgbench /usr/bin/pgbench-12 && \
+    ln -s /usr/lib/postgresql/13/bin/pgbench /usr/bin/pgbench-13 && \
+    ln -s /usr/lib/postgresql/14/bin/pgbench /usr/bin/pgbench-14 && \
+    ln -s /usr/lib/postgresql/15/bin/pgbench /usr/bin/pgbench-15 && \
+    ln -s /usr/lib/postgresql/16/bin/pgbench /usr/bin/pgbench-16 && \
+    # Create version-specific aliases for pg_dump
+    ln -s /usr/lib/postgresql/9.6/bin/pg_dump /usr/bin/pg_dump-9.6 && \
+    ln -s /usr/lib/postgresql/10/bin/pg_dump /usr/bin/pg_dump-10 && \
+    ln -s /usr/lib/postgresql/11/bin/pg_dump /usr/bin/pg_dump-11 && \
+    ln -s /usr/lib/postgresql/12/bin/pg_dump /usr/bin/pg_dump-12 && \
+    ln -s /usr/lib/postgresql/13/bin/pg_dump /usr/bin/pg_dump-13 && \
+    ln -s /usr/lib/postgresql/14/bin/pg_dump /usr/bin/pg_dump-14 && \
+    ln -s /usr/lib/postgresql/15/bin/pg_dump /usr/bin/pg_dump-15 && \
+    ln -s /usr/lib/postgresql/16/bin/pg_dump /usr/bin/pg_dump-16 && \
+    # Clean up to reduce image size
+    rm -rf /var/lib/apt/lists/*
+
+# NPM Install for building
+WORKDIR /usr/src/app
+ADD package.json /usr/src/app
+RUN npm install
+
+# Install nodemon globally
+#RUN npm install -g @nestjs/cli nodemon
+
+# Copy the rest of the application code
+# COPY src ./src
+# COPY test ./test
+# COPY nest-cli.json ./nest-cli.json
+# COPY tsconfig.json ./tsconfig.json
+# COPY tsconfig.buld.json ./tsconfig.build.json
+
+# Ensure all dependencies, including dev dependencies, are installed
+#RUN npm install @swc/cli @swc/core
+
+# Expose the application port
+EXPOSE 3000
+
+# Start the NestJS app with nodemon for auto-reloading
+CMD ["npm", "run", "start:dev"]

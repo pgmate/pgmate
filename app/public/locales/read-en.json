@@ -1,0 +1,19 @@
+{
+  "import": "Import",
+  "feed": {
+    "empty": "No RSS Feeds added yet.",
+    "import": "Import from RSS Feed"
+  },
+  "library": {
+    "empty": "No articles saved yet.",
+    "import": "Import your first content"
+  },
+  "bucket": {
+    "library": "Library",
+    "rss": "Feed",
+    "history": "History",
+    "starred": "Starred",
+    "snoozed": "For later",
+    "archived": "Archived"
+  }
+}

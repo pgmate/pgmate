@@ -1,0 +1,35 @@
+{
+  "loading": "Loading...",
+  "step1": {
+    "continue_with_email": "Continue with your E-Mail:",
+    "explain_pin": "You will receive a login PIN within a minute.",
+    "placeholder": "john@doe.com",
+    "accept_terms": "By proceeding, I declare that I have read and accepted LingoCafe's <1>terms and conditions</1> and <2>privacy policy</2>.",
+    "continue": "Continue",
+    "email_required": "Please insert your email address.",
+    "email_invalid": "Please insert a valid email address.",
+    "email_not_whitelisted": "Sorry, we haven't invited you yet.",
+    "alias_not_accepted": "Sorry, we don't accept aliased emails.",
+    "domain_not_accepted": "Sorry, we don't accept emails from this domain.",
+    "internal_error": "Something went wrong, please try again later."
+  },
+  "step2": {
+    "enter_otp": "Login PIN:",
+    "enter_otp_hint": "Check your email, we've sent you a PIN.",
+    "placeholder": "0000",
+    "continue": "Confirm",
+    "cancel": "Go back and use a different email",
+    "otp_required": "Please insert the PIN you received via email.",
+    "otp_invalid": "The PIN must be a 4 digits number",
+    "otp_validation_failed": "Invalid PIN, please check your email.",
+    "internal_error": "Something went wrong, please try again later."
+  },
+  "terms": {
+    "title": "Terms & Conditions",
+    "content": "## 1. Introduction\nThese Terms and Conditions govern the use of the LingoCafe.app language learning application. By using the app, you agree to these terms.\n\n## 2. Account Registration\nTo access the app, users must register an account using their email address. This email is used for account verification and for sending occasional reminders and insights related to the app.\n\n## 3. Use of the App\nLingoCafe.app is free of charge. Users are encouraged, but not obliged, to support the app through donations via Patreon or similar platforms.\n\n## 4. User Responsibilities\nUsers are responsible for the security of their own account and must not share their login credentials.\n\n## 5. Intellectual Property\nAll content within LingoCafe.app is the property of the app developers. Users may not reproduce, distribute, or create derivative works without permission.\n\n## 6. Termination of Use\nThe app developers reserve the right to terminate or restrict access to any user who violates these terms.\n\n## 7. Changes to Terms\nThese terms may be updated periodically. Continued use of the app implies acceptance of the revised terms.\n\n## 8. Governing Law\nThese terms are governed by the laws of the country where the data is stored (Europe)."
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "content": "## 1. Introduction\nThis policy outlines how we collect, use, and protect user data in LingoCafe.app.\n\n## 2. Data Collection\nWe collect the following user data:\n- Email for account registration\n- App usage data (content read, words learned, usage frequency)\n\n## 3. Use of Data\nData is used for account management, app personalization, and sending occasional emails with reminders and insights.\n\n## 4. Data Storage and Protection\nData is stored in Europe and will not leave European territory. The data is protected with industry-standard security measures.\n\n## 5. Owner of Data\nThe data is owned by Marco Pegoraro and will never be disclosed to third parties or collaborators.\n\n## 6. User Rights\nUsers have the right to access, rectify, or delete their data. Requests should be directed to the app's contact information.\n\n## 7. Changes to Privacy Policy\nThis policy may be updated periodically. Continued use of the app implies acceptance of the revised policy.\n\n## 8. Contact Information\nFor any questions regarding these terms or privacy policy, users can contact babelifyapp@gmail.com."
+  }
+}

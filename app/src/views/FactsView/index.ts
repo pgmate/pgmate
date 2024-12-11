@@ -1,0 +1,1 @@
+export { FactsView } from "./FactsView";

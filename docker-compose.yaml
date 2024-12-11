@@ -1,0 +1,77 @@
+services:
+  ###
+  # Project Services
+  ###
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+    ports:
+      - "${API_PORT:-8080}:8080"
+    volumes:
+      - ./api/src:/usr/src/app/src:delegated
+      - ./api/contents:/usr/src/app/contents:delegated
+      - ./api/public:/usr/src/app/public:delegated
+      - ./api/test:/usr/src/app/test:delegated
+      - ./api/package.json:/usr/src/app/package.json
+      - ./api/nest-cli.json:/usr/src/app/nest-cli.json
+      - ./api/tsconfig.json:/usr/src/app/tsconfig.json
+      - ./api/tsconfig.build.json:/usr/src/app/tsconfig.build.json
+      - ./data/migrations:/usr/src/app/migrations
+    environment:
+      NODE_ENV: ${API_NODE_ENV:-development}
+      PGSTRING: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/postgres
+      PGMATE_ADMIN_SECRET: ${PGMATE_ADMIN_SECRET:-pgmate}
+      PGMATE_ENCRYPTION_KEY: ${PGMATE_ENCRYPTION_KEY:-3ffab9a475c91bf39fd1673c428d7a839d3c958b4b908724cabd3b0584d9c7fb}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ###
+  # External Images
+  ###
+
+  postgres:
+    container_name: pg
+    image: postgres:16
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 1s
+      retries: 20
+    command: >
+      postgres -c log_destination=stderr
+             -c logging_collector=off
+             -c log_statement=all
+             -c log_min_duration_statement=250
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "0.05"
+    #       memory: 100M
+    #     reservations:
+    #       cpus: "0.05"
+    #       memory: 50M
+
+  adminer:
+    image: adminer:4.8.1
+    ports:
+      - "${ADMINER_PORT:-8081}:8080"
+    links:
+      - postgres:db
+    restart: unless-stopped
+
+volumes:
+  postgres:
+
+networks:
+  default:
+    name: pgmate

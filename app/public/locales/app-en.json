@@ -1,0 +1,21 @@
+{
+  "name": "LingoCafe.app",
+  "welcome": "Welcome to BabelifyV2",
+  "langs": {
+    "en": "English",
+    "it": "Italian",
+    "sv": "Swedish",
+    "da": "Danish",
+    "de": "German",
+    "hu": "Hungarian",
+    "ru": "Russian",
+    "pl": "Polish",
+    "es": "Spanish"
+  },
+  "tab": {
+    "read": "Read",
+    "translate": "Translate",
+    "learn": "Learn",
+    "profile": "Profile"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "title": {
+    "word": "Lookup a word",
+    "sentence": "Translate this sentence",
+    "article": "Import an article"
+  },
+  "field": {
+    "title": {
+      "placeholder": "Article's title",
+      "helper": "Give a title to your article"
+    },
+    "content": {
+      "placeholder": "Paste any text or URLs...",
+      "helper": "<b>{{characters}}</b> chars; <b>{{words}}</b> words; <b>{{sentences}}</b> sentences; <b>{{paragraphs}}</b> paragraphs"
+    },
+    "level": {
+      "placeholder": "CEFR Level: A1, A2, B1, B2, C1, C2",
+      "helper": "Rate the language complexity of the article"
+    },
+    "tags": {
+      "placeholder": "tag1, tag2, tag3",
+      "helper": "Add tags to your article"
+    },
+    "cover_url": {
+      "placeholder": "https://example.com/image.jpg",
+      "helper": "Add a cover image to your article"
+    },
+    "source_url": {
+      "placeholder": "https://example.com/article.html",
+      "helper": "Link your article to an online source"
+    },
+    "source_name": {
+      "placeholder": "Google News",
+      "helper": "Give a name to the source of your article"
+    }
+  },
+  "error": {
+    "title": {
+      "required": "Please provide a title"
+    },
+    "content": {
+      "required": "Please provide a content"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+# General rules
+node_modules
+dist
+*.log
+.DS_Store
+
+# Specific to React app
+app/node_modules
+app/dist
+app/build
+app/package-lock.json
+app/yarn.lock
+app/*.tsbuildinfo
+
+# Specific to NestJS app
+api/node_modules
+api/dist
+api/.env
+api/.package-lock.json
+api/yarn.lock
+
+# Specific to the project
+.git
+.docker-images
+.vscode
+prompts
+scripts
+docker-compose.yml
+docker-compose.frontend.yml
+docker-compose.prod.yml
+docker-compose.full.yml
+Makefile
+PGMate.postman_collection.json
+pgmate.sh
+README.md
+supervisord.conf
+wait-for-postgres.sh
+
+# Ignore local configuration and environment files
+*.env
+*.env.local

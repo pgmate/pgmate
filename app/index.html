@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <title>PGMate - Made with ❤️ and ChatGPT</title>
+
+    <!-- Add to home screen for Safari on iOS -->
+    <link rel="icon" type="image/png" href="/icons/apple-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="LingoCafe.app" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Custom Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      #curtain {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: white;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        transform: translate3d(0, 0, 0);
+        transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      #curtain img {
+        margin-top: 25%;
+        width: 100px;
+        height: auto;
+      }
+
+      #curtain.hide-curtain {
+        left: -110vw;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- <div id="curtain">
+      <img
+        src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgdmlld0JveD0iMCAwIDEyOCAxMjgiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjY0IiBjeT0iNjQiIHI9IjY0IiBmaWxsPSIjMTk3NmQyIi8+CjxnIGZpbGw9IndoaXRlIj4KICA8cGF0aCBkPSJNNDIuOTg2MiA3MS4yODAzQzQyLjk4NjIgNjUuMzkzIDQ4LjA3MzggNjAuMjE0OCA1NC45ODU0IDYwLjIxNDhDNS43OTk1NSA2MC4yMTQ4IDExLjAyODEgNjUuMzIzOCAxMS4wMjgxIDcyLjEwNzZMMTEgNzUuOTg0NkMxMSAxMDguNDExIDMzLjUzOTcgMTEwLjk5MiA1NC45ODU0IDExMEgxMTYuMDFDMTI0LjEyIDExMCAxMzAgMTA0LjEyIDEzMCA5NS45OTg5Vjc1Ljk4NDZIMTA5LjA1M0MxMDkuMDUzIDg2LjM5NzQgOTkuNjU1NCA5My44MDMgODkuNTI2OSA5My44MDNDNzkuNTY4OCA5My44MDMgNzAuMTk1MyA4Ni4zODI0IDcwLjE5NTMgNzUuOTg0Nkg0Mi45ODYyVjcxaDEwNi4xMzRDMTI1LjcwOSA3MSAyOS41MzM5IDU3Ljc0MTkgNDIuOTg2MiA3MS4yODAzWiIvPgo8cGF0aCBkPSJNODIuNTczMSA4My43NTE5QzgxLjk1NDUgODIuMzc2NSA4MC4zNzA0IDgxLjg4MjggNzguNDQxMyA4MS44ODI4Qzc0LjM3NzkgODEuODgyOCA3MS4xMjc2IDg1LjE0NTYgNzEuMTI3NiA4OUg2Ni42Mjc3QzY2LjYyNzcgODIuNzMwMSA3Mi42MTk3IDc3IDc4LjQ0MTMgNzdDODAuNTg0MSA3NyA4Mi41NzMxIDc4Ljk4NzkgODIuNTczMSA4My43NTE5WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTYzLjkzMzggODkuMDA3NEM2My45MzM4IDg1LjQxMzUgNjAuODcyOCA4Mi4zNDg2IDU3LjI4NzEgODIuMzQ4Nkg1MS45NzU2QzUxLjk3NTYgNzguMzg0NiA1NS4xNTU4IDc1LjIwMzcgNTguODI0MyA3NS4yMDM3QzYyLjU0MzggNzUuMjAzNyA2NS43NTg0IDc4LjQwNzYgNjUuNzU4NCA4Mi4xMjg0QzY1Ljc1ODQgODUuNzY5OSA2Mi40MDY1IDg4LjkzMjkgNTguODI0MyA4OC45MzI5QzU1LjE2NzMgODguOTMyOSA1MS45Nzc0IDg1LjU5ODQgNTEuOTc3NCA4Mi4yNzkzSDU3LjI4NzFDNTcuMjg3MSA4Ni43MTUzIDYwLjU2OTUgODkuMDA3NCA2My45MzM4IDg5LjAwNzRaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNDMuNDk1MSA4Mi4xODMzQzQzLjQ5NTEgODM0OS4xNjkgNDUuNjg1MiA4Ni4xNzg5IDQ4Ljc2OTQgODYuMTc4OUM1MS44OTg5IDg2LjE3ODkgNTQuMTk3NSA4Mi4wMzggNTQuMTk3NSA4Ni4xNzg5QzU0LjE5NzUgODcuMzAzNSA1My4zMDI3IDg5Ljc3ODQgNTMuMDQ2MiA5MC43ODI0QzUzLjAxNzUgOTAuOTg0NCA1Mi45MTI1IDkxLjk5MDEgNTIuNTc5MyA5My4wODU2TzUyLjMyNzQgOTMuODAzOUM1Mi4zMjc0IDk0LjIwODcgNTMuMzY0NiA5NS4wMTQxIDU0LjY3MzUgOTUuMTU3NEM1Ny41MDgxIDk1LjQ0MjMgNTguNDEyMSA5MS44NDggNTguNDEyMSA5MS44NDgiIGZpbGw9IndoaXRlIi8+CjwvZz4KPC9zdmc+Cg=="
+        alt="book rss icon"
+      />
+    </div> -->
+    <script>
+      // Used for showing the loading screen a minimum time
+      window.__START__ = Date.now();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -16,6 +16,7 @@ curl -sL https://gist.github.com/marcopeg/27bcf40b765de16e8a0193b0d3657673/raw/p
 
 ```bash
 # Starts backend on Docker & frontend on local Node
+make py.build # just the first time
 make boot
 
 # Starts the backend only

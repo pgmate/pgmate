@@ -484,9 +484,9 @@ py.run:
 		sh -c "python /scripts/$(from).py"
 
 py.build:
-	docker build --no-cache -t pgmate-py-runner ./.docker-images/python
+	docker build -t pgmate-py-runner --load ./.docker-images/python
 py.rebuild:
-	docker build -t pgmate-py-runner ./.docker-images/python
+	docker build --no-cache -t pgmate-py-runner ./.docker-images/python
 py: py.run
 
 

@@ -7,29 +7,60 @@ import { SizedBox } from "../../components/SizedBox";
 import { useDynamicQueries } from "../../hooks/use-query";
 import { ResultsTable } from "./containers/ResultsTable";
 import { ResultsEmpty } from "./containers/ResultsEmpty";
+import { splitIntoStatements1 as splitIntoStatements } from "./utils";
 
-// const SQL = `
-// SELECT * FROM now();
-// SELECT 'marco' AS name;
-// SELECT 1 + 1 AS sum;
+const SQL = `
+SELECT * FROM now();
+SELECT 'marco' AS name;
+SELECT 1 + 1 AS sum;
 
-// -- error here
-// select foo from hoho;
+-- error here
+select foo from hoho;
 
-// SELECT
-// *
-// FROM
-// pgmate.migrations;
+SELECT
+*
+FROM
+pgmate.migrations;
 
-// create table
-// if not exists
-// "users" (name text primary key, age int);
+create table
+if not exists
+"users" (name text primary key, age int);
 
-// SELECT
-// *
-// FROM
-// pgmate.facts;
-// `;
+SELECT
+*
+FROM
+pgmate.facts;
+
+-- Simple SQL function
+CREATE OR REPLACE FUNCTION add_one(num integer)
+RETURNS integer AS $$
+BEGIN
+  RETURN num + 1;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Simple SQL DO block
+DO $$
+BEGIN
+  RAISE NOTICE 'Hello from DO block';
+END;
+$$;
+
+-- Begin/Rollback transaction
+BEGIN;
+INSERT INTO pgmate.settings (key, value)
+VALUES ('foo', '"bar"');
+ROLLBACK;
+
+-- Begin/Commit transaction
+BEGIN;
+INSERT INTO pgmate.settings (key, value)
+VALUES ('foo', '"bar"')
+ON CONFLICT ON CONSTRAINT settings_pkey
+DO UPDATE SET value = EXCLUDED.value
+RETURNING *;
+COMMIT;
+`;
 
 interface QueryResult {
   rows: any[] | null;
@@ -41,8 +72,10 @@ export const QueryView = () => {
   const { conn } = useParams<{ conn: string }>();
   const query = useDynamicQueries(conn!, { disableAnalyze: false });
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
-  // const [editorContent, setEditorContent] = useState(SQL);
-  const [editorContent, setEditorContent] = useState("");
+  const [editorContent, setEditorContent] = useState(
+    import.meta.env.VITE_NODE_ENV === "development" ? SQL : ""
+  );
+  // const [editorContent, setEditorContent] = useState("");
   const [results, setResults] = useState<QueryResult[] | null>(null);
   const [showResults, setShowResults] = useState(false);
 
@@ -79,30 +112,6 @@ export const QueryView = () => {
     }, 10);
   };
 
-  const splitIntoStatements = (content: string): string[] => {
-    const lines = content.split("\n");
-    const statements: string[] = [];
-    let currentStatement = "";
-
-    lines.forEach((line) => {
-      const trimmedLine = line.trim();
-      currentStatement += trimmedLine + "\n";
-
-      // Check if the line ends with a semicolon
-      if (trimmedLine.endsWith(";")) {
-        statements.push(currentStatement.trim());
-        currentStatement = ""; // Reset for the next statement
-      }
-    });
-
-    // Add the last statement if it doesn't end with a semicolon
-    if (currentStatement.trim()) {
-      statements.push(currentStatement.trim());
-    }
-
-    return statements;
-  };
-
   const runSelection = () => {
     const editor = editorRef.current;
     const model = editor?.getModel();
@@ -129,7 +138,8 @@ export const QueryView = () => {
     const fullContent = model.getValue();
     const statements = splitIntoStatements(fullContent);
 
-    execStatements(statements);
+    console.log(statements);
+    // execStatements(statements);
   };
 
   const runStatement = (monaco: Monaco) => {

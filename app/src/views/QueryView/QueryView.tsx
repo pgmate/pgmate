@@ -3,9 +3,12 @@ import { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Button, ButtonGroup, Box, Alert, useTheme } from "@mui/material";
 import { PageLayout } from "../../components/PageLayout";
+import { SplitPane } from "../../components/SplitPane";
+import { SizedBox } from "../../components/SizedBox";
 import { useDynamicQueries } from "../../hooks/use-query";
 import { ResultsTable } from "./containers/ResultsTable";
 import { ResultsEmpty } from "./containers/ResultsEmpty";
+import { set } from "react-hook-form";
 
 const SQL = `
 SELECT * FROM now();
@@ -40,6 +43,7 @@ export const QueryView = () => {
   const [results, setResults] = useState<QueryResult[] | null>(null);
 
   const editorRef = useRef<any>(null);
+  const editorSizeRef = useRef<{ width: number; height: number } | null>(null);
 
   const handleEditorMount = (editor: any, monaco: Monaco) => {
     editorRef.current = editor; // Assign editor instance to the ref
@@ -63,6 +67,11 @@ export const QueryView = () => {
         runAll();
       }
     );
+
+    // Set initial editor size
+    setTimeout(() => {
+      editor.layout(editorSizeRef.current);
+    }, 10);
   };
 
   const splitIntoStatements = (content: string): string[] => {
@@ -227,65 +236,87 @@ export const QueryView = () => {
     console.log("Saving Content to Database:", editorContent);
   };
 
-  useEffect(() => {
-    execStatements(["select * from pgmate.migrations where 1 = 2"]);
-  }, []);
+  const handlePaneSizeChange = (size: { width: number; height: number }) => {
+    editorRef.current?.layout(size);
+    editorSizeRef.current = size;
+  };
+
+  // useEffect(() => {
+  //   execStatements(["select * from pgmate.migrations where 1 = 2"]);
+  // }, []);
 
   return (
-    <PageLayout title="Query" subtitle="Query your database">
+    <SplitPane storageKey="query" direction="vertical">
       <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={2}
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
       >
-        <ButtonGroup variant="contained">
-          <Button onClick={runSelection}>Run Selection</Button>
-          <Button onClick={runAll}>Run All</Button>
-          <Button onClick={() => runStatement(editorRef.current.monaco)}>
-            Run Statement
+        <Box sx={{ flex: 1 }}>
+          <SizedBox onSizeChange={handlePaneSizeChange}>
+            {() => (
+              <Editor
+                language={"sql"}
+                value={editorContent}
+                theme={monacoTheme}
+                height={100}
+                options={{
+                  lineNumbers: "on",
+                  scrollBeyondLastLine: false,
+                  minimap: { enabled: false },
+                  padding: {
+                    top: 10,
+                  },
+                  fontSize: 10,
+                  contextmenu: false,
+                }}
+                onMount={handleEditorMount}
+                onChange={(value) => {
+                  setEditorContent(value || "");
+                }}
+              />
+            )}
+          </SizedBox>
+        </Box>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          px={2}
+          py={1}
+        >
+          <ButtonGroup variant="contained" size="small">
+            <Button onClick={runSelection}>Run Selection</Button>
+            <Button onClick={runAll}>Run All</Button>
+            <Button onClick={() => runStatement(editorRef.current.monaco)}>
+              Run Statement
+            </Button>
+          </ButtonGroup>
+          <Button variant="outlined" onClick={saveToDatabase} size="small">
+            Save Query
           </Button>
-        </ButtonGroup>
-        <Button variant="outlined" onClick={saveToDatabase}>
-          Save Query
-        </Button>
+        </Box>
       </Box>
-      <Editor
-        language={"sql"}
-        value={editorContent}
-        theme={monacoTheme}
-        height={300}
-        options={{
-          lineNumbers: "on",
-          scrollBeyondLastLine: false,
-          minimap: { enabled: false },
-          padding: {
-            top: 10,
-          },
-          fontSize: 10,
-          contextmenu: false,
-        }}
-        onMount={handleEditorMount}
-        onChange={(value) => {
-          setEditorContent(value || "");
-        }}
-      />
-      <Box>
-        {results && results.length === 1 && (
-          <Box>
-            {results[0].error && (
-              <Alert severity="error">{results[0].error.message}</Alert>
-            )}
-            {results[0].rows && results[0].rows.length > 0 ? (
-              <ResultsTable rows={results[0].rows} />
-            ) : (
-              <ResultsEmpty data={results[0]} />
-            )}
-          </Box>
-        )}
+      {results && (
+        <Box>
+          {results && results.length === 1 && (
+            <Box>
+              {results[0].error && (
+                <Alert severity="error">{results[0].error.message}</Alert>
+              )}
+              {results[0].rows && results[0].rows.length > 0 ? (
+                <ResultsTable rows={results[0].rows} />
+              ) : (
+                <ResultsEmpty data={results[0]} />
+              )}
+            </Box>
+          )}
 
-        {results && results.length > 1 && <Box>Multiple results</Box>}
-      </Box>
-    </PageLayout>
+          {results && results.length > 1 && <Box>Multiple results</Box>}
+        </Box>
+      )}
+    </SplitPane>
   );
 };

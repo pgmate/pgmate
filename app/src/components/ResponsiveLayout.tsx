@@ -27,6 +27,9 @@ const drawerMinWidth = 200;
 const MainContent = styled("main")<{ marginLeft: number }>(
   ({ theme, marginLeft }) => ({
     flexGrow: 1,
+    display: "flex",
+    flexDirection: "column",
+    height: "calc(100vh - 64px)",
     marginLeft: `${marginLeft}px`,
     [theme.breakpoints.down("sm")]: {
       marginLeft: 0,

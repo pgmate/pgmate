@@ -20,7 +20,7 @@ WHERE
     $1 = ANY(f."tags") AND f."title" > $2
 ORDER BY
     f."title" ASC
-LIMIT 3;
+LIMIT 30;
 `;
 
 const THUMB_UP = `

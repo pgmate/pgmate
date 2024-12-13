@@ -20,7 +20,7 @@ export_tables?=public.access_tokens,public.users,public.users_profile,metrics.lo
 ignore_migrations?=1010_fetchq-schema,1011_fetchq-init,1012_fetchq-tasks
 
 # Project Version
-version?=alpha-0.0.0
+version?=alpha-0.0.1
 help:
 	@clear
 	@echo ""

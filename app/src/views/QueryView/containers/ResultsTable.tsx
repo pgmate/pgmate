@@ -1,9 +1,4 @@
-import {
-  DataGrid,
-  GridRowsProp,
-  GridColDef,
-  GridColumnResizeParams,
-} from "@mui/x-data-grid";
+import { DataGrid, GridRowsProp, GridColDef } from "@mui/x-data-grid";
 
 interface ResultsTableProps {
   rows: any[];

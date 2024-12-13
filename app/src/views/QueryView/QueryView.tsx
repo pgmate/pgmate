@@ -8,29 +8,28 @@ import { useDynamicQueries } from "../../hooks/use-query";
 import { ResultsTable } from "./containers/ResultsTable";
 import { ResultsEmpty } from "./containers/ResultsEmpty";
 
-const SQL = `
-SELECT * FROM now();
-SELECT 'marco' AS name;
-SELECT 1 + 1 AS sum;
+// const SQL = `
+// SELECT * FROM now();
+// SELECT 'marco' AS name;
+// SELECT 1 + 1 AS sum;
 
--- error here
-select foo from hoho;
+// -- error here
+// select foo from hoho;
 
+// SELECT
+// *
+// FROM
+// pgmate.migrations;
 
-SELECT
-*
-FROM 
-pgmate.migrations;
+// create table
+// if not exists
+// "users" (name text primary key, age int);
 
-create table 
-if not exists 
-"users" (name text primary key, age int);
-
-SELECT
-*
-FROM 
-pgmate.facts;
-`;
+// SELECT
+// *
+// FROM
+// pgmate.facts;
+// `;
 
 interface QueryResult {
   rows: any[] | null;

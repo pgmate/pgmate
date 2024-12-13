@@ -1,21 +1,45 @@
 import Editor, { Monaco } from "@monaco-editor/react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Button, ButtonGroup, Box, useTheme } from "@mui/material";
+import { Button, ButtonGroup, Box, Alert, useTheme } from "@mui/material";
 import { PageLayout } from "../../components/PageLayout";
-import { useDynamicQuery } from "../../hooks/use-query";
+import { useDynamicQueries } from "../../hooks/use-query";
+import { ResultsTable } from "./containers/ResultsTable";
+import { ResultsEmpty } from "./containers/ResultsEmpty";
+
+const SQL = `
+SELECT * FROM now();
+SELECT 'marco' AS name;
+SELECT 1 + 1 AS sum;
+
+-- error here
+select foo from hoho;
+
+
+SELECT
+*
+FROM 
+pgmate.migrations;
+
+create table 
+if not exists 
+"users" (name text primary key, age int);
+`;
+
+interface QueryResult {
+  rows: any[] | null;
+  error: any | null;
+}
 
 export const QueryView = () => {
   const theme = useTheme();
   const { conn } = useParams<{ conn: string }>();
-  const query = useDynamicQuery(conn!);
+  const query = useDynamicQueries(conn!, { disableAnalyze: false });
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
-  const [editorContent, setEditorContent] = useState(
-    "SELECT * FROM now();\nSELECT 'marco' AS name;\nSELECT 1 + 1 AS sum;"
-  );
+  const [editorContent, setEditorContent] = useState(SQL);
+  const [results, setResults] = useState<QueryResult[] | null>(null);
 
   const editorRef = useRef<any>(null);
-  const decorationsRef = useRef<string[]>([]); // Store editor decorations
 
   const handleEditorMount = (editor: any, monaco: Monaco) => {
     editorRef.current = editor; // Assign editor instance to the ref
@@ -31,23 +55,74 @@ export const QueryView = () => {
         runStatement(monaco);
       }
     });
+
+    // Add keybinding for Alt+Cmd+Enter or Alt+Ctrl+Enter (Run All Statements)
+    editor.addCommand(
+      monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.Enter,
+      () => {
+        runAll();
+      }
+    );
+  };
+
+  const splitIntoStatements = (content: string): string[] => {
+    const lines = content.split("\n");
+    const statements: string[] = [];
+    let currentStatement = "";
+
+    lines.forEach((line) => {
+      const trimmedLine = line.trim();
+      currentStatement += trimmedLine + "\n";
+
+      // Check if the line ends with a semicolon
+      if (trimmedLine.endsWith(";")) {
+        statements.push(currentStatement.trim());
+        currentStatement = ""; // Reset for the next statement
+      }
+    });
+
+    // Add the last statement if it doesn't end with a semicolon
+    if (currentStatement.trim()) {
+      statements.push(currentStatement.trim());
+    }
+
+    return statements;
   };
 
   const runSelection = () => {
-    const selectedText = editorRef.current
-      ?.getModel()
-      ?.getValueInRange(editorRef.current.getSelection());
-    console.log("Run Selection:", selectedText);
-    query(selectedText, []).then((res) => {
-      console.table(res[0]);
-    });
+    const editor = editorRef.current;
+    const model = editor?.getModel();
+    const selection = editor?.getSelection();
+
+    if (!model || !selection) {
+      console.log("Model or selection is not defined.");
+      return;
+    }
+
+    const selectedText = model.getValueInRange(selection);
+    const statements = splitIntoStatements(selectedText);
+
+    if (statements.every(($) => $ === "")) {
+      runAll();
+      return;
+    }
+
+    execStatements(statements);
   };
 
   const runAll = () => {
-    console.log("Run All:", editorContent);
-    query(editorContent, []).then((res) => {
-      console.table(res[0]);
-    });
+    const editor = editorRef.current;
+    const model = editor?.getModel();
+
+    if (!model) {
+      console.log("Model is not defined.");
+      return;
+    }
+
+    const fullContent = model.getValue();
+    const statements = splitIntoStatements(fullContent);
+
+    execStatements(statements);
   };
 
   const runStatement = (monaco: Monaco) => {
@@ -67,13 +142,40 @@ export const QueryView = () => {
     let startLine = cursorLine;
     let endLine = cursorLine;
 
-    // Move upwards to find the start of the SQL statement
-    while (startLine > 0 && !lines[startLine].trim().endsWith(";")) {
+    if (
+      lines[startLine].trim().startsWith("--") ||
+      lines[startLine].trim() == ""
+    ) {
+      console.log("empty line? what do we do???");
+      return;
+    }
+
+    // Find the beginning of the statmement
+    while (startLine > 0) {
+      const currentLine = lines[startLine].trim();
+
+      // Stop at the first empty line or after encountering a line ending with ';'
+      if (
+        currentLine.trim() === "" ||
+        currentLine.trim().endsWith(";") ||
+        currentLine.trim().startsWith("--")
+      ) {
+        if (startLine !== endLine) {
+          startLine++; // Move to the line after the empty line or semicolon
+          break;
+        }
+      }
       startLine--;
     }
 
-    // Move downwards to find the end of the SQL statement
-    while (endLine < lines.length - 1 && !lines[endLine].trim().endsWith(";")) {
+    // Find the end of the statment
+    while (endLine < lines.length - 1) {
+      const currentLine = lines[endLine].trim();
+
+      // Stop at the first empty line or after encountering a line ending with ';'
+      if (currentLine === "" || currentLine.endsWith(";")) {
+        break;
+      }
       endLine++;
     }
 
@@ -83,7 +185,11 @@ export const QueryView = () => {
       .join("\n")
       .trim();
 
-    console.log("Run Statement:", statement);
+    if (!statement) {
+      console.log("@failed to identify a statement");
+      runAll();
+      return;
+    }
 
     // Highlight the full statement by selecting it
     const range = new monaco.Range(
@@ -96,15 +202,34 @@ export const QueryView = () => {
     editor.setSelection(range);
     editor.revealRange(range); // Ensure the range is visible in the editor
 
-    // Handle query execution
-    query(statement, []).then((res) => {
-      console.table(res[0]);
-    });
+    execStatements([statement]);
+  };
+
+  const execStatements = (statements: string[]) => {
+    setResults(null);
+    query(statements.map((statement) => ({ statement, variables: [] }))).then(
+      ([queries]) => {
+        setResults(queries);
+        queries.forEach((item: any) => {
+          console.log(item.query.statement);
+          if (item.rows) {
+            console.table(item.rows);
+          }
+          if (item.error) {
+            console.error(item.error.message);
+          }
+        });
+      }
+    );
   };
 
   const saveToDatabase = async () => {
     console.log("Saving Content to Database:", editorContent);
   };
+
+  useEffect(() => {
+    execStatements(["select * from pgmate.migrations where 1 = 2"]);
+  }, []);
 
   return (
     <PageLayout title="Query" subtitle="Query your database">
@@ -129,7 +254,7 @@ export const QueryView = () => {
         language={"sql"}
         value={editorContent}
         theme={monacoTheme}
-        height={400}
+        height={300}
         options={{
           lineNumbers: "on",
           scrollBeyondLastLine: false,
@@ -145,6 +270,22 @@ export const QueryView = () => {
           setEditorContent(value || "");
         }}
       />
+      <Box>
+        {results && results.length === 1 && (
+          <Box>
+            {results[0].error && (
+              <Alert severity="error">{results[0].error.message}</Alert>
+            )}
+            {results[0].rows && results[0].rows.length > 0 ? (
+              <ResultsTable rows={results[0].rows} />
+            ) : (
+              <ResultsEmpty data={results[0]} />
+            )}
+          </Box>
+        )}
+
+        {results && results.length > 1 && <Box>Multiple results</Box>}
+      </Box>
     </PageLayout>
   );
 };

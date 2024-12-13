@@ -52,7 +52,7 @@ export class QueryController {
         planning?: string;
         execution?: string;
       };
-      // meta: any;
+      meta: any;
     }[];
     stats: {
       connection: string;
@@ -97,6 +97,7 @@ export class QueryController {
             planningTime = planningTimeRow['QUERY PLAN'].split(':').pop();
           } catch (err) {
             console.log('Analyze failed for:', query.statement, err.message)
+            explained = null;
           }
         }
 

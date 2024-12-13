@@ -1,14 +1,12 @@
 import Editor, { Monaco } from "@monaco-editor/react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { Button, ButtonGroup, Box, Alert, useTheme } from "@mui/material";
-import { PageLayout } from "../../components/PageLayout";
 import { SplitPane } from "../../components/SplitPane";
 import { SizedBox } from "../../components/SizedBox";
 import { useDynamicQueries } from "../../hooks/use-query";
 import { ResultsTable } from "./containers/ResultsTable";
 import { ResultsEmpty } from "./containers/ResultsEmpty";
-import { set } from "react-hook-form";
 
 const SQL = `
 SELECT * FROM now();
@@ -27,6 +25,11 @@ pgmate.migrations;
 create table 
 if not exists 
 "users" (name text primary key, age int);
+
+SELECT
+*
+FROM 
+pgmate.facts;
 `;
 
 interface QueryResult {
@@ -39,8 +42,10 @@ export const QueryView = () => {
   const { conn } = useParams<{ conn: string }>();
   const query = useDynamicQueries(conn!, { disableAnalyze: false });
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
-  const [editorContent, setEditorContent] = useState(SQL);
+  // const [editorContent, setEditorContent] = useState(SQL);
+  const [editorContent, setEditorContent] = useState("");
   const [results, setResults] = useState<QueryResult[] | null>(null);
+  const [showResults, setShowResults] = useState(false);
 
   const editorRef = useRef<any>(null);
   const editorSizeRef = useRef<{ width: number; height: number } | null>(null);
@@ -71,6 +76,7 @@ export const QueryView = () => {
     // Set initial editor size
     setTimeout(() => {
       editor.layout(editorSizeRef.current);
+      editor.focus();
     }, 10);
   };
 
@@ -109,14 +115,7 @@ export const QueryView = () => {
     }
 
     const selectedText = model.getValueInRange(selection);
-    const statements = splitIntoStatements(selectedText);
-
-    if (statements.every(($) => $ === "")) {
-      runAll();
-      return;
-    }
-
-    execStatements(statements);
+    execStatements([selectedText]);
   };
 
   const runAll = () => {
@@ -218,7 +217,9 @@ export const QueryView = () => {
     setResults(null);
     query(statements.map((statement) => ({ statement, variables: [] }))).then(
       ([queries]) => {
+        console.log("Queries:", queries);
         setResults(queries);
+        setShowResults(true);
         queries.forEach((item: any) => {
           console.log(item.query.statement);
           if (item.rows) {
@@ -299,7 +300,7 @@ export const QueryView = () => {
           </Button>
         </Box>
       </Box>
-      {results && (
+      {showResults && (
         <Box>
           {results && results.length === 1 && (
             <Box>

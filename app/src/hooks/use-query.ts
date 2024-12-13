@@ -1,6 +1,12 @@
 import { useEffect, useRef, useCallback } from "react";
 import { usePost } from "./use-axios";
 
+const DEFAULT_DYNAMIC_QUERY_OPTIONS = { disableAnalyze: true };
+
+interface DynamicQueryOptions {
+  disableAnalyze: boolean;
+}
+
 interface QueryBody {
   conn: string;
   disableAnalyze: boolean;
@@ -111,7 +117,10 @@ export const useQuery = <TRow = any>(
   };
 };
 
-export const useDynamicQuery = (conn: string) => {
+export const useDynamicQuery = (
+  conn: string,
+  { disableAnalyze = true }: DynamicQueryOptions = DEFAULT_DYNAMIC_QUERY_OPTIONS
+) => {
   const [refetch] = usePost<QueryBody, QueryResult<any>>("/query");
 
   return useCallback(
@@ -121,7 +130,7 @@ export const useDynamicQuery = (conn: string) => {
     ): Promise<[RType[], any]> =>
       refetch({
         conn,
-        disableAnalyze: true,
+        disableAnalyze,
         queries: [
           {
             statement,
@@ -129,6 +138,23 @@ export const useDynamicQuery = (conn: string) => {
           },
         ],
       }).then((res: any) => [res.data?.queries?.[0]?.rows, res]),
+    [conn]
+  );
+};
+
+export const useDynamicQueries = (
+  conn: string,
+  { disableAnalyze = true }: DynamicQueryOptions = DEFAULT_DYNAMIC_QUERY_OPTIONS
+) => {
+  const [refetch] = usePost<QueryBody, QueryResult<any>>("/query");
+
+  return useCallback(
+    (queries: any[]): Promise<any> =>
+      refetch({
+        conn,
+        disableAnalyze,
+        queries,
+      }).then((res: any) => [res.data?.queries, res]),
     [conn]
   );
 };

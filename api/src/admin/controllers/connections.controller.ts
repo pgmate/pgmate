@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, UseGuards, Inject } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  Inject,
+  Param,
+} from '@nestjs/common';
 import { Pool } from 'pg';
 import { AdminGuard } from '../admin.guard';
 import { EncryptionService } from '../../shared/services/encryption.service';
@@ -19,6 +27,14 @@ export class ConnectionsController {
 
     return {
       connections,
+    };
+  }
+
+  @Get(':name')
+  async getItem(@Param('name') name: string) {
+    const connection = await this.connectionsService.getConnection(name);
+    return {
+      connection,
     };
   }
 

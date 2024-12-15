@@ -1,2 +1,2 @@
 export { Form } from "./Form";
-export type { FormField } from "./types";
+export type { FormField, FormApi } from "./types";

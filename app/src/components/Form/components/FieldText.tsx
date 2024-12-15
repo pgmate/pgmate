@@ -3,13 +3,19 @@ import { TextField } from "@mui/material";
 
 import { FormFieldProps } from "../types";
 
-export const FieldText: React.FC<FormFieldProps> = ({ control, name }) => {
+export const FieldText: React.FC<FormFieldProps> = ({
+  control,
+  name,
+  rules,
+}) => {
+  console.log("FieldText", name, rules);
   return (
     <Controller
       key={name}
       name={name}
       control={control}
-      render={({ field }) => (
+      rules={rules}
+      render={({ field, fieldState }) => (
         <TextField
           {...field}
           label={name}
@@ -17,6 +23,8 @@ export const FieldText: React.FC<FormFieldProps> = ({ control, name }) => {
           variant="outlined"
           fullWidth
           margin="normal"
+          error={!!fieldState.error}
+          helperText={fieldState.error?.message || ""}
         />
       )}
     />

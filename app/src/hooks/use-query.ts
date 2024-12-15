@@ -87,6 +87,7 @@ export const useQuery = <TRow = any>(
       query: string;
     };
   };
+  reload: () => void;
 } => {
   const dedupeRef = useRef<string | null>(null);
 
@@ -111,9 +112,26 @@ export const useQuery = <TRow = any>(
     });
   }, [conn, statement, stableStringify(variables)]);
 
+  const reload = useCallback(
+    (_variables: any[] = variables) => {
+      refetch({
+        conn,
+        disableAnalyze: true,
+        queries: [
+          {
+            statement,
+            variables: _variables,
+          },
+        ],
+      });
+    },
+    [conn, statement, stableStringify(variables)]
+  );
+
   return {
     ...result,
     data: data?.queries?.[0],
+    reload,
   };
 };
 

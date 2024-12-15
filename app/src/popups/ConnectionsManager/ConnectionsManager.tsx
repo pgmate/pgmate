@@ -24,13 +24,13 @@ import {
 
 export const ConnectionsManager: React.FC = () => {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+  const formRef = useRef<ConnectionFormApis>(null);
+  const { connections, getConnectionData, deleteConnection, upsertConnection } =
+    useConnections();
   const [editConnection, setEditConnection] = useState<ConnectionData | null>(
     null
   );
-  const { connections, getConnectionData, deleteConnection, upsertConnection } =
-    useConnections();
-  const formRef = useRef<ConnectionFormApis>(null);
 
   useSubscribe("connections::manager", () => {
     setOpen(true);
@@ -75,11 +75,6 @@ export const ConnectionsManager: React.FC = () => {
   const handleClose = () => {
     setOpen(false);
   };
-
-  useEffect(() => {
-    // handleRequestEdit({ name: "dw", desc: "dw" });
-    handleRequestNew();
-  }, []);
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth>

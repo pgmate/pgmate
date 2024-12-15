@@ -1,14 +1,9 @@
-import { useQuery, useDynamicQuery } from "../../../hooks/use-query";
+import { useDynamicQuery } from "../../../hooks/use-query";
 import { useAxios } from "../../../hooks/use-axios";
+import { usePubSub } from "../../../hooks/use-pubsub";
+import { useConnections as useGlobal } from "../../../hooks/use-connections";
 
-const GET_CONNECTIONS = `
-SELECT
-  "name",
-  "desc"
-FROM "pgmate"."connections"
-ORDER BY "name" ASC
-`;
-
+// Implement it as backend call
 const DELETE_CONNECTION = `
 DELETE FROM "pgmate"."connections"
 WHERE "name" = $1
@@ -34,16 +29,14 @@ export interface ConnectionData extends ConnectionItem {
 
 export const useConnections = () => {
   const axios = useAxios();
+  const bus = usePubSub();
   const query = useDynamicQuery("default");
-  const { data, reload } = useQuery<ConnectionItem>(
-    "default",
-    GET_CONNECTIONS,
-    []
-  );
+
+  const { items } = useGlobal();
 
   const deleteConnection = async (conn: ConnectionItem) => {
     await query(DELETE_CONNECTION, [conn.name]);
-    reload();
+    bus.emit("connections::changed");
   };
 
   const getConnectionData = async (name: string) => {
@@ -58,11 +51,12 @@ export const useConnections = () => {
       conn: `postgres://${data.conn.user}:${data.conn.password}@${data.conn.host}:${data.conn.port}/${data.conn.database}`,
       ssl: data.ssl,
     });
-    await reload();
+    bus.emit("connections::changed");
   };
 
   return {
-    connections: data?.rows || [],
+    // Do not allow to modify the default connection in the manager
+    connections: items.filter((c) => c.name !== "default"),
     deleteConnection,
     getConnectionData,
     upsertConnection,

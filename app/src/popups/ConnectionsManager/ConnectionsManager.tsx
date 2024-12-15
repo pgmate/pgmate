@@ -8,6 +8,7 @@ import {
   Button,
   IconButton,
   Icon,
+  Stack,
 } from "@mui/material";
 import { useSubscribe } from "../../hooks/use-pubsub";
 import {
@@ -54,25 +55,60 @@ export const ConnectionsManager: React.FC = () => {
     upsertConnection(data).then(() => setEditConnection(null));
   };
 
+  const handleRequestNew = () => {
+    setEditConnection({
+      name: "",
+      desc: "",
+      conn: {
+        host: "localhost",
+        port: 5432,
+        user: "",
+        password: "",
+        database: "",
+      },
+      ssl: false,
+      created_at: "",
+      updated_at: "",
+    });
+  };
+
   const handleClose = () => {
     setOpen(false);
   };
 
   useEffect(() => {
-    handleRequestEdit({ name: "dw", desc: "dw" });
+    // handleRequestEdit({ name: "dw", desc: "dw" });
+    handleRequestNew();
   }, []);
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth>
       {editConnection === null && (
-        <DialogTitle>Connections Manager</DialogTitle>
+        <DialogTitle>
+          <Stack
+            direction={"row"}
+            alignItems={"center"}
+            justifyContent={"space-between"}
+          >
+            <span>Connections Manager</span>
+            <IconButton onClick={handleRequestNew}>
+              <Icon>add</Icon>
+            </IconButton>
+          </Stack>
+        </DialogTitle>
       )}
       {editConnection !== null && (
         <DialogTitle>
           <IconButton onClick={() => setEditConnection(null)} sx={{ mr: 1 }}>
             <Icon>arrow_back</Icon>
           </IconButton>
-          Edit Connection: <b>{editConnection.name}</b>
+          {editConnection.name ? (
+            <>
+              Edit Connection: <b>{editConnection.name}</b>
+            </>
+          ) : (
+            "New Connection"
+          )}
         </DialogTitle>
       )}
       <DialogContent>

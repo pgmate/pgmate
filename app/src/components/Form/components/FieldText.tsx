@@ -8,7 +8,6 @@ export const FieldText: React.FC<FormFieldProps> = ({
   name,
   rules,
 }) => {
-  console.log("FieldText", name, rules);
   return (
     <Controller
       key={name}

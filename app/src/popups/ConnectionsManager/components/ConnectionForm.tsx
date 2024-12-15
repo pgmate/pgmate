@@ -25,7 +25,7 @@ export const ConnectionForm = React.forwardRef<
 
       const values = formRef.current?.getValues();
       onSave({
-        name: data?.name,
+        name: values?.name,
         desc: values?.desc,
         conn: {
           host: values?.host,
@@ -43,6 +43,13 @@ export const ConnectionForm = React.forwardRef<
     <Form
       ref={formRef}
       fields={[
+        {
+          name: "name",
+          type: "text",
+          rules: {
+            required: "Name is required",
+          },
+        },
         {
           name: "desc",
           type: "text",
@@ -97,6 +104,7 @@ export const ConnectionForm = React.forwardRef<
         },
       ]}
       defaultValues={{
+        name: data?.name,
         desc: data?.desc,
         host: data?.conn.host,
         port: data?.conn.port,

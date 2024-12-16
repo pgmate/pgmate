@@ -33,8 +33,6 @@ Makefile
 PGMate.postman_collection.json
 pgmate.sh
 README.md
-supervisord.conf
-wait-for-postgres.sh
 
 # Ignore local configuration and environment files
 *.env

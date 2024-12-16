@@ -261,12 +261,17 @@ full.rebuild:
 
 full.start:
 	docker compose -f docker-compose.full.yml up -d
-	@$(MAKE) -s -f Makefile _check_healthz
+	@docker compose -f docker-compose.full.yml logs -f
 
 full.down:
 	docker compose -f docker-compose.full.yml down -v
 
 full: full.rebuild full.start
+
+full.psql:
+	@clear
+	@echo "\n# Attaching SQL Client to:\n> db=api-full\n"
+	@docker compose -f docker-compose.full.yml exec api-full psql -U postgres $(db)
 
 
 

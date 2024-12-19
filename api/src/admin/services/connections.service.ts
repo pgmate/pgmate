@@ -2,6 +2,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Pool, Client } from 'pg';
 import { performance } from 'perf_hooks';
 import { EncryptionService } from '../../shared/services/encryption.service';
+import { parsePGString } from '../../database/utils/parse-pgstring';
 
 @Injectable()
 export class ConnectionsService {
@@ -25,6 +26,32 @@ export class ConnectionsService {
       'SELECT "name", "desc", "ssl", "created_at", "updated_at" FROM "pgmate"."connections" ORDER BY "name"',
     );
     return rows;
+  }
+
+  async getConnection(name: string): Promise<{
+    name: string;
+    desc: string | null;
+    conn: string;
+    ssl: boolean;
+    created_at: Date;
+    updated_at: Date;
+  }> {
+    const { rows } = await this.pool.query(
+      'SELECT "name", "desc", "ssl", "conn", "created_at", "updated_at" FROM "pgmate"."connections" WHERE "name" = $1',
+      [name],
+    );
+
+    if (rows.length === 0) {
+      throw new Error(`Connection with name "${name}" not found`);
+    }
+
+    const connection = rows[0];
+    const decrypted = this.encryptionService.decrypt(connection.conn);
+
+    return {
+      ...connection,
+      conn: parsePGString(decrypted),
+    };
   }
 
   async upsertConnection(

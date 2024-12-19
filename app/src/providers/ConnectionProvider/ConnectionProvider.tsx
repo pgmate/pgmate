@@ -1,5 +1,6 @@
 import { createContext, useCallback } from "react";
 import { useGet } from "../../hooks/use-axios";
+import { useSubscribe } from "../../hooks/use-pubsub";
 
 export interface Connection {
   name: string;
@@ -20,7 +21,9 @@ export const ConnectionContext = createContext<{
 export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { data } = useGet("/connections");
+  // Fetches connections and keeps them up-to-date
+  const { data, refetch } = useGet("/connections");
+  useSubscribe("connections::changed", refetch);
 
   const getByName = useCallback(
     (name: string) => {

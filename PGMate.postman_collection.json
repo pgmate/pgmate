@@ -150,6 +150,21 @@
 					"response": []
 				},
 				{
+					"name": "connections::get",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-pgmate-admin-secret",
+								"value": "{{PGMATE_ADMIN_SECRET}}",
+								"type": "text"
+							}
+						],
+						"url": "localhost:8080/admin/v1/connections/default"
+					},
+					"response": []
+				},
+				{
 					"name": "connections::add",
 					"request": {
 						"method": "POST",

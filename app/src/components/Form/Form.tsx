@@ -4,7 +4,7 @@ import {
   forwardRef,
   useImperativeHandle,
 } from "react";
-import { useForm, RegisterOptions } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { Box, Stack, Button } from "@mui/material";
 import { FieldText } from "./components/FieldText";
 import { FieldPassword } from "./components/FieldPassword";

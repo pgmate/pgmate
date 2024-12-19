@@ -1,7 +1,7 @@
 import { useDynamicQuery } from "../../../hooks/use-query";
 import { useAxios } from "../../../hooks/use-axios";
 import { usePubSub } from "../../../hooks/use-pubsub";
-import { useConnections as useGlobal } from "../../../hooks/use-connections";
+import { useConnections as useGlobalConnections } from "../../../hooks/use-connections";
 
 // Implement it as backend call
 const DELETE_CONNECTION = `
@@ -32,7 +32,7 @@ export const useConnections = () => {
   const bus = usePubSub();
   const query = useDynamicQuery("default");
 
-  const { items } = useGlobal();
+  const { items } = useGlobalConnections();
 
   const deleteConnection = async (conn: ConnectionItem) => {
     await query(DELETE_CONNECTION, [conn.name]);

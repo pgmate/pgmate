@@ -1,0 +1,41 @@
+name: Build and Push Docker Image on Tag
+
+on:
+  push:
+    # Trigger only when a tag is created
+    tags: [ "*" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract Tag
+        run: echo "TAG=${GITHUB_REF##*/}" >> $GITHUB_ENV
+        # This takes the last part of the GITHUB_REF, which looks like 'refs/tags/1.0.0'
+        # and sets TAG=1.0.0 as an environment variable.
+
+      - name: Build Docker Image Tagged and latest
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 \
+          --build-arg NODE_ENV=production \
+          --build-arg VITE_API_PREFIX="/" \
+          -t pgmate/pgmate:latest \
+          -t pgmate/pgmate:${TAG}
+
+      - name: Push Docker Image Tagged and latest
+        run: |
+          docker push pgmate/pgmate:latest
+          docker push pgmate/pgmate:${TAG}

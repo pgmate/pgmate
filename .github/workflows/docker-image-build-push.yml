@@ -33,7 +33,7 @@ jobs:
           --build-arg NODE_ENV=production \
           --build-arg VITE_API_PREFIX="/" \
           -t pgmate/pgmate:latest \
-          -t pgmate/pgmate:${TAG}
+          -t pgmate/pgmate:${TAG} .
 
       - name: Push Docker Image Tagged and latest
         run: |

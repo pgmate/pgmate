@@ -26,16 +26,11 @@ jobs:
         run: echo "TAG=${GITHUB_REF##*/}" >> $GITHUB_ENV
         # This takes the last part of the GITHUB_REF, which looks like 'refs/tags/1.0.0'
         # and sets TAG=1.0.0 as an environment variable.
-
-      - name: Build Docker Image Tagged and latest
+      - name: Build and Push Docker Image Tagged and latest
         run: |
           docker buildx build --platform linux/amd64,linux/arm64 \
           --build-arg NODE_ENV=production \
           --build-arg VITE_API_PREFIX="/" \
           -t pgmate/pgmate:latest \
-          -t pgmate/pgmate:${TAG} .
-
-      - name: Push Docker Image Tagged and latest
-        run: |
-          docker push pgmate/pgmate:latest
-          docker push pgmate/pgmate:${TAG}
+          -t pgmate/pgmate:${TAG} \
+          --push .

@@ -53,10 +53,11 @@ RUN npm install --production=true
 #
 # Final production stage
 #
-FROM node:21 AS production
-# FROM node:21-slim AS production
+#FROM node:21 AS production
+FROM node:21-slim AS production
 
-# Install PostgreSQL clients and contrib packages for all versions
+# Install PostgreSQL client tools
+# (this adds on a lot of size to the image, so it's commented out for now)
 # RUN apt-get update && apt-get install -y wget gnupg && \
 #     wget -qO - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
 #     echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
@@ -68,55 +69,23 @@ FROM node:21 AS production
 #         postgresql-client-13 postgresql-contrib-13 \
 #         postgresql-client-14 postgresql-contrib-14 \
 #         postgresql-client-15 postgresql-contrib-15 \
-#         postgresql-client-16 postgresql-contrib-16 && \
-#     # Create version-specific aliases for pgbench
-#     ln -s /usr/lib/postgresql/9.6/bin/pgbench /usr/bin/pgbench-9.6 && \
+#         postgresql-client-16 postgresql-contrib-16
+# RUN ln -s /usr/lib/postgresql/9.6/bin/pgbench /usr/bin/pgbench-9.6 && \
 #     ln -s /usr/lib/postgresql/10/bin/pgbench /usr/bin/pgbench-10 && \
 #     ln -s /usr/lib/postgresql/11/bin/pgbench /usr/bin/pgbench-11 && \
 #     ln -s /usr/lib/postgresql/12/bin/pgbench /usr/bin/pgbench-12 && \
 #     ln -s /usr/lib/postgresql/13/bin/pgbench /usr/bin/pgbench-13 && \
 #     ln -s /usr/lib/postgresql/14/bin/pgbench /usr/bin/pgbench-14 && \
 #     ln -s /usr/lib/postgresql/15/bin/pgbench /usr/bin/pgbench-15 && \
-#     ln -s /usr/lib/postgresql/16/bin/pgbench /usr/bin/pgbench-16 && \
-#     # Create version-specific aliases for pg_dump
-#     ln -s /usr/lib/postgresql/9.6/bin/pg_dump /usr/bin/pg_dump-9.6 && \
+#     ln -s /usr/lib/postgresql/16/bin/pgbench /usr/bin/pgbench-16
+# RUN ln -s /usr/lib/postgresql/9.6/bin/pg_dump /usr/bin/pg_dump-9.6 && \
 #     ln -s /usr/lib/postgresql/10/bin/pg_dump /usr/bin/pg_dump-10 && \
 #     ln -s /usr/lib/postgresql/11/bin/pg_dump /usr/bin/pg_dump-11 && \
 #     ln -s /usr/lib/postgresql/12/bin/pg_dump /usr/bin/pg_dump-12 && \
 #     ln -s /usr/lib/postgresql/13/bin/pg_dump /usr/bin/pg_dump-13 && \
 #     ln -s /usr/lib/postgresql/14/bin/pg_dump /usr/bin/pg_dump-14 && \
 #     ln -s /usr/lib/postgresql/15/bin/pg_dump /usr/bin/pg_dump-15 && \
-#     ln -s /usr/lib/postgresql/16/bin/pg_dump /usr/bin/pg_dump-16 &&
-
-
-RUN apt-get update && apt-get install -y wget gnupg && \
-    wget -qO - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
-    echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
-    apt-get update && apt-get install -y \
-        postgresql-client-9.6 postgresql-contrib-9.6 \
-        postgresql-client-10 postgresql-contrib-10 \
-        postgresql-client-11 postgresql-contrib-11 \
-        postgresql-client-12 postgresql-contrib-12 \
-        postgresql-client-13 postgresql-contrib-13 \
-        postgresql-client-14 postgresql-contrib-14 \
-        postgresql-client-15 postgresql-contrib-15 \
-        postgresql-client-16 postgresql-contrib-16
-RUN ln -s /usr/lib/postgresql/9.6/bin/pgbench /usr/bin/pgbench-9.6 && \
-    ln -s /usr/lib/postgresql/10/bin/pgbench /usr/bin/pgbench-10 && \
-    ln -s /usr/lib/postgresql/11/bin/pgbench /usr/bin/pgbench-11 && \
-    ln -s /usr/lib/postgresql/12/bin/pgbench /usr/bin/pgbench-12 && \
-    ln -s /usr/lib/postgresql/13/bin/pgbench /usr/bin/pgbench-13 && \
-    ln -s /usr/lib/postgresql/14/bin/pgbench /usr/bin/pgbench-14 && \
-    ln -s /usr/lib/postgresql/15/bin/pgbench /usr/bin/pgbench-15 && \
-    ln -s /usr/lib/postgresql/16/bin/pgbench /usr/bin/pgbench-16
-RUN ln -s /usr/lib/postgresql/9.6/bin/pg_dump /usr/bin/pg_dump-9.6 && \
-    ln -s /usr/lib/postgresql/10/bin/pg_dump /usr/bin/pg_dump-10 && \
-    ln -s /usr/lib/postgresql/11/bin/pg_dump /usr/bin/pg_dump-11 && \
-    ln -s /usr/lib/postgresql/12/bin/pg_dump /usr/bin/pg_dump-12 && \
-    ln -s /usr/lib/postgresql/13/bin/pg_dump /usr/bin/pg_dump-13 && \
-    ln -s /usr/lib/postgresql/14/bin/pg_dump /usr/bin/pg_dump-14 && \
-    ln -s /usr/lib/postgresql/15/bin/pg_dump /usr/bin/pg_dump-15 && \
-    ln -s /usr/lib/postgresql/16/bin/pg_dump /usr/bin/pg_dump-16
+#     ln -s /usr/lib/postgresql/16/bin/pg_dump /usr/bin/pg_dump-16
 
 # Install tini
 RUN apt-get update && apt-get install -y tini && apt-get clean

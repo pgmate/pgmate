@@ -1,4 +1,5 @@
 import axios from "axios";
+import * as crypto from "crypto-js";
 import React, { useState } from "react";
 import { useForm, Controller, FieldValues } from "react-hook-form";
 import {
@@ -42,13 +43,17 @@ export const LoginView: React.FC = () => {
 
   const _onSubmit = (data: LoginFormInputs) => {
     setError(null);
+
+    // Hash the password before sending
+    const secret = crypto.SHA256(data.secret).toString(crypto.enc.Hex);
+
     axios
       .get(`${API_PREFIX}/admin/v1/status`, {
         headers: {
-          "x-pgmate-admin-secret": data.secret,
+          "x-pgmate-admin-secret": secret,
         },
       })
-      .then(() => bus.emit("auth.success", data))
+      .then(() => bus.emit("auth.success", { ...data, secret }))
       .catch((error) => {
         setError(error?.response.data.message || error.message);
         bus.emit("auth.error", error);

@@ -11,10 +11,10 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    environment:
-      NODE_ENV: production
-      PGSTRING: postgresql://postgres:postgres@localhost:5432/postgres
-      PGMATE_ADMIN_SECRET: ${PGMATE_ADMIN_SECRET:-pgmate}
+    # environment:
+    #   NODE_ENV: production
+    #   PGSTRING: postgresql://postgres:postgres@localhost:5432/postgres
+    #   PGMATE_ADMIN_SECRET: ${PGMATE_ADMIN_SECRET:-pgmate}
     restart: unless-stopped
     healthcheck:
       test:

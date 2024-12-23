@@ -139,5 +139,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 EXPOSE 5432 8080
 
 # Start Supervisor to manage both PostgreSQL and NestJS
-ENV NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV:-production}
+ENV PGSTRING=${PGSTRING:-postgres://postgres:postgres@localhost:5432/postgres}
+ENV PGMATE_ADMIN_SECRET=${PGMATE_ADMIN_SECRET:-pgmate}
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

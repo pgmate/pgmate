@@ -39,6 +39,7 @@ jobs:
           docker buildx build --platform linux/amd64,linux/arm64 \
           --build-arg NODE_ENV=production \
           --build-arg VITE_API_PREFIX="/" \
+          -f ./Dockerfile.full \
           -t pgmate/pgmate:latest-full \
           -t pgmate/pgmate:${TAG}-full \
-          --push ./Dockerfile.full
+          --push .

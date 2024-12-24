@@ -1,17 +1,34 @@
-import { List, ListItem, ListItemButton, ListItemText } from "@mui/material";
+import {
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  IconButton,
+  Icon,
+} from "@mui/material";
 import { Link } from "react-router-dom";
 
+import { usePubSub } from "../../hooks/use-pubsub";
 import { PageLayout } from "../../components/PageLayout";
 import { useConnections } from "../../hooks/use-connections";
 import { DidYouKnow } from "./containers/DidYouKnow";
 
 export const HomeView = () => {
+  const bus = usePubSub();
   const { items } = useConnections();
 
   return (
     <>
       <DidYouKnow />
-      <PageLayout disablePadding title="Connection Manager">
+      <PageLayout
+        disablePadding
+        title="Connection Manager"
+        tray={
+          <IconButton onClick={() => bus.emit("connections::manager")}>
+            <Icon>edit</Icon>
+          </IconButton>
+        }
+      >
         <List>
           {items.map((item) => (
             <ListItem key={item.name}>

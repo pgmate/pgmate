@@ -4,11 +4,11 @@ import { Link } from "react-router-dom";
 import {
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   ListItemIcon,
   Divider,
   Icon,
-  ListItemSecondaryAction,
 } from "@mui/material";
 import { HealthRate } from "../components/HealthRate";
 
@@ -23,18 +23,8 @@ export const DBList: React.FC<DBListProps> = ({ conn }) => {
     <List>
       {items.map((db) => (
         <React.Fragment key={db.name}>
-          <ListItem
-            component={Link}
-            to={`/${conn}/${db.name}`}
-            sx={{
-              color: "inherit",
-              textDecoration: "none", // Ensures link doesn't show underline
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center" }}>
+          <ListItem disablePadding disableGutters>
+            <ListItemButton component={Link} to={`/${conn}/${db.name}`}>
               <ListItemIcon>
                 <HealthRate
                   health_factor={db.health_factor}
@@ -47,10 +37,8 @@ export const DBList: React.FC<DBListProps> = ({ conn }) => {
                 primary={db.name}
                 secondary={`Size: ${db.size_readable} | Owner: ${db.owner}`}
               />
-            </div>
-            <ListItemSecondaryAction>
-              <Icon>chevron_right</Icon> {/* Disclosure Icon */}
-            </ListItemSecondaryAction>
+              <Icon>chevron_right</Icon>
+            </ListItemButton>
           </ListItem>
           <Divider />
         </React.Fragment>

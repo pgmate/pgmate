@@ -6,6 +6,8 @@ export interface Connection {
   name: string;
   desc: string;
   ssl: boolean;
+  database: string;
+  username: string;
   created_at: string;
   updated_at: string;
 }

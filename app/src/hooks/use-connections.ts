@@ -29,6 +29,8 @@ export const useConnection = (name: string): Connection | undefined => {
 
 export const useURLConnection = (): Connection | undefined => {
   const { getByName } = useConnections();
-  const match = useMatch("/:conn/*");
-  return match?.params.conn ? getByName(match.params.conn) : undefined;
+  const match = useMatch("/:conn/:db/*");
+  return match?.params.conn && match?.params.db
+    ? getByName(match.params.conn, match?.params.db)
+    : undefined;
 };

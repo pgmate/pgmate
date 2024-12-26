@@ -3,5 +3,5 @@ import { ConnectionSchema } from "./ConnectionSchema";
 
 export const ConnectionSchemaWrapper = () => {
   const conn = useURLConnection();
-  return conn ? <ConnectionSchema conn={conn.name} /> : null;
+  return conn ? <ConnectionSchema conn={conn} /> : null;
 };

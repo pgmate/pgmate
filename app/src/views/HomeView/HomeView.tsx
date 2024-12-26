@@ -17,6 +17,8 @@ export const HomeView = () => {
   const bus = usePubSub();
   const { items } = useConnections();
 
+  console.log(items);
+
   return (
     <>
       <DidYouKnow />

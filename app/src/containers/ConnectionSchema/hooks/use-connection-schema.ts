@@ -65,7 +65,7 @@ const transformToNestedList = (
 };
 
 export const useConnectionSchema = (conn: Connection) => {
-  const { data, ...results } = useQueries(conn.name, [
+  const { data, ...results } = useQueries(conn, [
     {
       statement:
         "SELECT schema_name FROM information_schema.schemata ORDER BY schema_name;",

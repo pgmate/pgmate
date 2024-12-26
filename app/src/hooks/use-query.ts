@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
 import { usePost } from "./use-axios";
+import { Connection } from "../providers/ConnectionProvider";
 
 const DEFAULT_DYNAMIC_QUERY_OPTIONS = { disableAnalyze: true };
 
@@ -39,7 +40,7 @@ const stableStringify = (obj: any): string =>
   );
 
 export const useQueries = (
-  conn: string,
+  conn: string | Connection,
   queries: {
     statement: string;
     variables: any[];
@@ -49,7 +50,7 @@ export const useQueries = (
   error: any | null;
   data: null | { rows: any[] }[];
 } => {
-  const dedupeRef = useRef<string | null>(null);
+  const dedupeRef = useRef<string | Connection | null>(null);
 
   const [refetch, { data, ...result }] = usePost("/query");
 
@@ -59,7 +60,8 @@ export const useQueries = (
     dedupeRef.current = conn;
 
     refetch({
-      conn,
+      conn: typeof conn === "string" ? conn : conn.name,
+      database: typeof conn === "string" ? undefined : conn.database,
       disableAnalyze: true,
       queries,
     });
@@ -72,7 +74,7 @@ export const useQueries = (
 };
 
 export const useQuery = <TRow = any>(
-  conn: string,
+  conn: string | Connection,
   statement: string,
   variables: any[]
 ): {
@@ -89,7 +91,7 @@ export const useQuery = <TRow = any>(
   };
   reload: () => void;
 } => {
-  const dedupeRef = useRef<string | null>(null);
+  const dedupeRef = useRef<string | Connection | null>(null);
 
   const [refetch, { data, ...result }] = usePost<QueryBody, QueryResult<TRow>>(
     "/query"
@@ -101,7 +103,8 @@ export const useQuery = <TRow = any>(
     dedupeRef.current = conn;
 
     refetch({
-      conn,
+      conn: typeof conn === "string" ? conn : conn.name,
+      database: typeof conn === "string" ? undefined : conn.database,
       disableAnalyze: true,
       queries: [
         {
@@ -115,7 +118,8 @@ export const useQuery = <TRow = any>(
   const reload = useCallback(
     (_variables: any[] = variables) => {
       refetch({
-        conn,
+        conn: typeof conn === "string" ? conn : conn.name,
+        database: typeof conn === "string" ? undefined : conn.database,
         disableAnalyze: true,
         queries: [
           {
@@ -136,7 +140,7 @@ export const useQuery = <TRow = any>(
 };
 
 export const useDynamicQuery = (
-  conn: string,
+  conn: string | Connection,
   { disableAnalyze = true }: DynamicQueryOptions = DEFAULT_DYNAMIC_QUERY_OPTIONS
 ) => {
   const [refetch] = usePost<QueryBody, QueryResult<any>>("/query");
@@ -147,7 +151,8 @@ export const useDynamicQuery = (
       variables: any[] = []
     ): Promise<[RType[], any]> =>
       refetch({
-        conn,
+        conn: typeof conn === "string" ? conn : conn.name,
+        database: typeof conn === "string" ? undefined : conn.database,
         disableAnalyze,
         queries: [
           {
@@ -161,7 +166,7 @@ export const useDynamicQuery = (
 };
 
 export const useDynamicQueries = (
-  conn: string,
+  conn: string | Connection,
   { disableAnalyze = true }: DynamicQueryOptions = DEFAULT_DYNAMIC_QUERY_OPTIONS
 ) => {
   const [refetch] = usePost<QueryBody, QueryResult<any>>("/query");
@@ -169,7 +174,8 @@ export const useDynamicQueries = (
   return useCallback(
     (queries: any[]): Promise<any> =>
       refetch({
-        conn,
+        conn: typeof conn === "string" ? conn : conn.name,
+        database: typeof conn === "string" ? undefined : conn.database,
         disableAnalyze,
         queries,
       }).then((res: any) => [res.data?.queries, res]),

@@ -97,7 +97,10 @@ export class ConnectionsService {
     return rows[0];
   }
 
-  async createClient(name: string): Promise<[Client, string, string]> {
+  async createClient(
+    name: string,
+    database?: string,
+  ): Promise<[Client, string, string]> {
     const timerStart = performance.now();
     const { conn, ssl } = await this.getConnectionDetails(name);
 
@@ -105,8 +108,21 @@ export class ConnectionsService {
       throw new Error(`Connection with name "${name}" not found`);
     }
 
-    // Decrypt the connection string and create a client
-    const connectionString = this.encryptionService.decrypt(conn);
+    // Decrypt the connection string
+    const decryptedConn = this.encryptionService.decrypt(conn);
+
+    // Parse the connection string
+    const url = new URL(decryptedConn);
+
+    // Replace the database in the connection string if the `database` parameter is provided
+    if (database) {
+      url.pathname = `/${database}`;
+    }
+
+    // Final connection string with optional database override
+    const connectionString = url.toString();
+
+    // Create a new client with the updated connection string
     const client = new Client({
       connectionString,
       ssl: ssl ? { rejectUnauthorized: false } : false,

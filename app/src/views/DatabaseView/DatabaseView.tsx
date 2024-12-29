@@ -30,7 +30,7 @@ export const DatabaseView = () => {
             underline="hover"
             color="inherit"
           >
-            {params.db}
+            {conn?.name}
           </MUILink>
           <Typography color="text.primary">{params.db}</Typography>
         </Breadcrumbs>

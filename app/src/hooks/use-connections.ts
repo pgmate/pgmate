@@ -22,9 +22,12 @@ export interface ConnectionData extends ConnectionItem {
 
 export const useConnections = () => useContext(ConnectionContext);
 
-export const useConnection = (name: string): Connection | undefined => {
+export const useConnection = (
+  name: string,
+  database?: string
+): Connection | undefined => {
   const { getByName } = useConnections();
-  return getByName(name);
+  return getByName(name, database);
 };
 
 export const useURLConnection = (): Connection | undefined => {

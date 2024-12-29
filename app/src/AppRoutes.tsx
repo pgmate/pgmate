@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { LogoutView } from "./views/LogoutView";
 import { HomeView } from "./views/HomeView";
 import { ConnectionView } from "./views/ConnectionView";
+import { DatabaseView } from "./views/DatabaseView";
 import { SchemaView } from "./views/SchemaView";
 import { TableView } from "./views/TableView";
 import { QueryView } from "./views/QueryView";
@@ -34,11 +35,15 @@ const routesConfig: RouteObject[] = [
     element: <QueryView />,
   },
   {
-    path: "/:conn/:schema",
+    path: "/:conn/:db",
+    element: <DatabaseView />,
+  },
+  {
+    path: "/:conn/:db/:schema",
     element: <SchemaView />,
   },
   {
-    path: "/:conn/:schema/:table/:mode",
+    path: "/:conn/:db/:schema/:table/:mode",
     element: <TableView />,
   },
 ];

@@ -174,8 +174,9 @@ export const useDynamicQueries = (
   return useCallback(
     (queries: any[]): Promise<any> =>
       refetch({
-        conn: typeof conn === "string" ? conn : conn.name,
-        database: typeof conn === "string" ? undefined : conn.database,
+        conn: typeof conn === "string" ? conn : conn?.name || "no-conn",
+        database:
+          typeof conn === "string" ? undefined : conn?.database || "no-db",
         disableAnalyze,
         queries,
       }).then((res: any) => [res.data?.queries, res]),

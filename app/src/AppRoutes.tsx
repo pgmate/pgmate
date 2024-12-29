@@ -31,7 +31,7 @@ const routesConfig: RouteObject[] = [
     element: <ConnectionView />,
   },
   {
-    path: "/:conn/query",
+    path: "/:conn/:db/query",
     element: <QueryView />,
   },
   {

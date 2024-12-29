@@ -163,8 +163,8 @@ WITH schema_info AS (
       WHERE p.pronamespace = n.oid
     ) AS total_functions
   FROM pg_namespace n
-  WHERE n.nspname NOT LIKE 'pg\_%' ESCAPE '\'  -- Exclude schemas like pg_catalog
-    AND n.nspname != 'information_schema'
+  --WHERE n.nspname NOT LIKE 'pg\_%' ESCAPE '\'
+  --  AND n.nspname != 'information_schema'
 )
 SELECT
   schema_name,
@@ -269,7 +269,30 @@ export const useSchemas = (conn: Connection): { items: SchemaItem[] } => {
     total_functions: Number(schema.total_functions),
   }));
 
-  console.log(items);
+  // Sort schemas based on the rules
+  const sortedItems = items.sort((a, b) => {
+    if (a.schema_name === "public") return -1; // "public" goes first
+    if (b.schema_name === "public") return 1;
+    if (
+      a.schema_name === "information_schema" ||
+      a.schema_name.startsWith("pg_")
+    ) {
+      if (
+        b.schema_name === "information_schema" ||
+        b.schema_name.startsWith("pg_")
+      ) {
+        return a.schema_name.localeCompare(b.schema_name); // Sort among "pg_xxx" or "information_schema"
+      }
+      return 1; // "information_schema" and "pg_xxx" go last
+    }
+    if (
+      b.schema_name === "information_schema" ||
+      b.schema_name.startsWith("pg_")
+    ) {
+      return -1;
+    }
+    return a.schema_name.localeCompare(b.schema_name); // Alphabetical for others
+  });
 
-  return { items };
+  return { items: sortedItems };
 };

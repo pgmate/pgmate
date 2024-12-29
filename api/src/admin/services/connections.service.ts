@@ -113,6 +113,7 @@ export class ConnectionsService {
 
     // Parse the connection string
     const url = new URL(decryptedConn);
+    // console.log(decryptedConn);
 
     // Replace the database in the connection string if the `database` parameter is provided
     if (database) {
@@ -121,6 +122,7 @@ export class ConnectionsService {
 
     // Final connection string with optional database override
     const connectionString = url.toString();
+    // console.log(connectionString);
 
     // Create a new client with the updated connection string
     const client = new Client({

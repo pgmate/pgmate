@@ -19,6 +19,7 @@ export class QueryController {
   ) {}
 
   private async _query(client, query, variables) {
+    // console.log(client.connectionParameters, query.substr(0, 40), variables);
     const timerStart = performance.now();
     const result = await client.query(query, variables);
     const timerEnd = performance.now();
@@ -57,6 +58,7 @@ export class QueryController {
       connection: string;
     };
   }> {
+    // console.log('@createClient:', body.conn, body.database);
     const [client, aquisitionTime] = await this.connectionsService.createClient(
       body.conn,
       body.database,

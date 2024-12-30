@@ -7,12 +7,10 @@ WITH view_definitions AS (
 )
 SELECT
   view_name,
-  json_agg(
-    DISTINCT json_build_object(
-      'schema', t_ns.nspname,
-      'table', t.relname
-    )::text
-  )::json AS dependent_tables
+  STRING_AGG(
+    DISTINCT t_ns.nspname || '.' || t.relname,
+    ', '
+  ) AS depends_on
 FROM view_definitions vd
 LEFT JOIN pg_class t ON position(t.relname IN vd.view_definition) > 0
 LEFT JOIN pg_namespace t_ns ON t.relnamespace = t_ns.oid

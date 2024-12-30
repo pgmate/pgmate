@@ -4,6 +4,9 @@ import { Link as RouterLink } from "react-router-dom";
 import { useEmit } from "../../hooks/use-pubsub";
 import { useConnection } from "../../hooks/use-connections";
 import { PageLayout } from "../../components/PageLayout";
+import { TablesList } from "./containers/TablesList";
+import { ViewsList } from "./containers/ViewsList";
+import { MViewsList } from "./containers/MViewsList";
 
 export const SchemaView = () => {
   const params = useParams<{ conn: string; db: string; schema: string }>();
@@ -47,7 +50,9 @@ export const SchemaView = () => {
         </Breadcrumbs>
       }
     >
-      ...Schema View - coming soon...
+      {conn && <TablesList conn={conn} schema={params.schema!} />}
+      {conn && <ViewsList conn={conn} schema={params.schema!} />}
+      {conn && <MViewsList conn={conn} schema={params.schema!} />}
     </PageLayout>
   );
 };

@@ -559,6 +559,13 @@ ai: ai.schema
 
 
 
+
+
+pagila:
+	@$(MAKE) -s -f Makefile seed from=pagila-schema
+	@$(MAKE) -s -f Makefile seed from=pagila-data
+
+
 #
 # Numeric API
 #

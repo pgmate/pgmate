@@ -9,8 +9,8 @@ import {
   Button,
 } from "@mui/material";
 
-import { useConnections, useURLConnection } from "../../hooks/use-connections";
-import { usePubSub } from "../../hooks/use-pubsub";
+import { useConnections, useURLConnection } from "hooks/use-connections";
+import { usePubSub } from "hooks/use-pubsub";
 
 export const ConnectionSwitcher: React.FC = () => {
   const navigate = useNavigate();

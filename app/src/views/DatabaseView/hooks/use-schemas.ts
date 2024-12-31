@@ -1,5 +1,4 @@
-import { useQuery } from "../../../hooks/use-query";
-import { Connection } from "../../../providers/ConnectionProvider";
+import { useQuery } from "hooks/use-query";
 
 type TopItem = {
   name: string; // 'table_name', 'index_name', or 'view_name'

@@ -1,13 +1,13 @@
 import { RouteObject, useRoutes } from "react-router-dom";
 import { Navigate } from "react-router-dom";
-import { LogoutView } from "./views/LogoutView";
-import { HomeView } from "./views/HomeView";
-import { ConnectionView } from "./views/ConnectionView";
-import { DatabaseView } from "./views/DatabaseView";
-import { SchemaView } from "./views/SchemaView";
-import { TableView } from "./views/TableView";
-import { QueryView } from "./views/QueryView";
-import { FactsView } from "./views/FactsView";
+import { LogoutView } from "views/LogoutView";
+import { HomeView } from "views/HomeView";
+import { ConnectionView } from "views/ConnectionView";
+import { DatabaseView } from "views/DatabaseView";
+import { SchemaView } from "views/SchemaView";
+import { TableView } from "views/TableView";
+import { QueryView } from "views/QueryView";
+import { FactsView } from "views/FactsView";
 
 const routesConfig: RouteObject[] = [
   {

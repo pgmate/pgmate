@@ -6,7 +6,7 @@ import {
   TypographyProps,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import { Icon } from "./Icon";
+import { Icon } from "components/Icon";
 
 interface ShortUUIDProps {
   uuid: string;

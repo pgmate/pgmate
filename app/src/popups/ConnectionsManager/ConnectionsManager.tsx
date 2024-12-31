@@ -10,7 +10,7 @@ import {
   Icon,
   Stack,
 } from "@mui/material";
-import { useSubscribe } from "../../hooks/use-pubsub";
+import { useSubscribe } from "hooks/use-pubsub";
 import {
   useConnections,
   ConnectionItem,

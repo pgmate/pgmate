@@ -9,7 +9,6 @@ import {
   Divider,
   Icon,
 } from "@mui/material";
-import { Connection } from "../../../providers/ConnectionProvider";
 import { useSchemas } from "../hooks/use-schemas";
 
 interface SchemasListProps {

@@ -7,7 +7,7 @@ import {
   IconButton,
   Button,
 } from "@mui/material";
-import { Icon } from "../Icon";
+import { Icon } from "components/Icon";
 
 export interface SearchBarData {
   search: string;

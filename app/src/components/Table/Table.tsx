@@ -10,12 +10,12 @@ import {
   Button,
 } from "@mui/material";
 
-import { usePubSub } from "../../hooks/use-pubsub";
-import { TablePagination } from "../TablePagination";
-import { Icon } from "../Icon";
-import { CodeBox } from "../CodeBox";
-import { Form, FormField } from "../Form";
-import { DrawerLayout } from "../DrawerLayout";
+import { usePubSub } from "hooks/use-pubsub";
+import { TablePagination } from "components/TablePagination";
+import { Icon } from "components/Icon";
+import { CodeBox } from "components/CodeBox";
+import { Form, FormField } from "components/Form";
+import { DrawerLayout } from "components/DrawerLayout";
 import { SearchBar } from "./SearchBar";
 import { TableRow, TableRowProps } from "./TableRow";
 import { TableHeader, TableHeaderProps } from "./TableHeader";

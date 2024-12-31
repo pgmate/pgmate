@@ -1,9 +1,9 @@
 import { useParams } from "react-router-dom";
 import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import { useEmit } from "../../hooks/use-pubsub";
-import { useConnection } from "../../hooks/use-connections";
-import { PageLayout } from "../../components/PageLayout";
+import { useEmit } from "hooks/use-pubsub";
+import { useConnection } from "hooks/use-connections";
+import { PageLayout } from "components/PageLayout";
 import { ToggleTableMode } from "./containers/ToggleTableMode";
 import { TableData } from "./containers/TableData";
 import { TableStructure } from "./containers/TableStructure";
@@ -11,7 +11,6 @@ import { TableDLL } from "./containers/TableDLL";
 import { TableInfo } from "./containers/TableInfo";
 
 export const TableView = () => {
-  // const { conn, schema, table, mode } = useParams();
   const params = useParams<{
     conn: string;
     db: string;
@@ -67,10 +66,10 @@ export const TableView = () => {
       }
       tray={<ToggleTableMode />}
     >
-      {params.mode === "data" && <TableData />}
-      {params.mode === "structure" && <TableStructure />}
-      {params.mode === "dll" && <TableDLL />}
-      {params.mode === "info" && <TableInfo />}
+      {conn && params.mode === "data" && <TableData conn={conn} />}
+      {conn && params.mode === "structure" && <TableStructure />}
+      {conn && params.mode === "dll" && <TableDLL />}
+      {conn && params.mode === "info" && <TableInfo />}
     </PageLayout>
   );
 };

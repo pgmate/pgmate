@@ -1,7 +1,7 @@
-import { useDynamicQuery } from "../../../hooks/use-query";
-import { useAxios } from "../../../hooks/use-axios";
-import { usePubSub } from "../../../hooks/use-pubsub";
-import { useConnections as useGlobalConnections } from "../../../hooks/use-connections";
+import { useDynamicQuery } from "hooks/use-query";
+import { useAxios } from "hooks/use-axios";
+import { usePubSub } from "hooks/use-pubsub";
+import { useConnections as useGlobalConnections } from "hooks/use-connections";
 
 // Implement it as backend call
 const DELETE_CONNECTION = `

@@ -1,3 +1,4 @@
+import path from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 
@@ -11,6 +12,16 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
+    },
+  },
+  resolve: {
+    alias: {
+      hooks: path.resolve(__dirname, "src/hooks"),
+      providers: path.resolve(__dirname, "src/providers"),
+      components: path.resolve(__dirname, "src/components"),
+      containers: path.resolve(__dirname, "src/containers"),
+      popups: path.resolve(__dirname, "src/popups"),
+      views: path.resolve(__dirname, "src/views"),
     },
   },
   build: {

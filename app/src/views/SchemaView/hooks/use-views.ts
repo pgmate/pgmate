@@ -1,6 +1,4 @@
-import { useQuery } from "../../../hooks/use-query";
-import { Connection } from "../../../providers/ConnectionProvider";
-export type { Connection } from "../../../providers/ConnectionProvider";
+import { useQuery } from "hooks/use-query";
 
 const SQL_QUERY = `
 WITH view_definitions AS (

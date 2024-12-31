@@ -4,10 +4,10 @@
 
 import { createContext, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCurtain } from "../../hooks/use-curtain";
-import { useSubscribe } from "../../hooks/use-pubsub";
-import { useStorage } from "../../hooks/use-storage";
-import { LoginView } from "../../views/LoginView";
+import { useCurtain } from "hooks/use-curtain";
+import { useSubscribe } from "hooks/use-pubsub";
+import { useStorage } from "hooks/use-storage";
+import { LoginView } from "views/LoginView";
 
 export const AuthContext = createContext({
   secret: "",

@@ -11,7 +11,6 @@ import { TableDLL } from "./containers/TableDLL";
 import { TableInfo } from "./containers/TableInfo";
 
 export const TableView = () => {
-  // const { conn, schema, table, mode } = useParams();
   const params = useParams<{
     conn: string;
     db: string;

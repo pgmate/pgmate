@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useDynamicQuery } from "../../../../../hooks/use-query";
+import { useDynamicQuery } from "hooks/use-query";
 
 const GET_STATS = `
 SELECT

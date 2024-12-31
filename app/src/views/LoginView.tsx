@@ -12,8 +12,8 @@ import {
   InputAdornment,
   Alert,
 } from "@mui/material";
-import { Icon } from "../components/Icon";
-import { usePubSub } from "../hooks/use-pubsub";
+import { Icon } from "components/Icon";
+import { usePubSub } from "hooks/use-pubsub";
 
 const API_PREFIX = import.meta.env.VITE_API_PREFIX == "/" ? "" : "/api";
 // console.log("@ENV", import.meta.env);

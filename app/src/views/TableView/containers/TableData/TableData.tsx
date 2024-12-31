@@ -7,8 +7,8 @@ import {
   GridColDef,
   GridColumnResizeParams,
 } from "@mui/x-data-grid";
-import { CodeViewer } from "../../../../components/CodeViewer";
-import { useEmit } from "../../../../hooks/use-pubsub";
+import { CodeViewer } from "components/CodeViewer";
+import { useEmit } from "hooks/use-pubsub";
 import { useTableData } from "./hooks/use-table-data";
 import { useTableProps } from "./hooks/use-table-props";
 

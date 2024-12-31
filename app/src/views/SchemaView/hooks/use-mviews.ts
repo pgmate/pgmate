@@ -1,4 +1,4 @@
-import { useQuery } from "../../../hooks/use-query";
+import { useQuery } from "hooks/use-query";
 
 const SQL_QUERY = `
 WITH materialized_view_info AS (

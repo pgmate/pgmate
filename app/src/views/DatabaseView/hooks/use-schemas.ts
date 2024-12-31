@@ -1,4 +1,4 @@
-import { useQuery } from "../../../hooks/use-query";
+import { useQuery } from "hooks/use-query";
 
 type TopItem = {
   name: string; // 'table_name', 'index_name', or 'view_name'

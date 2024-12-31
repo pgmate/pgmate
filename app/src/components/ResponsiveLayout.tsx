@@ -9,7 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import { styled } from "@mui/system";
-import { Icon } from "./Icon";
+import { Icon } from "components/Icon";
 
 interface LayoutProps {
   icon?: string | React.ReactNode;

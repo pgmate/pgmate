@@ -6,7 +6,7 @@ import {
   DialogActions,
   Button,
 } from "@mui/material";
-import { useSubscribe } from "../hooks/use-pubsub";
+import { useSubscribe } from "hooks/use-pubsub";
 
 interface ShowDetailsData {
   title: React.ReactNode;

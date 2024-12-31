@@ -10,9 +10,9 @@ import {
 } from "@mui/material";
 import { Link } from "react-router-dom";
 
-import { usePubSub } from "../../hooks/use-pubsub";
-import { PageLayout } from "../../components/PageLayout";
-import { useConnections } from "../../hooks/use-connections";
+import { usePubSub } from "hooks/use-pubsub";
+import { PageLayout } from "components/PageLayout";
+import { useConnections } from "hooks/use-connections";
 import { DidYouKnow } from "./containers/DidYouKnow";
 
 export const HomeView = () => {

@@ -1,4 +1,4 @@
-import { useQueries } from "../../../hooks/use-query";
+import { useQueries } from "hooks/use-query";
 
 type TableType = "VIEW" | "BASE TABLE" | "MATERIALIZED VIEW";
 

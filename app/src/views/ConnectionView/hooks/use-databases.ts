@@ -1,4 +1,4 @@
-import { useQuery } from "../../../hooks/use-query";
+import { useQuery } from "hooks/use-query";
 
 interface DatabaseItem {
   name: string; // Name of the database

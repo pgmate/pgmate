@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Stack, IconButton } from "@mui/material";
-
-import { Icon } from "./Icon";
+import { Icon } from "components/Icon";
 
 export type OnPageChange = (nextPage: number, prevPage: number) => void;
 

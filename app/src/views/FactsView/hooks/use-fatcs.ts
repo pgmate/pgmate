@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useDynamicQuery } from "../../../hooks/use-query";
+import { useDynamicQuery } from "hooks/use-query";
 
 const GET_TAGS = `
 SELECT

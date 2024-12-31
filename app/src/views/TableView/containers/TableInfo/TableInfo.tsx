@@ -1,6 +1,6 @@
 import { useTableInfo } from "./hooks/use-table-info";
-import { Dashboard } from "../../../../components/Dashboard";
-import { ReadableSize } from "../../../../components/ReadableSize";
+import { Dashboard } from "components/Dashboard";
+import { ReadableSize } from "components/ReadableSize";
 
 export const TableInfo = () => {
   const { stats } = useTableInfo();

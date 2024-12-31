@@ -1,8 +1,8 @@
 import { useParams } from "react-router-dom";
 import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import { PageLayout } from "../../components/PageLayout";
-import { useConnection } from "../../hooks/use-connections";
+import { PageLayout } from "components/PageLayout";
+import { useConnection } from "hooks/use-connections";
 import { DBList } from "./containers/DbList";
 
 export const ConnectionView: React.FC = () => {

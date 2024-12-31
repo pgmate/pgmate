@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import { usePost } from "./use-axios";
+import { usePost } from "hooks/use-axios";
 
 const DEFAULT_DYNAMIC_QUERY_OPTIONS = { disableAnalyze: true };
 

@@ -1,6 +1,6 @@
 import Editor from "@monaco-editor/react";
 import { IconButton, Tooltip, Box, useTheme } from "@mui/material";
-import { Icon } from "./Icon";
+import { Icon } from "components/Icon";
 
 export const CodeViewer = ({
   code,

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { useStorage } from "../../../../../hooks/use-storage";
+import { useStorage } from "hooks/use-storage";
 
 const DEFAULTS = {
   page: 0,

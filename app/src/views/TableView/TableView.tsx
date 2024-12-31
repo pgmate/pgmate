@@ -1,9 +1,9 @@
 import { useParams } from "react-router-dom";
 import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import { useEmit } from "../../hooks/use-pubsub";
-import { useConnection } from "../../hooks/use-connections";
-import { PageLayout } from "../../components/PageLayout";
+import { useEmit } from "hooks/use-pubsub";
+import { useConnection } from "hooks/use-connections";
+import { PageLayout } from "components/PageLayout";
 import { ToggleTableMode } from "./containers/ToggleTableMode";
 import { TableData } from "./containers/TableData";
 import { TableStructure } from "./containers/TableStructure";

@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
-import { AuthContext } from "../providers/AuthProvider";
-import { usePubSub } from "./use-pubsub";
+import { AuthContext } from "providers/AuthProvider";
+import { usePubSub } from "hooks/use-pubsub";
 
 const API_PREFIX = import.meta.env.VITE_API_PREFIX == "/" ? "" : "/api";
 

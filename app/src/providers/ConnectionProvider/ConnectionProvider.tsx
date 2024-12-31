@@ -1,6 +1,6 @@
 import { createContext, useCallback } from "react";
-import { useGet } from "../../hooks/use-axios";
-import { useSubscribe } from "../../hooks/use-pubsub";
+import { useGet } from "hooks/use-axios";
+import { useSubscribe } from "hooks/use-pubsub";
 
 export const ConnectionContext = createContext<{
   items: Connection[];

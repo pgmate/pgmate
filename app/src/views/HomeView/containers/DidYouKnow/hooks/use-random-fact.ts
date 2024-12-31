@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState } from "react";
-import { useDynamicQuery } from "../../../../../hooks/use-query";
+import { useDynamicQuery } from "hooks/use-query";
 
 const GET_BATCH = `
 SELECT

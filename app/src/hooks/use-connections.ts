@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { useMatch } from "react-router-dom";
-import { ConnectionContext } from "../providers/ConnectionProvider";
+import { ConnectionContext } from "providers/ConnectionProvider";
 
 export interface ConnectionItem {
   name: string;

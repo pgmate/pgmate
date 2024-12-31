@@ -7,9 +7,9 @@ import {
   ListItemButton,
   Collapse,
 } from "@mui/material";
-import { Icon } from "../../components/Icon";
-import { useSubscribe } from "../../hooks/use-pubsub";
-import { useTableMode } from "../../hooks/use-table-mode";
+import { Icon } from "components/Icon";
+import { useSubscribe } from "hooks/use-pubsub";
+import { useTableMode } from "hooks/use-table-mode";
 import { useConnectionSchema } from "./hooks/use-connection-schema";
 import { useSchemaTree } from "./hooks/use-schema-tree";
 import { TableItem } from "./components/TableItem";

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { usePost } from "../../../../hooks/use-axios";
-import { CodeViewer } from "../../../../components/CodeViewer";
+import { usePost } from "hooks/use-axios";
+import { CodeViewer } from "components/CodeViewer";
 
 export const TableDLL = () => {
   const { conn, schema, table } = useParams<{

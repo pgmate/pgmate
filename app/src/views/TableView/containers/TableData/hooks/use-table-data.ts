@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useDynamicQuery } from "../../../../../hooks/use-query";
+import { useDynamicQuery } from "hooks/use-query";
 
 interface SchemaRow {
   column_name: string;

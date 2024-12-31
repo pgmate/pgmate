@@ -18,7 +18,17 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    "baseUrl": "src",
+    "paths": {
+      "hooks/*": ["hooks/*"],
+      "providers/*": ["providers/*"],
+      "components/*": ["components/*"],
+      "containers/*": ["containers/*"],
+      "popups/*": ["popups/*"],
+      "views/*": ["views/*"]
+    }
   },
   "include": [
     "src/**/*",

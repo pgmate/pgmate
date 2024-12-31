@@ -3,7 +3,7 @@ import {
   TableRowProps as MUITableRowProps,
   TableCell,
 } from "@mui/material";
-import { CodeBox } from "../CodeBox";
+import { CodeBox } from "components/CodeBox";
 
 export interface TableRowProps<Row extends Record<string, any>> {
   row: Row;

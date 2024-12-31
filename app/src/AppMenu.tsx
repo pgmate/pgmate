@@ -8,10 +8,10 @@ import {
   ListItemIcon,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import { Icon } from "./components/Icon";
-import { useURLConnection } from "./hooks/use-connections";
-import { ConnectionSchema } from "./containers/ConnectionSchema";
-import { FactsTags } from "./containers/FactsTags";
+import { useURLConnection } from "hooks/use-connections";
+import { Icon } from "components/Icon";
+import { ConnectionSchema } from "containers/ConnectionSchema";
+import { FactsTags } from "containers/FactsTags";
 
 const primaryMenu = [
   {

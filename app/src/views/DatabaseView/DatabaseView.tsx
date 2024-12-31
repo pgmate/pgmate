@@ -1,10 +1,9 @@
 import { useParams } from "react-router-dom";
 import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-// import { useEmit } from "../../hooks/use-pubsub";
-import { useConnection } from "../../hooks/use-connections";
+import { useConnection } from "hooks/use-connections";
 
-import { PageLayout } from "../../components/PageLayout";
+import { PageLayout } from "components/PageLayout";
 import { SchemasList } from "./containers/SchemasList";
 
 export const DatabaseView = () => {

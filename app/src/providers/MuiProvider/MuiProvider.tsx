@@ -1,8 +1,8 @@
 import { createContext, useState, ReactNode } from "react";
 import { ThemeProvider, CssBaseline } from "@mui/material";
+import { useStorage } from "hooks/use-storage";
 import { themeLight } from "./theme-light";
 import { themeDark } from "./theme-dark";
-import { useStorage } from "../../hooks/use-storage";
 
 type ThemeName = "light" | "dark";
 

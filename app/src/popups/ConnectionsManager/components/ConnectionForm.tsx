@@ -1,6 +1,6 @@
 import React, { useImperativeHandle, useRef } from "react";
+import { Form, FormApi } from "components/Form";
 import { ConnectionData } from "../hooks/use-connections";
-import { Form, FormApi } from "../../../components/Form";
 
 export interface ConnectionFormApis {
   save: () => void;

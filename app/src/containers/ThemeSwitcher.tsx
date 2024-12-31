@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, IconButton, Icon } from "@mui/material";
-import { useMUITheme } from "../hooks/use-mui-theme";
+import { useMUITheme } from "hooks/use-mui-theme";
 
 export const ThemeSwitcher: React.FC = () => {
   const { theme, setTheme } = useMUITheme();

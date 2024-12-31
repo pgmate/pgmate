@@ -1,4 +1,4 @@
-import { useURLConnection } from "../../hooks/use-connections";
+import { useURLConnection } from "hooks/use-connections";
 import { ConnectionSchema } from "./ConnectionSchema";
 
 export const ConnectionSchemaWrapper = () => {

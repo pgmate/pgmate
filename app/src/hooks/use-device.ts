@@ -1,5 +1,5 @@
 import { useMediaQuery, useTheme } from "@mui/material";
-import { isFullScreen } from "./is-fullscreen";
+import { isFullScreen } from "hooks/is-fullscreen";
 
 declare global {
   interface Navigator {

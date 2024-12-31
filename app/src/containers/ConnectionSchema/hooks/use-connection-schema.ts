@@ -1,7 +1,7 @@
 import { useQueries } from "../../../hooks/use-query";
 import { Connection } from "../../../providers/ConnectionProvider";
 
-type TableType = "VIEW" | "BASE TABLE";
+type TableType = "VIEW" | "BASE TABLE" | "MATERIALIZED VIEW";
 
 interface SchemaInfo {
   schema_name: string;
@@ -72,8 +72,22 @@ export const useConnectionSchema = (conn: Connection) => {
       variables: [],
     },
     {
-      statement:
-        "select table_schema, table_name, table_type from information_schema.tables;",
+      statement: `
+        SELECT 
+            table_schema, 
+            table_name, 
+            table_type 
+        FROM 
+            information_schema.tables
+
+        UNION ALL
+
+        SELECT 
+            schemaname AS table_schema, 
+            matviewname AS table_name, 
+            'MATERIALIZED VIEW' AS table_type 
+        FROM 
+            pg_matviews;`,
       variables: [],
     },
   ]);

@@ -8,7 +8,7 @@ interface TableItemProps {
   mode: string;
   schema: string;
   name: string;
-  type: "VIEW" | "BASE TABLE";
+  type: "VIEW" | "BASE TABLE" | "MATERIALIZED VIEW";
   selected?: boolean;
 }
 
@@ -38,6 +38,11 @@ export const TableItem: React.FC<TableItemProps> = ({
                     theme.palette.mode === "light"
                       ? theme.palette.primary.main
                       : theme.palette.primary.light
+                : type === "MATERIALIZED VIEW"
+                ? (theme) =>
+                    theme.palette.mode === "light"
+                      ? theme.palette.success.main
+                      : theme.palette.success.light
                 : "inherit",
           }}
         >

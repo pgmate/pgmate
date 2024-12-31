@@ -17,15 +17,37 @@ export class ConnectionsService {
     {
       name: string;
       desc: string | null;
+      database: string;
+      username: string;
       ssl: boolean;
       created_at: Date;
       updated_at: Date;
     }[]
   > {
     const { rows } = await this.pool.query(
-      'SELECT "name", "desc", "ssl", "created_at", "updated_at" FROM "pgmate"."connections" ORDER BY "name"',
+      'SELECT "name", "desc", "ssl", "conn", "created_at", "updated_at" FROM "pgmate"."connections" ORDER BY "name"',
     );
-    return rows;
+    return rows.map((row) => {
+      try {
+        // Decrypt the connection string
+        const decryptedConn = this.encryptionService.decrypt(row.conn);
+
+        // Parse the connection string to extract details
+        const { database, user } = parsePGString(decryptedConn);
+
+        return {
+          ...row,
+          database, // Extracted database name
+          username: user, // Extracted username
+        };
+      } catch (error) {
+        this.logger.error(
+          `Failed to decrypt or parse connection string for connection: ${row.name}`,
+          error,
+        );
+        throw new Error(`Failed to process connection: ${row.name}`);
+      }
+    });
   }
 
   async getConnection(name: string): Promise<{
@@ -75,7 +97,10 @@ export class ConnectionsService {
     return rows[0];
   }
 
-  async createClient(name: string): Promise<[Client, string, string]> {
+  async createClient(
+    name: string,
+    database?: string,
+  ): Promise<[Client, string, string]> {
     const timerStart = performance.now();
     const { conn, ssl } = await this.getConnectionDetails(name);
 
@@ -83,8 +108,23 @@ export class ConnectionsService {
       throw new Error(`Connection with name "${name}" not found`);
     }
 
-    // Decrypt the connection string and create a client
-    const connectionString = this.encryptionService.decrypt(conn);
+    // Decrypt the connection string
+    const decryptedConn = this.encryptionService.decrypt(conn);
+
+    // Parse the connection string
+    const url = new URL(decryptedConn);
+    // console.log(decryptedConn);
+
+    // Replace the database in the connection string if the `database` parameter is provided
+    if (database) {
+      url.pathname = `/${database}`;
+    }
+
+    // Final connection string with optional database override
+    const connectionString = url.toString();
+    // console.log(connectionString);
+
+    // Create a new client with the updated connection string
     const client = new Client({
       connectionString,
       ssl: ssl ? { rejectUnauthorized: false } : false,

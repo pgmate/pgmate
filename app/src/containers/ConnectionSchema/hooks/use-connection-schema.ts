@@ -1,4 +1,5 @@
 import { useQueries } from "../../../hooks/use-query";
+import { Connection } from "../../../providers/ConnectionProvider";
 
 type TableType = "VIEW" | "BASE TABLE";
 
@@ -63,7 +64,7 @@ const transformToNestedList = (
   return sortedSchemas;
 };
 
-export const useConnectionSchema = (conn: string) => {
+export const useConnectionSchema = (conn: Connection) => {
   const { data, ...results } = useQueries(conn, [
     {
       statement:

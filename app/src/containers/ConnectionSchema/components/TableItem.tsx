@@ -1,9 +1,10 @@
 import { ListItem, ListItemButton, ListItemText } from "@mui/material";
 import { Link } from "react-router-dom";
 import { Icon } from "../../../components/Icon";
+import { Connection } from "../../../providers/ConnectionProvider";
 
 interface TableItemProps {
-  conn: string;
+  conn: Connection;
   mode: string;
   schema: string;
   name: string;
@@ -25,7 +26,7 @@ export const TableItem: React.FC<TableItemProps> = ({
         disableGutters
         selected={selected}
         component={Link}
-        to={`/${conn}/${schema}/${name}/${mode}`}
+        to={`/${conn.name}/${conn.database}/${schema}/${name}/${mode}`}
         sx={{ pl: 2, height: "30px" }}
       >
         <Icon

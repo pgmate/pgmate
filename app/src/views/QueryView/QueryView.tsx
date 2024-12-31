@@ -5,6 +5,7 @@ import { Button, ButtonGroup, Box, Alert, useTheme } from "@mui/material";
 import { SplitPane } from "../../components/SplitPane";
 import { SizedBox } from "../../components/SizedBox";
 import { useDynamicQueries } from "../../hooks/use-query";
+import { useConnection } from "../../hooks/use-connections";
 import { ResultsTable } from "./containers/ResultsTable";
 import { ResultsEmpty } from "./containers/ResultsEmpty";
 import { splitIntoStatements1 as splitIntoStatements } from "./utils";
@@ -69,7 +70,8 @@ interface QueryResult {
 
 export const QueryView = () => {
   const theme = useTheme();
-  const { conn } = useParams<{ conn: string }>();
+  const params = useParams<{ conn: string; db: string }>();
+  const conn = useConnection(params.conn!, params.db!);
   const query = useDynamicQueries(conn!, { disableAnalyze: false });
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
   const [editorContent, setEditorContent] = useState(
@@ -143,6 +145,7 @@ export const QueryView = () => {
   };
 
   const runStatement = (monaco: Monaco) => {
+    console.log("Running Statement", conn?.name, conn?.database);
     const editor = editorRef.current;
     const model = editor?.getModel();
     const position = editor?.getPosition();
@@ -224,6 +227,7 @@ export const QueryView = () => {
 
   const execStatements = (statements: string[]) => {
     setResults(null);
+    console.log("Executing Statements:", statements);
     query(statements.map((statement) => ({ statement, variables: [] }))).then(
       ([queries]) => {
         console.log("Queries:", queries);
@@ -255,6 +259,8 @@ export const QueryView = () => {
   //   execStatements(["select * from pgmate.migrations where 1 = 2"]);
   // }, []);
 
+  // if (!conn?.name) return;
+
   return (
     <SplitPane storageKey="query" direction="vertical">
       <Box
@@ -266,28 +272,30 @@ export const QueryView = () => {
       >
         <Box sx={{ flex: 1 }}>
           <SizedBox onSizeChange={handlePaneSizeChange}>
-            {() => (
-              <Editor
-                language={"sql"}
-                value={editorContent}
-                theme={monacoTheme}
-                height={100}
-                options={{
-                  lineNumbers: "on",
-                  scrollBeyondLastLine: false,
-                  minimap: { enabled: false },
-                  padding: {
-                    top: 10,
-                  },
-                  fontSize: 10,
-                  contextmenu: false,
-                }}
-                onMount={handleEditorMount}
-                onChange={(value) => {
-                  setEditorContent(value || "");
-                }}
-              />
-            )}
+            {() =>
+              conn?.name && (
+                <Editor
+                  language={"sql"}
+                  value={editorContent}
+                  theme={monacoTheme}
+                  height={100}
+                  options={{
+                    lineNumbers: "on",
+                    scrollBeyondLastLine: false,
+                    minimap: { enabled: false },
+                    padding: {
+                      top: 10,
+                    },
+                    fontSize: 10,
+                    contextmenu: false,
+                  }}
+                  onMount={handleEditorMount}
+                  onChange={(value) => {
+                    setEditorContent(value || "");
+                  }}
+                />
+              )
+            }
           </SizedBox>
         </Box>
         <Box

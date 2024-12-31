@@ -36,8 +36,9 @@ const options = [
 
 export function ToggleTableMode() {
   const navigate = useNavigate();
-  const { conn, schema, table, mode } = useParams<{
+  const { conn, db, schema, table, mode } = useParams<{
     conn: string;
+    db: string;
     schema: string;
     table: string;
     mode: string;
@@ -55,7 +56,7 @@ export function ToggleTableMode() {
   ) => {
     setSelectedIndex(index);
     setOpen(false);
-    navigate(`/${conn}/${schema}/${table}/${options[index].mode}`);
+    navigate(`/${conn}/${db}/${schema}/${table}/${options[index].mode}`);
   };
 
   const handleToggle = () => {

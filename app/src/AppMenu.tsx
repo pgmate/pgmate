@@ -30,7 +30,7 @@ const primaryMenu = [
     useProps: () => {
       const connection = useURLConnection();
       return {
-        href: `/${connection?.name}/query`,
+        href: `/${connection?.name}/${connection?.database}/query`,
       };
     },
   },

@@ -3,6 +3,7 @@ import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { PageLayout } from "../../components/PageLayout";
 import { useConnection } from "../../hooks/use-connections";
+import { DBList } from "./containers/DbList";
 
 export const ConnectionView: React.FC = () => {
   const params = useParams<{ conn: string }>();
@@ -10,6 +11,7 @@ export const ConnectionView: React.FC = () => {
 
   return (
     <PageLayout
+      disablePadding
       title={conn?.desc || conn?.name}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">
@@ -25,7 +27,7 @@ export const ConnectionView: React.FC = () => {
         </Breadcrumbs>
       }
     >
-      ... here we will place a dashboard with connection details ...
+      <DBList conn={params.conn!} />
     </PageLayout>
   );
 };

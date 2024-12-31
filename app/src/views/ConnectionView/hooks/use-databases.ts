@@ -69,7 +69,7 @@ export const useDatabases = (conn: string): { items: DatabaseItem[] } => {
   const { data } = useQuery(conn, GET_DATABASES, []);
 
   // Map and transform the raw rows into the correct types
-  const items: DatabaseItem[] = (data?.rows || []).map((db: any) => ({
+  const items: DatabaseItem[] = (data?.rows || []).map((db) => ({
     name: db.name, // Already a string
     description: db.description || null, // Convert undefined to null
     is_selected: db.is_selected === "true", // Convert string "true"/"false" to boolean
@@ -86,7 +86,7 @@ export const useDatabases = (conn: string): { items: DatabaseItem[] } => {
     health_rate: db.health_rate as "green" | "yellow" | "red", // Ensure valid health rate value
   }));
 
-  console.log(items);
+  // console.log(items);
 
   return { items };
 };

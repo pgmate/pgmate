@@ -1,7 +1,6 @@
 import { ListItem, ListItemButton, ListItemText } from "@mui/material";
 import { Link } from "react-router-dom";
 import { Icon } from "../../../components/Icon";
-import { Connection } from "../../../providers/ConnectionProvider";
 
 interface TableItemProps {
   conn: Connection;

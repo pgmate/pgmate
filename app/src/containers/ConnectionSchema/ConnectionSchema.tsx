@@ -10,7 +10,6 @@ import {
 import { Icon } from "../../components/Icon";
 import { useSubscribe } from "../../hooks/use-pubsub";
 import { useTableMode } from "../../hooks/use-table-mode";
-import { Connection } from "../../providers/ConnectionProvider";
 import { useConnectionSchema } from "./hooks/use-connection-schema";
 import { useSchemaTree } from "./hooks/use-schema-tree";
 import { TableItem } from "./components/TableItem";

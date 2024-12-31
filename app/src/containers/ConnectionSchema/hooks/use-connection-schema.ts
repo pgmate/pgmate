@@ -1,5 +1,4 @@
 import { useQueries } from "../../../hooks/use-query";
-import { Connection } from "../../../providers/ConnectionProvider";
 
 type TableType = "VIEW" | "BASE TABLE" | "MATERIALIZED VIEW";
 

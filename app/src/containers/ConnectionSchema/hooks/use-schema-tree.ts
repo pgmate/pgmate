@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useStorage } from "../../../hooks/use-storage";
-import { Connection } from "../../../providers/ConnectionProvider";
 
 const BASE_KEY = "schemas.expanded";
 

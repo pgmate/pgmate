@@ -1,7 +1,7 @@
 import { Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-import { useTables, Connection, TableItem } from "../hooks/use-tables";
+import { useTables, TableItem } from "../hooks/use-tables";
 import { DataGrid } from "../../../components/DataGrid";
 
 interface TablesListProps {

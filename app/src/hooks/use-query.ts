@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
 import { usePost } from "./use-axios";
-import { Connection } from "../providers/ConnectionProvider";
 
 const DEFAULT_DYNAMIC_QUERY_OPTIONS = { disableAnalyze: true };
 

@@ -2,16 +2,6 @@ import { createContext, useCallback } from "react";
 import { useGet } from "../../hooks/use-axios";
 import { useSubscribe } from "../../hooks/use-pubsub";
 
-export interface Connection {
-  name: string;
-  desc: string;
-  ssl: boolean;
-  database: string;
-  username: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export const ConnectionContext = createContext<{
   items: Connection[];
   getByName: (name: string, database?: string) => Connection | undefined;

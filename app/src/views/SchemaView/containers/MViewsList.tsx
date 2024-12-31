@@ -1,7 +1,7 @@
 import { Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-import { useMViews, Connection, MViewItem } from "../hooks/use-mviews";
+import { useMViews, MViewItem } from "../hooks/use-mviews";
 import { DataGrid } from "../../../components/DataGrid";
 
 interface MViewsListProps {

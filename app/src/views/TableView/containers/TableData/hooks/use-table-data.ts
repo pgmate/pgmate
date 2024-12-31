@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useDynamicQuery } from "../../../../../hooks/use-query";
+import { Connection } from "../../../../../providers/ConnectionProvider";
 
 interface SchemaRow {
   column_name: string;
@@ -51,7 +52,7 @@ const getPKey = (info: SchemaRow[]): string | null => {
 };
 
 export const useTableData = (
-  conn: string,
+  conn: Connection,
   schema: string,
   table: string,
   {

@@ -66,10 +66,10 @@ export const TableView = () => {
       }
       tray={<ToggleTableMode />}
     >
-      {params.mode === "data" && <TableData />}
-      {params.mode === "structure" && <TableStructure />}
-      {params.mode === "dll" && <TableDLL />}
-      {params.mode === "info" && <TableInfo />}
+      {conn && params.mode === "data" && <TableData conn={conn} />}
+      {conn && params.mode === "structure" && <TableStructure />}
+      {conn && params.mode === "dll" && <TableDLL />}
+      {conn && params.mode === "info" && <TableInfo />}
     </PageLayout>
   );
 };

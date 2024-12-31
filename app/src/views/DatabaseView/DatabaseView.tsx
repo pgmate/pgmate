@@ -5,6 +5,7 @@ import { useConnection } from "hooks/use-connections";
 
 import { PageLayout } from "components/PageLayout";
 import { SchemasList } from "./containers/SchemasList";
+import { DiskCharts } from "./containers/DiskCharts";
 
 export const DatabaseView = () => {
   const params = useParams<{ conn: string; db: string }>();
@@ -12,6 +13,7 @@ export const DatabaseView = () => {
 
   return (
     <PageLayout
+      disablePadding
       title={params.db}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">
@@ -35,6 +37,7 @@ export const DatabaseView = () => {
         </Breadcrumbs>
       }
     >
+      {conn && <DiskCharts conn={conn} />}
       {conn && <SchemasList conn={conn} />}
     </PageLayout>
   );

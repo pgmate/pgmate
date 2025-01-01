@@ -6,7 +6,7 @@ import { useConnection } from "hooks/use-connections";
 import { PageLayout } from "components/PageLayout";
 import { SchemasList } from "./containers/SchemasList";
 import { DiskCharts } from "./containers/DiskCharts";
-import { TreeMap } from "./containers/TreeMap";
+// import { TreeMap } from "./containers/TreeMap";
 
 export const DatabaseView = () => {
   const params = useParams<{ conn: string; db: string }>();
@@ -39,7 +39,7 @@ export const DatabaseView = () => {
       }
     >
       {conn && <DiskCharts conn={conn} />}
-      {conn && <TreeMap conn={conn} />}
+      {/* {conn && <TreeMap conn={conn} />} */}
       {conn && <SchemasList conn={conn} />}
     </PageLayout>
   );

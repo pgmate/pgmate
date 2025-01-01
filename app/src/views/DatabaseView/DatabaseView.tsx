@@ -6,6 +6,7 @@ import { useConnection } from "hooks/use-connections";
 import { PageLayout } from "components/PageLayout";
 import { SchemasList } from "./containers/SchemasList";
 import { DiskCharts } from "./containers/DiskCharts";
+import { SunburstChart } from "./containers/SunburstChart";
 // import { TreeMap } from "./containers/TreeMap";
 
 export const DatabaseView = () => {
@@ -38,6 +39,7 @@ export const DatabaseView = () => {
         </Breadcrumbs>
       }
     >
+      {conn && <SunburstChart conn={conn} />}
       {conn && <DiskCharts conn={conn} />}
       {/* {conn && <TreeMap conn={conn} />} */}
       {conn && <SchemasList conn={conn} />}

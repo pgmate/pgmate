@@ -45,16 +45,16 @@ export const useTheme = () => {
           fill: legendTextColor,
         },
       },
-      tooltip: {
-        container: {
-          background: isDarkMode ? "#444444" : "#ffffff", // Adjust based on theme
-          color: textColor,
-          fontSize: 12,
-          borderRadius: 4,
-          boxShadow: "0 3px 6px rgba(0, 0, 0, 0.5)", // Subtle shadow for depth
-          padding: "5px 10px",
-        },
-      },
+      // tooltip: {
+      //   container: {
+      //     background: isDarkMode ? "#444444" : "#ffffff", // Adjust based on theme
+      //     color: textColor,
+      //     fontSize: 12,
+      //     borderRadius: 4,
+      //     boxShadow: "0 3px 6px rgba(0, 0, 0, 0.5)", // Subtle shadow for depth
+      //     padding: "5px 10px",
+      //   },
+      // },
     },
     colors: {
       text: textColor,

@@ -1,9 +1,22 @@
 import { useQuery } from "hooks/use-query";
 
-type TreeNode = {
+type TreeNodeItem = {
   name: string; // Node name (schema, table, or partition)
-  value?: number; // Value for leaf nodes (partitions or tables without partitions)
-  children?: TreeNode[]; // Child nodes (tables under schemas, partitions under tables)
+  children?: TreeNodeItem[]; // Child nodes (tables under schemas, partitions under tables)
+} & (
+  | {
+      total_size: number;
+      data_size: number;
+      heap_size: number;
+      toast_size: number;
+      index_size: number;
+    }
+  | {}
+);
+
+type TreeNode = {
+  name: string; // Root node name (database name)
+  children: TreeNodeItem[]; // Child nodes (schemas)
 };
 
 const SQL_QUERY = `
@@ -64,7 +77,16 @@ aggregated_partitions AS (
 SELECT 
   "schema",
   table_name,
-  type,
+  CASE 
+    WHEN type = 'p' THEN (
+      SELECT parent_namespace.nspname || '.' || parent_table.relname
+      FROM pg_inherits
+      JOIN pg_class parent_table ON pg_inherits.inhparent = parent_table.oid
+      JOIN pg_namespace parent_namespace ON parent_table.relnamespace = parent_namespace.oid
+      WHERE pg_inherits.inhrelid = final_data.table_oid
+    )
+    ELSE type
+  END AS type, -- Replace type for child partitions
   total_size,
   data_size,
   heap_size,
@@ -80,7 +102,7 @@ FROM (
     "schema", table_name, NULL AS table_oid, type, total_size, data_size, heap_size, toast_size, index_size, free_space
   FROM aggregated_partitions
 ) AS final_data
-where "schema" NOT IN ('pgmate', 'pg_toast', 'pg_catalog1', 'information_schema') -- Exclude system schemas
+WHERE "schema" NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
 `;
 
 export const useTreeMap = (conn: Connection): { items: TreeNode } => {
@@ -91,50 +113,90 @@ export const useTreeMap = (conn: Connection): { items: TreeNode } => {
     table_name: row.table_name,
     type: row.type,
     total_size: Number(row.total_size),
+    data_size: Number(row.data_size),
+    heap_size: Number(row.heap_size),
+    toast_size: Number(row.toast_size),
+    index_size: Number(row.index_size),
   }));
+
+  console.log("items", items);
 
   const treeMapData: TreeNode = {
     name: conn.database,
     children: Object.entries(
-      items.reduce<Record<string, TreeNode>>((schemas, item) => {
+      items.reduce<Record<string, TreeNodeItem>>((schemas, item) => {
+        // Ensure schema node exists
         if (!schemas[item.schema]) {
-          schemas[item.schema] = { name: item.schema, children: [], value: 0 };
+          schemas[item.schema] = {
+            name: item.schema,
+            children: [],
+          };
         }
         const schemaNode = schemas[item.schema];
 
         if (item.type === "P") {
-          const tableNode: TreeNode = {
-            name: item.table_name,
-            children: [],
-            value: 0, // Initialize with 0; will calculate later
-          };
-          schemaNode.children?.push(tableNode);
-        } else if (item.type === "p") {
-          const parentTable = schemaNode.children?.find(
-            (table) => table.name === item.table_name
+          // Check if the partitioned table already exists
+          let tableNode = schemaNode.children?.find(
+            (child) => child.name === item.table_name
           );
-          if (parentTable) {
-            parentTable.children?.push({
+          if (!tableNode) {
+            // Create partitioned table node if it doesn't exist
+            tableNode = {
               name: item.table_name,
-              value: item.total_size,
+              children: [],
+            };
+            schemaNode.children?.push(tableNode);
+          }
+        } else if (typeof item.type === "string" && item.type.includes(".")) {
+          // Handle partitions (type contains "schema.table_name")
+          const [parentSchema, parentTableName] = item.type.split(".");
+          if (parentSchema === item.schema) {
+            // Find or create the parent table node
+            let parentTableNode = schemaNode.children?.find(
+              (table) => table.name === parentTableName
+            );
+            if (!parentTableNode) {
+              // Create parent table node if it doesn't exist
+              parentTableNode = {
+                name: parentTableName,
+                children: [],
+              };
+              schemaNode.children?.push(parentTableNode);
+            }
+            // Add the partition as a child of the parent table
+            parentTableNode.children?.push({
+              name: item.table_name,
+              total_size: item.total_size,
+              data_size: item.data_size,
+              heap_size: item.heap_size,
+              toast_size: item.toast_size,
+              index_size: item.index_size,
             });
-            parentTable.value = (parentTable.value || 0) + item.total_size; // Update parent value
           }
         } else {
+          // Handle regular tables and materialized views
           schemaNode.children?.push({
             name: item.table_name,
-            value: item.total_size,
+            total_size: item.total_size,
+            data_size: item.data_size,
+            heap_size: item.heap_size,
+            toast_size: item.toast_size,
+            index_size: item.index_size,
           });
         }
 
-        // Recalculate schema node value as the sum of its children's values
-        schemaNode.value = schemaNode.children?.reduce(
-          (acc, child) => acc + (child.value || 0),
-          0
-        );
         return schemas;
       }, {})
-    ).map(([_, schemaNode]) => schemaNode),
+    ).map(([_, schemaNode]) => {
+      // If a node has children, omit its values
+      if (schemaNode.children?.length) {
+        return {
+          name: schemaNode.name,
+          children: schemaNode.children,
+        };
+      }
+      return schemaNode;
+    }), // Convert schema map to array
   };
 
   return { items: treeMapData };

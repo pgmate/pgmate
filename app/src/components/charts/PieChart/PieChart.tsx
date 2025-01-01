@@ -5,6 +5,7 @@ import { useTheme } from "./use-theme";
 interface PieChartCustomProps {
   customTitle?: string; // Optional custom title
   legend?: "legend" | "labels" | "off"; // Toggle for legend, labels, or off
+  height?: number; // Height of the chart
 }
 
 type PieChartProps<T> = Omit<PieSvgProps<T>, "data" | "height" | "width"> &
@@ -26,7 +27,13 @@ type LegendProps = {
 export const PieChart = <T extends { id: string | number; value: number }>(
   props: PieChartProps<T>
 ) => {
-  const { customTitle, data, legend = "labels", ...chartProps } = props;
+  const {
+    customTitle,
+    data,
+    legend = "labels",
+    height = 400,
+    ...chartProps
+  } = props;
   const theme = useTheme();
 
   // Conditional settings for legends and labels
@@ -50,16 +57,16 @@ export const PieChart = <T extends { id: string | number; value: number }>(
   const arcLinkLabelsEnabled = legend === "labels";
 
   return (
-    <Box height={400} width={"100%"}>
+    <Box display={"block"} height={height} width={"100%"}>
       {customTitle && (
-        <Typography variant="h3" align="center" gutterBottom>
+        <Typography variant="h3" align="center" mt={2} gutterBottom>
           {customTitle}
         </Typography>
       )}
       <ResponsivePie
         data={data}
-        margin={{ top: 50, right: 50, bottom: 50, left: 50 }}
-        innerRadius={0.5} // Donut style
+        margin={{ top: 30, right: 20, bottom: 50, left: 20 }}
+        innerRadius={0.75} // Donut style
         padAngle={0.7}
         cornerRadius={3}
         colors={{ scheme: theme.isDarkMode ? "dark2" : "set2" }} // Adjust color scheme

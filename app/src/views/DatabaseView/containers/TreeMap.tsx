@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import { ResponsiveTreeMap } from "@nivo/treemap";
 import { useTreeMap } from "../hooks/use-tree-map";
 
@@ -7,7 +7,7 @@ interface TreeMapProps {
 }
 
 export const TreeMap: React.FC<TreeMapProps> = ({ conn }) => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { items } = useTreeMap(conn);
 
   console.log("@tree-map", items);

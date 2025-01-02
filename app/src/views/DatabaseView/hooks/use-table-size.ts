@@ -86,8 +86,7 @@ FROM (
     "schema", table_name, NULL AS table_oid, type, total_size, data_size, heap_size, toast_size, index_size, free_space
   FROM aggregated_partitions
 ) AS final_data
-where "schema" NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
-  and "type" not in ('p') -- Exclude child partitions
+where "type" not in ('p') -- Exclude child partitions
 order by total_size desc;
 `;
 

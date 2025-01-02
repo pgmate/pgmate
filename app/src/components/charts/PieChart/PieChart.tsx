@@ -1,6 +1,7 @@
 import { ResponsivePie, PieSvgProps } from "@nivo/pie";
 import { Box, Typography } from "@mui/material";
 import { useTheme } from "./use-theme";
+import { PieChartTooltip } from "./PieChartTooltip";
 
 interface PieChartCustomProps {
   customTitle?: string; // Optional custom title
@@ -56,6 +57,17 @@ export const PieChart = <T extends { id: string | number; value: number }>(
   // Enable arc link labels only in "labels" mode
   const arcLinkLabelsEnabled = legend === "labels";
 
+  const renderTooltip = ({ datum }: any) => {
+    const { id, value, color } = datum;
+    return (
+      <PieChartTooltip
+        id={String(id)} // Ensure id is a string
+        value={value || 0} // Default to 0 if value is undefined
+        color={color}
+      />
+    );
+  };
+
   return (
     <Box display={"block"} height={height} width={"100%"}>
       {customTitle && (
@@ -81,6 +93,7 @@ export const PieChart = <T extends { id: string | number; value: number }>(
         enableArcLinkLabels={arcLinkLabelsEnabled} // Enable/disable arc link labels
         legends={legends} // Conditional legends
         theme={theme.theme} // Use custom theme
+        tooltip={renderTooltip} // Custom tooltip
         {...chartProps}
       />
     </Box>

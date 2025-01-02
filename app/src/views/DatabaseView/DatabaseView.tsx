@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
-import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
+import { Box, Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import { Link as RouterLink } from "react-router-dom";
 import { useConnection } from "hooks/use-connections";
 
@@ -39,9 +40,18 @@ export const DatabaseView = () => {
         </Breadcrumbs>
       }
     >
-      {conn && <SunburstChart conn={conn} />}
-      {conn && <DiskCharts conn={conn} />}
-      {/* {conn && <TreeMap conn={conn} />} */}
+      {conn && (
+        <Box sx={{ flexGrow: 1, mb: 4 }}>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <SunburstChart conn={conn} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <DiskCharts conn={conn} />
+            </Grid>
+          </Grid>
+        </Box>
+      )}
       {conn && <SchemasList conn={conn} />}
     </PageLayout>
   );

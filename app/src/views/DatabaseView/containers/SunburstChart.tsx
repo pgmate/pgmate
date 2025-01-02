@@ -9,6 +9,6 @@ export const SunburstChart: React.FC<SunburstChartProps> = ({ conn }) => {
   const { items } = useTreeMap(conn);
 
   return (
-    <Chart title="Disk Usage" height={400} value={"total_size"} data={items} />
+    <Chart title="Disk Usage" height={350} value={"total_size"} data={items} />
   );
 };

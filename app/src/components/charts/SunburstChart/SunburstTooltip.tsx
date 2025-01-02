@@ -1,5 +1,5 @@
-import { Box, Typography } from "@mui/material";
-import { formatLabelSize as formatSize } from "./format-size";
+import { Box, Stack, Typography, useTheme } from "@mui/material";
+import { formatTooltipSize as formatSize } from "./format-size";
 
 export interface SunburstTooltipProps {
   id: string;
@@ -14,15 +14,31 @@ export const SunburstTooltip = ({
   percentage,
   color,
 }: SunburstTooltipProps) => {
+  const theme = useTheme();
+
+  // Dynamically set background and text colors based on the current theme mode
+  const backgroundColor =
+    theme.palette.mode === "dark"
+      ? theme.palette.grey[900]
+      : theme.palette.common.white;
+  const borderColor =
+    theme.palette.mode === "dark"
+      ? theme.palette.grey[700]
+      : theme.palette.grey[300];
+  const textColor =
+    theme.palette.mode === "dark"
+      ? theme.palette.common.white
+      : theme.palette.text.primary;
+
   return (
     <Box
       display="flex"
       alignItems="center"
-      bgcolor="white"
+      bgcolor={backgroundColor}
+      color={textColor}
       padding="8px"
-      border="1px solid #ccc"
+      border={`1px solid ${borderColor}`}
       borderRadius="4px"
-      boxShadow="0px 2px 4px rgba(0, 0, 0, 0.2)"
     >
       {/* Color Indicator */}
       <Box
@@ -33,14 +49,14 @@ export const SunburstTooltip = ({
         borderRadius="50%"
       />
       {/* Text Content */}
-      <Box>
-        <Typography variant="body2" fontWeight="bold">
-          {id}
+      <Stack direction={"row"} spacing={1}>
+        <Typography variant="body2" fontWeight="bold" color="inherit">
+          {id}:
         </Typography>
-        <Typography variant="body2">
+        <Typography variant="body2" color="inherit">
           {formatSize(value)} ({percentage.toFixed(1)}%)
         </Typography>
-      </Box>
+      </Stack>
     </Box>
   );
 };

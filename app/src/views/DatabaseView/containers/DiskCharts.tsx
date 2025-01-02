@@ -1,37 +1,11 @@
 import { useNavigate } from "react-router-dom";
-import { Paper } from "@mui/material";
 import { useTableSize } from "../hooks/use-table-size";
 import { PieChart } from "components/charts/PieChart";
-import { PieTooltipProps } from "@nivo/pie";
 
 interface DiskChartsProps {
   conn: Connection;
   details?: number;
 }
-
-const formatBytes = (bytes: number): string => {
-  if (bytes === 0) return "0B";
-  const sizes = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  const value = bytes / Math.pow(1024, i);
-  return `${value.toFixed(1)}${sizes[i]}`;
-};
-
-// const ArcLabel = ({ value }: { value: number }) => formatBytes(value);
-
-const ArcTooltip = ({
-  datum,
-}: PieTooltipProps<{ id: string; label: string; value: number }>) => (
-  <Paper
-    sx={{
-      fontSize: 12,
-      px: 2,
-      py: 1,
-    }}
-  >
-    <b>{datum.id}:</b> {formatBytes(datum.value)}
-  </Paper>
-);
 
 export const DiskCharts: React.FC<DiskChartsProps> = ({
   conn,
@@ -67,9 +41,9 @@ export const DiskCharts: React.FC<DiskChartsProps> = ({
     <PieChart
       customTitle="Top Tables by Size"
       data={processedData}
-      height={250}
+      height={350}
       arcLabel={() => ""}
-      tooltip={ArcTooltip}
+      // tooltip={ArcTooltip}
       onClick={(data) => {
         if (data.id === "others") return;
         navigate(

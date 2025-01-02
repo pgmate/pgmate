@@ -43,7 +43,6 @@ export const DiskCharts: React.FC<DiskChartsProps> = ({
       data={processedData}
       height={350}
       arcLabel={() => ""}
-      // tooltip={ArcTooltip}
       onClick={(data) => {
         if (data.id === "others") return;
         navigate(

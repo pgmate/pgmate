@@ -1,20 +1,17 @@
 import { useQuery } from "hooks/use-query";
 
-type TreeNodeItem = {
+export type TreeNodeItem = {
   name: string; // Node name (schema, table, or partition)
   children?: TreeNodeItem[]; // Child nodes (tables under schemas, partitions under tables)
-} & (
-  | {
-      total_size: number;
-      data_size: number;
-      heap_size: number;
-      toast_size: number;
-      index_size: number;
-    }
-  | {}
-);
+  total_size?: number;
+  data_size?: number;
+  heap_size?: number;
+  toast_size?: number;
+  index_size?: number;
+  value?: number; // Derived value for Sunburst chart
+};
 
-type TreeNode = {
+export type TreeNode = {
   name: string; // Root node name (database name)
   children: TreeNodeItem[]; // Child nodes (schemas)
 };
@@ -102,7 +99,7 @@ FROM (
     "schema", table_name, NULL AS table_oid, type, total_size, data_size, heap_size, toast_size, index_size, free_space
   FROM aggregated_partitions
 ) AS final_data
-WHERE "schema" NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
+WHERE "schema" NOT IN ('pg_toast1', 'pg_catalog1', 'information_schema1') -- Exclude system schemas
 `;
 
 export const useTreeMap = (conn: Connection): { items: TreeNode } => {
@@ -119,7 +116,7 @@ export const useTreeMap = (conn: Connection): { items: TreeNode } => {
     index_size: Number(row.index_size),
   }));
 
-  console.log("items", items);
+  // console.log("items", items);
 
   const treeMapData: TreeNode = {
     name: conn.database,

@@ -20,6 +20,7 @@ export const SchemaView = () => {
   return (
     <PageLayout
       disableMargins
+      stickyHeader
       title={params.schema}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">

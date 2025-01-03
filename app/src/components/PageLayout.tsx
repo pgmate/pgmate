@@ -16,6 +16,7 @@ interface PageLayoutProps {
   tray?: React.ReactNode | string;
   disableMargins?: boolean;
   disablePadding?: boolean;
+  stickyHeader?: boolean; // New prop for sticky header
   bodyProps?: BoxProps;
 }
 
@@ -26,6 +27,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
   title,
   subtitle,
   tray,
+  stickyHeader,
   bodyProps = {},
 }) => {
   const theme = useTheme();
@@ -43,11 +45,16 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
     <Paper
       elevation={isSmallScreen ? 0 : 3}
       sx={{
+        // height: "100vh",
+        ...(stickyHeader ? { height: "100vh" } : {}),
+        display: "flex",
+        flexDirection: "column",
         marginX: isSmallScreen || disableMargins ? 0 : 2,
         marginY: isSmallScreen || disableMargins ? 0 : 2,
         borderRadius: 0,
       }}
     >
+      {/* Page Header */}
       <Stack
         direction={"row"}
         justifyContent={"space-between"}
@@ -56,6 +63,14 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
           padding: 2,
           borderBottom: "1px solid",
           borderBottomColor: "divider",
+          ...(stickyHeader
+            ? {
+                position: "sticky",
+                top: 0,
+                zIndex: theme.zIndex.appBar,
+                // backgroundColor: theme.palette.background.paper,
+              }
+            : {}),
         }}
       >
         <Stack>
@@ -73,9 +88,15 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
         </Stack>
         {tray}
       </Stack>
+      {/* Page Body */}
       <Box
         {...bodyProps}
-        sx={{ ...bodyProps.sx, padding: disablePadding ? 0 : 2 }}
+        sx={{
+          ...bodyProps.sx,
+          flex: 1,
+          overflowY: stickyHeader ? "auto" : "visible", // Enable scrolling when header is sticky
+          padding: disablePadding ? 0 : 2,
+        }}
       >
         {children}
       </Box>

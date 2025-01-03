@@ -18,6 +18,7 @@ export const DatabaseView = () => {
     <PageLayout
       disablePadding
       disableMargins
+      stickyHeader
       title={params.db}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">

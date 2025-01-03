@@ -18,7 +18,11 @@ export const FactsView = () => {
   const { tag } = useParams();
   const { items, loadMore, thumbUp, thumbDown } = useFacts(tag!);
   return (
-    <PageLayout title={tag} subtitle="Interesting facts about Postgres">
+    <PageLayout
+      title={tag}
+      subtitle="Interesting facts about Postgres"
+      disableMargins
+    >
       <List disablePadding>
         {items.map((fact) => (
           <ListItem key={fact.uuid} disablePadding sx={{ mb: 4 }}>

@@ -8,6 +8,7 @@ import {
   useMediaQuery,
   BoxProps,
 } from "@mui/material";
+import { useDevice } from "hooks/use-device";
 
 interface PageLayoutProps {
   title: React.ReactNode | string;
@@ -32,6 +33,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
 }) => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const { isDesktop } = useDevice();
 
   useEffect(() => {
     if (typeof title === "string") {
@@ -46,7 +48,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
       elevation={isSmallScreen ? 0 : 3}
       sx={{
         // height: "100vh",
-        ...(stickyHeader ? { height: "100vh" } : {}),
+        ...(stickyHeader && isDesktop ? { height: "100vh" } : {}),
         display: "flex",
         flexDirection: "column",
         marginX: isSmallScreen || disableMargins ? 0 : 2,
@@ -63,7 +65,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
           padding: 2,
           borderBottom: "1px solid",
           borderBottomColor: "divider",
-          ...(stickyHeader
+          ...(stickyHeader && isDesktop
             ? {
                 position: "sticky",
                 top: 0,
@@ -94,7 +96,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
         sx={{
           ...bodyProps.sx,
           flex: 1,
-          overflowY: stickyHeader ? "auto" : "visible", // Enable scrolling when header is sticky
+          overflowY: stickyHeader && isDesktop ? "auto" : "visible", // Enable scrolling when header is sticky
           padding: disablePadding ? 0 : 2,
         }}
       >

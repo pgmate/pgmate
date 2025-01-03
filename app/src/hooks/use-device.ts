@@ -10,6 +10,7 @@ declare global {
 interface Device {
   isTouch: boolean;
   isMobile: boolean;
+  isDesktop: boolean;
   isFullScreen: boolean;
 }
 
@@ -19,6 +20,7 @@ export const useDevice = (): Device => {
   return {
     isTouch: useMediaQuery("(hover: none) and (pointer: coarse)"),
     isMobile: useMediaQuery(theme.breakpoints.down("sm")),
+    isDesktop: useMediaQuery(theme.breakpoints.up("md")),
     isFullScreen: isFullScreen(),
   };
 };

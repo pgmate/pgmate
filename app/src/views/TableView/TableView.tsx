@@ -26,6 +26,7 @@ export const TableView = () => {
   );
   return (
     <PageLayout
+      disableMargins
       title={params.table}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">

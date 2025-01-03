@@ -19,6 +19,7 @@ export const SchemaView = () => {
   );
   return (
     <PageLayout
+      disableMargins
       title={params.schema}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">

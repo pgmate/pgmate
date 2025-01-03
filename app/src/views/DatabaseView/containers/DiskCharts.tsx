@@ -48,7 +48,7 @@ export const DiskCharts: React.FC<DiskChartsProps> = ({
         navigate(
           `/${conn.name}/${conn.database}/${String(data.label)
             .split(".")
-            .join("/")}/data`
+            .join("/")}/info`
         );
       }}
     />

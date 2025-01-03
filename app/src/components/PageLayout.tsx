@@ -14,12 +14,14 @@ interface PageLayoutProps {
   children: React.ReactNode;
   subtitle?: React.ReactNode | string;
   tray?: React.ReactNode | string;
+  disableMargins?: boolean;
   disablePadding?: boolean;
   bodyProps?: BoxProps;
 }
 
 export const PageLayout: React.FC<PageLayoutProps> = ({
   disablePadding,
+  disableMargins,
   children,
   title,
   subtitle,
@@ -41,8 +43,8 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
     <Paper
       elevation={isSmallScreen ? 0 : 3}
       sx={{
-        marginX: isSmallScreen ? 0 : 2,
-        marginY: isSmallScreen ? 0 : 2,
+        marginX: isSmallScreen || disableMargins ? 0 : 2,
+        marginY: isSmallScreen || disableMargins ? 0 : 2,
         borderRadius: 0,
       }}
     >

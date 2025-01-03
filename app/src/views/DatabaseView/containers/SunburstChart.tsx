@@ -20,10 +20,10 @@ export const SunburstChart: React.FC<SunburstChartProps> = ({ conn }) => {
         if (depth === 1) {
           navigate(`/${conn.name}/${conn.database}/${path[0]}`);
         } else if (depth === 2) {
-          navigate(`/${conn.name}/${conn.database}/${path[1]}/${path[0]}/data`);
+          navigate(`/${conn.name}/${conn.database}/${path[1]}/${path[0]}/info`);
         } else if (depth === 3) {
           console.log(path);
-          navigate(`/${conn.name}/${conn.database}/${path[2]}/${path[0]}/data`);
+          navigate(`/${conn.name}/${conn.database}/${path[2]}/${path[0]}/info`);
         }
       }}
     />

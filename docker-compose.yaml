@@ -19,6 +19,7 @@ services:
       - ./api/tsconfig.json:/usr/src/app/tsconfig.json
       - ./api/tsconfig.build.json:/usr/src/app/tsconfig.build.json
       - ./data/migrations:/usr/src/app/migrations
+      - ./data/seeds:/usr/src/app/seeds
     environment:
       NODE_ENV: ${API_NODE_ENV:-development}
       PGSTRING: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/postgres

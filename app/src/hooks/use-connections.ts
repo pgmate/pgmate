@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { useMatch } from "react-router-dom";
-import { ConnectionContext, Connection } from "../providers/ConnectionProvider";
+import { ConnectionContext } from "providers/ConnectionProvider";
 
 export interface ConnectionItem {
   name: string;
@@ -22,13 +22,18 @@ export interface ConnectionData extends ConnectionItem {
 
 export const useConnections = () => useContext(ConnectionContext);
 
-export const useConnection = (name: string): Connection | undefined => {
+export const useConnection = (
+  name: string,
+  database?: string
+): Connection | undefined => {
   const { getByName } = useConnections();
-  return getByName(name);
+  return getByName(name, database);
 };
 
 export const useURLConnection = (): Connection | undefined => {
   const { getByName } = useConnections();
-  const match = useMatch("/:conn/*");
-  return match?.params.conn ? getByName(match.params.conn) : undefined;
+  const match = useMatch("/:conn/:db/*");
+  return match?.params.conn && match?.params.db
+    ? getByName(match.params.conn, match?.params.db)
+    : undefined;
 };

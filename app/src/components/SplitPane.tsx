@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Box } from "@mui/material";
-import { useStorage } from "../hooks/use-storage";
+import { useStorage } from "hooks/use-storage";
 
 interface SplitPaneProps {
   storageKey?: string;

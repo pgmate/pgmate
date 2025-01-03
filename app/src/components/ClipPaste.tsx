@@ -1,5 +1,5 @@
 import { IconButton, Icon, Tooltip } from "@mui/material";
-import { useDevice } from "../hooks/use-device";
+import { useDevice } from "hooks/use-device";
 
 interface ClipPasteProps {
   onChange?: (text: string) => void;

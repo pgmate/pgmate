@@ -11,7 +11,7 @@ import {
   Divider,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import { PageLayout } from "../../components/PageLayout";
+import { PageLayout } from "components/PageLayout";
 import { useFacts } from "./hooks/use-fatcs";
 
 export const FactsView = () => {

@@ -7,17 +7,22 @@ import {
   GridColDef,
   GridColumnResizeParams,
 } from "@mui/x-data-grid";
-import { CodeViewer } from "../../../../components/CodeViewer";
-import { useEmit } from "../../../../hooks/use-pubsub";
+import { CodeViewer } from "components/CodeViewer";
+import { useEmit } from "hooks/use-pubsub";
 import { useTableData } from "./hooks/use-table-data";
 import { useTableProps } from "./hooks/use-table-props";
 
-export const TableData = () => {
-  const { conn, schema, table } = useParams<{
+interface TableDataProps {
+  conn: Connection;
+}
+
+export const TableData: React.FC<TableDataProps> = ({ conn }) => {
+  const params = useParams<{
     conn: string;
     schema: string;
     table: string;
   }>();
+  const { schema, table } = params;
   useEmit("ConnectionSchema.focus", { schema, table }, 300);
 
   const props = useTableProps();

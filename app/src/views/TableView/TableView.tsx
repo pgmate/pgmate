@@ -1,8 +1,9 @@
 import { useParams } from "react-router-dom";
 import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import { useEmit } from "../../hooks/use-pubsub";
-import { PageLayout } from "../../components/PageLayout";
+import { useEmit } from "hooks/use-pubsub";
+import { useConnection } from "hooks/use-connections";
+import { PageLayout } from "components/PageLayout";
 import { ToggleTableMode } from "./containers/ToggleTableMode";
 import { TableData } from "./containers/TableData";
 import { TableStructure } from "./containers/TableStructure";
@@ -10,11 +11,22 @@ import { TableDLL } from "./containers/TableDLL";
 import { TableInfo } from "./containers/TableInfo";
 
 export const TableView = () => {
-  const { conn, schema, table, mode } = useParams();
-  useEmit("ConnectionSchema.focus", { schema, table }, 300);
+  const params = useParams<{
+    conn: string;
+    db: string;
+    schema: string;
+    table: string;
+    mode: string;
+  }>();
+  const conn = useConnection(params.conn!, params.db!);
+  useEmit(
+    "ConnectionSchema.focus",
+    { schema: params.schema, table: params.table },
+    300
+  );
   return (
     <PageLayout
-      title={table}
+      title={params.table}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">
           <MUILink
@@ -27,29 +39,37 @@ export const TableView = () => {
           </MUILink>
           <MUILink
             component={RouterLink}
-            to={`/${conn}`}
+            to={`/${conn?.name}`}
             underline="hover"
             color="inherit"
           >
-            {conn}
+            {conn?.name}
           </MUILink>
           <MUILink
             component={RouterLink}
-            to={`/${conn}/${schema}`}
+            to={`/${conn?.name}/${conn?.database}`}
             underline="hover"
             color="inherit"
           >
-            {schema}
+            {conn?.database}
           </MUILink>
-          <Typography color="text.primary">{table}</Typography>
+          <MUILink
+            component={RouterLink}
+            to={`/${conn?.name}/${conn?.database}/${params.schema}`}
+            underline="hover"
+            color="inherit"
+          >
+            {params.schema}
+          </MUILink>
+          <Typography color="text.primary">{params.table}</Typography>
         </Breadcrumbs>
       }
       tray={<ToggleTableMode />}
     >
-      {mode === "data" && <TableData />}
-      {mode === "structure" && <TableStructure />}
-      {mode === "dll" && <TableDLL />}
-      {mode === "info" && <TableInfo />}
+      {conn && params.mode === "data" && <TableData conn={conn} />}
+      {conn && params.mode === "structure" && <TableStructure />}
+      {conn && params.mode === "dll" && <TableDLL />}
+      {conn && params.mode === "info" && <TableInfo />}
     </PageLayout>
   );
 };

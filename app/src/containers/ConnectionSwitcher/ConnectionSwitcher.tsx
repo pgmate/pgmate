@@ -9,8 +9,8 @@ import {
   Button,
 } from "@mui/material";
 
-import { useConnections, useURLConnection } from "../../hooks/use-connections";
-import { usePubSub } from "../../hooks/use-pubsub";
+import { useConnections, useURLConnection } from "hooks/use-connections";
+import { usePubSub } from "hooks/use-pubsub";
 
 export const ConnectionSwitcher: React.FC = () => {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ export const ConnectionSwitcher: React.FC = () => {
   const [open, setOpen] = useState(false);
 
   const handleChange = (event: SelectChangeEvent<string>) => {
-    navigate(`/${event.target.value}`);
+    navigate(event.target.value);
     setOpen(false);
   };
 
@@ -34,7 +34,13 @@ export const ConnectionSwitcher: React.FC = () => {
   return (
     <FormControl fullWidth>
       <Select
-        value={currentConnection?.name || ""}
+        value={
+          currentConnection
+            ? currentConnection.database
+              ? `/${currentConnection.name}/${currentConnection.database}`
+              : `/${currentConnection.name}`
+            : ""
+        }
         onChange={handleChange}
         size="small"
         displayEmpty
@@ -42,7 +48,9 @@ export const ConnectionSwitcher: React.FC = () => {
         onOpen={() => setOpen(true)}
         onClose={() => setOpen(false)}
         renderValue={(selected) =>
-          selected ? `Connected to: ${selected}` : "Select a connection"
+          selected
+            ? `Connected to: ${selected.split("/")[1]}`
+            : "Select a connection"
         }
         sx={{
           color: "inherit", // Text color inherits from parent
@@ -61,7 +69,14 @@ export const ConnectionSwitcher: React.FC = () => {
       >
         {/* Connection items */}
         {connections.map((connection) => (
-          <MenuItem key={connection.name} value={connection.name}>
+          <MenuItem
+            key={connection.name}
+            value={
+              connection.database
+                ? `/${connection.name}/${connection.database}`
+                : `/${connection.name}`
+            }
+          >
             <ListItemText
               primary={connection.name}
               secondary={connection.desc}

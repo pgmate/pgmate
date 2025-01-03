@@ -1,13 +1,13 @@
 import { ListItem, ListItemButton, ListItemText } from "@mui/material";
 import { Link } from "react-router-dom";
-import { Icon } from "../../../components/Icon";
+import { Icon } from "components/Icon";
 
 interface TableItemProps {
-  conn: string;
+  conn: Connection;
   mode: string;
   schema: string;
   name: string;
-  type: "VIEW" | "BASE TABLE";
+  type: "VIEW" | "BASE TABLE" | "MATERIALIZED VIEW";
   selected?: boolean;
 }
 
@@ -25,7 +25,7 @@ export const TableItem: React.FC<TableItemProps> = ({
         disableGutters
         selected={selected}
         component={Link}
-        to={`/${conn}/${schema}/${name}/${mode}`}
+        to={`/${conn.name}/${conn.database}/${schema}/${name}/${mode}`}
         sx={{ pl: 2, height: "30px" }}
       >
         <Icon
@@ -37,6 +37,11 @@ export const TableItem: React.FC<TableItemProps> = ({
                     theme.palette.mode === "light"
                       ? theme.palette.primary.main
                       : theme.palette.primary.light
+                : type === "MATERIALIZED VIEW"
+                ? (theme) =>
+                    theme.palette.mode === "light"
+                      ? theme.palette.success.main
+                      : theme.palette.success.light
                 : "inherit",
           }}
         >

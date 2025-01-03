@@ -7,9 +7,9 @@ import {
   ListItemButton,
   Collapse,
 } from "@mui/material";
-import { Icon } from "../../components/Icon";
-import { useSubscribe } from "../../hooks/use-pubsub";
-import { useTableMode } from "../../hooks/use-table-mode";
+import { Icon } from "components/Icon";
+import { useSubscribe } from "hooks/use-pubsub";
+import { useTableMode } from "hooks/use-table-mode";
 import { useConnectionSchema } from "./hooks/use-connection-schema";
 import { useSchemaTree } from "./hooks/use-schema-tree";
 import { TableItem } from "./components/TableItem";
@@ -19,7 +19,7 @@ interface FocusedData {
   table: string;
 }
 
-export const ConnectionSchema: React.FC<{ conn: string }> = ({ conn }) => {
+export const ConnectionSchema: React.FC<{ conn: Connection }> = ({ conn }) => {
   const { schema } = useConnectionSchema(conn);
   const { mode } = useTableMode();
   const { expandedSchemas, handleToggle } = useSchemaTree(conn);
@@ -29,7 +29,11 @@ export const ConnectionSchema: React.FC<{ conn: string }> = ({ conn }) => {
 
   return (
     <List>
-      <ListSubheader>Connected to: {conn}</ListSubheader>
+      <ListSubheader>
+        {conn.name}
+        {" > "}
+        {conn.database}
+      </ListSubheader>
       {schema.map((schema) => {
         const isExpanded = expandedSchemas.has(schema.name);
 

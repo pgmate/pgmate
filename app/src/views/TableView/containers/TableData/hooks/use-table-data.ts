@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useDynamicQuery } from "../../../../../hooks/use-query";
+import { useDynamicQuery } from "hooks/use-query";
 
 interface SchemaRow {
   column_name: string;
@@ -11,25 +11,38 @@ interface SchemaRow {
 }
 
 const GET_SCHEMA = `
-  SELECT
-      c.column_name,
-      c.data_type,
-      c.character_maximum_length,
-      c.is_nullable,
-      c.column_default,
-      CASE WHEN tc.constraint_type = 'PRIMARY KEY' THEN true ELSE false END AS is_primary_key
-  FROM information_schema.columns c
-  LEFT JOIN information_schema.key_column_usage kcu
-      ON c.table_schema = kcu.table_schema
-      AND c.table_name = kcu.table_name
-      AND c.column_name = kcu.column_name
-  LEFT JOIN information_schema.table_constraints tc
-      ON tc.table_schema = kcu.table_schema
-      AND tc.table_name = kcu.table_name
-      AND tc.constraint_name = kcu.constraint_name
-  WHERE c.table_schema = $1
-    AND c.table_name = $2
-  ORDER BY c.ordinal_position;
+SELECT
+    a.attname AS column_name,
+    pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
+    CASE 
+        WHEN a.atttypid IN (1042, 1043) THEN a.atttypmod - 4
+        ELSE NULL
+    END AS character_maximum_length,
+    NOT a.attnotnull AS is_nullable,
+    pg_get_expr(d.adbin, d.adrelid) AS column_default,
+    CASE 
+        WHEN EXISTS (
+            SELECT 1 
+            FROM pg_index i 
+            WHERE i.indrelid = c.oid 
+              AND i.indisprimary 
+              AND a.attnum = ANY (i.indkey)
+        ) THEN true
+        ELSE false
+    END AS is_primary_key
+FROM
+    pg_class c
+    JOIN pg_namespace n ON c.relnamespace = n.oid
+    JOIN pg_attribute a ON a.attrelid = c.oid
+    LEFT JOIN pg_attrdef d ON d.adrelid = c.oid AND d.adnum = a.attnum
+WHERE
+    c.relname = $2
+    AND n.nspname = $1
+    AND c.relkind IN ('r', 'v', 'm') -- r = table, v = view, m = materialized view
+    AND a.attnum > 0
+    AND NOT a.attisdropped
+ORDER BY
+    a.attnum;
 `;
 
 const getPKey = (info: SchemaRow[]): string | null => {
@@ -38,7 +51,7 @@ const getPKey = (info: SchemaRow[]): string | null => {
 };
 
 export const useTableData = (
-  conn: string,
+  conn: Connection,
   schema: string,
   table: string,
   {

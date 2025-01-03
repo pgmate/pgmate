@@ -2,13 +2,13 @@
  * Used in the App.tsx to choose the root UI element to render
  */
 
-import { useCurtain } from "./hooks/use-curtain";
-import { ResponsiveLayout } from "./components/ResponsiveLayout";
+import { useCurtain } from "hooks/use-curtain";
+import { ResponsiveLayout } from "components/ResponsiveLayout";
+import { ShowDetails } from "popups/ShowDetails";
+import { ConnectionsManager } from "popups/ConnectionsManager";
 import { AppRoutes } from "./AppRoutes";
 import { AppMenu } from "./AppMenu";
 import { AppTray } from "./AppTray";
-import { ShowDetails } from "./popups/ShowDetails";
-import { ConnectionsManager } from "./popups/ConnectionsManager";
 
 export const App = () => {
   useCurtain();

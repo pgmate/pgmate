@@ -1,6 +1,6 @@
 import { useContext } from "react";
 
-import { MUIContext, MUIContextProps } from "../providers/MuiProvider";
+import { MUIContext, MUIContextProps } from "providers/MuiProvider";
 
 export const useMUITheme = (): MUIContextProps => {
   const context = useContext(MUIContext);

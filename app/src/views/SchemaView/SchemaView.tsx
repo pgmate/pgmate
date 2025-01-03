@@ -1,15 +1,25 @@
 import { useParams } from "react-router-dom";
 import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
-import { useEmit } from "../../hooks/use-pubsub";
-import { PageLayout } from "../../components/PageLayout";
+import { useEmit } from "hooks/use-pubsub";
+import { useConnection } from "hooks/use-connections";
+import { PageLayout } from "components/PageLayout";
+import { TablesList } from "./containers/TablesList";
+import { ViewsList } from "./containers/ViewsList";
+import { MViewsList } from "./containers/MViewsList";
 
 export const SchemaView = () => {
-  const { conn, schema } = useParams();
-  useEmit("ConnectionSchema.focus", { schema, table: null }, 300);
+  const params = useParams<{ conn: string; db: string; schema: string }>();
+  const conn = useConnection(params.conn!, params.db!);
+
+  useEmit(
+    "ConnectionSchema.focus",
+    { schema: params.schema, table: null },
+    300
+  );
   return (
     <PageLayout
-      title={schema}
+      title={params.schema}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">
           <MUILink
@@ -22,17 +32,27 @@ export const SchemaView = () => {
           </MUILink>
           <MUILink
             component={RouterLink}
-            to={`/${conn}`}
+            to={`/${conn?.name}`}
             underline="hover"
             color="inherit"
           >
-            {conn}
+            {conn?.name}
           </MUILink>
-          <Typography color="text.primary">{schema}</Typography>
+          <MUILink
+            component={RouterLink}
+            to={`/${conn?.name}/${conn?.database}`}
+            underline="hover"
+            color="inherit"
+          >
+            {conn?.database}
+          </MUILink>
+          <Typography color="text.primary">{params.schema}</Typography>
         </Breadcrumbs>
       }
     >
-      ...coming soon...
+      {conn && <TablesList conn={conn} schema={params.schema!} />}
+      {conn && <ViewsList conn={conn} schema={params.schema!} />}
+      {conn && <MViewsList conn={conn} schema={params.schema!} />}
     </PageLayout>
   );
 };

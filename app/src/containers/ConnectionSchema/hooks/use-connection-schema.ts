@@ -1,6 +1,6 @@
-import { useQueries } from "../../../hooks/use-query";
+import { useQueries } from "hooks/use-query";
 
-type TableType = "VIEW" | "BASE TABLE";
+type TableType = "VIEW" | "BASE TABLE" | "MATERIALIZED VIEW";
 
 interface SchemaInfo {
   schema_name: string;
@@ -63,7 +63,7 @@ const transformToNestedList = (
   return sortedSchemas;
 };
 
-export const useConnectionSchema = (conn: string) => {
+export const useConnectionSchema = (conn: Connection) => {
   const { data, ...results } = useQueries(conn, [
     {
       statement:
@@ -71,8 +71,22 @@ export const useConnectionSchema = (conn: string) => {
       variables: [],
     },
     {
-      statement:
-        "select table_schema, table_name, table_type from information_schema.tables;",
+      statement: `
+        SELECT 
+            table_schema, 
+            table_name, 
+            table_type 
+        FROM 
+            information_schema.tables
+
+        UNION ALL
+
+        SELECT 
+            schemaname AS table_schema, 
+            matviewname AS table_name, 
+            'MATERIALIZED VIEW' AS table_type 
+        FROM 
+            pg_matviews;`,
       variables: [],
     },
   ]);

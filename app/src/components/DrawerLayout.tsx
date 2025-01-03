@@ -10,8 +10,7 @@ import {
   useTheme,
   useMediaQuery,
 } from "@mui/material";
-import { Icon } from "./Icon";
-import React from "react";
+import { Icon } from "components/Icon";
 
 interface DrawerLayoutProps extends DrawerProps {
   disablePadding?: boolean;

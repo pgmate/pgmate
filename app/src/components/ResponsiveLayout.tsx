@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import { Icon } from "components/Icon";
+import { useDevice } from "hooks/use-device";
 
 interface LayoutProps {
   icon?: string | React.ReactNode;
@@ -45,6 +46,7 @@ export const ResponsiveLayout: React.FC<LayoutProps> = ({
   title,
   subtitle,
 }) => {
+  const { isDesktop } = useDevice();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [marginLeft, setMarginLeft] = useState(
     Math.max(window.innerWidth * drawerWidth, drawerMinWidth)
@@ -84,7 +86,7 @@ export const ResponsiveLayout: React.FC<LayoutProps> = ({
             <Typography variant="h4">{title}</Typography>
             {subtitle && <Typography variant="h6">{subtitle}</Typography>}
           </Stack>
-          {tray}
+          {isDesktop && tray}
           <IconButton
             color="inherit"
             aria-label="open drawer"

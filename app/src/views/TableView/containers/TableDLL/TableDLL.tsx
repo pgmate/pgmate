@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Stack } from "@mui/material";
 import { usePost } from "hooks/use-axios";
 import { CodeViewer } from "components/CodeViewer";
 
@@ -19,6 +20,7 @@ export const TableDLL = () => {
       schema,
       tables: [table],
     }).then((res: any) => {
+      console.log(res.data);
       setData(res.data);
     });
   }, [conn, schema, table]);
@@ -27,5 +29,10 @@ export const TableDLL = () => {
     return <div>Loading...</div>;
   }
 
-  return <CodeViewer code={data.sql} language="sql" height={300} />;
+  return (
+    <Stack direction={"row"} spacing={1}>
+      <CodeViewer code={data.sql} language="sql" height={300} />
+      <CodeViewer code={data.sql_ts} language="sql" height={300} />
+    </Stack>
+  );
 };

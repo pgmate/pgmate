@@ -21,10 +21,13 @@ export class PGDumpController {
     const { cmd, sql, aquisitionTime, executionTime } =
       await this.PGDumpService.dump(body);
 
+    const ts = await this.PGDumpService.dump_ts(body);
+
     return {
       req: body,
       cmd,
       sql,
+      sql_ts: ts.sql,
       stats: {
         connection: aquisitionTime,
         execution: executionTime,

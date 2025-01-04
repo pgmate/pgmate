@@ -123,44 +123,147 @@ export class PGDumpService {
     const _dll: string[] = [];
 
     for (const table of tables) {
-      // 1. Create Table Statement (columns, types, options)
+      let ddl = '';
+
+      // 1. export series
+      ddl += `-- Series for: ${schema}.${table}\n`;
+      const seqReferences = await client.query(
+        `
+        SELECT
+          quote_ident(n.nspname) AS schema_name,
+          quote_ident(c.relname) AS table_name,
+          quote_ident(a.attname) AS column_name,
+          pg_get_expr(ad.adbin, ad.adrelid) AS default_expr
+        FROM pg_attribute a
+        JOIN pg_class c ON a.attrelid = c.oid
+        JOIN pg_namespace n ON c.relnamespace = n.oid
+        JOIN pg_attrdef ad ON ad.adrelid = a.attrelid AND ad.adnum = a.attnum
+        WHERE n.nspname = $1
+          AND c.relname = $2
+          AND pg_get_expr(ad.adbin, ad.adrelid) LIKE '%nextval(%'
+          AND NOT a.attisdropped
+          AND a.attnum > 0;
+        `,
+        [schema, table],
+      );
+
+      const sequencesFound: { seqSchema: string; seqName: string }[] = [];
+
+      seqReferences.rows.forEach((row) => {
+        const match = /nextval\('([^']+)'::regclass\)/.exec(row.default_expr);
+        if (match) {
+          const seqFull = match[1]; // e.g. "public.actor_actor_id_seq" or just "actor_actor_id_seq"
+          if (seqFull.includes('.')) {
+            const [seqSchema, seqName] = seqFull.split('.');
+            sequencesFound.push({ seqSchema, seqName });
+          } else {
+            // If no schema is given, use the table's schema (row.schema_name)
+            sequencesFound.push({
+              seqSchema: row.schema_name.replace(/"/g, ''),
+              seqName: seqFull,
+            });
+          }
+        }
+      });
+
+      let sequencesDDL = '';
+
+      for (const { seqSchema, seqName } of sequencesFound) {
+        // Query the sequence metadata
+        const seqData = await client.query(
+          `
+    SELECT
+      s.seqstart,
+      s.seqincrement,
+      s.seqmax,
+      s.seqmin,
+      s.seqcache,
+      s.seqcycle
+    FROM pg_class c
+    JOIN pg_namespace n ON c.relnamespace = n.oid
+    JOIN pg_sequence s ON s.seqrelid = c.oid
+    WHERE n.nspname = $1
+      AND c.relname = $2
+      AND c.relkind = 'S';
+    `,
+          [seqSchema, seqName],
+        );
+
+        if (!seqData.rows.length) continue; // No sequence found or not valid
+
+        const { seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle } =
+          seqData.rows[0];
+
+        // Build CREATE SEQUENCE statement
+        // Note: Always quote schema & sequence name
+        sequencesDDL += `CREATE SEQUENCE "${seqSchema}"."${seqName}"
+START WITH ${seqstart}
+INCREMENT BY ${seqincrement}
+MINVALUE ${seqmin}
+MAXVALUE ${seqmax}
+CACHE ${seqcache} ${seqcycle ? 'CYCLE' : 'NO CYCLE'};\n`;
+      }
+
+      ddl += sequencesDDL + '\n';
+
+      // 2. Create Table Statement (columns, types, options)
+      ddl += `-- Table structure for: ${schema}.${table}\n`;
       const createTable = await client.query(
         `
-    WITH cols AS (
-      SELECT a.attname AS column_name,
-             pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
-             (SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid)
+        WITH cols AS (
+          SELECT
+            a.attname AS column_name,
+            pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
+            (
+              SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid)
               FROM pg_catalog.pg_attrdef d
               WHERE d.adrelid = a.attrelid
                 AND d.adnum = a.attnum
-                AND a.atthasdef) AS default_value,
-             a.attnotnull AS not_null
-      FROM pg_catalog.pg_attribute a
-      JOIN pg_catalog.pg_class c ON a.attrelid = c.oid
-      JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
-      WHERE n.nspname = $1
-        AND c.relname = $2
-        AND a.attnum > 0
-        AND NOT a.attisdropped
-      ORDER BY a.attnum
-    )
-    SELECT 'CREATE TABLE ' || quote_ident($1) || '.' || quote_ident($2)
-           || E' (\n'
-           || string_agg(
-                '  ' || quote_ident(column_name)
-                || ' ' || data_type
-                || CASE WHEN not_null THEN ' NOT NULL' ELSE '' END
-                || COALESCE(' DEFAULT ' || default_value, '')
-                , E',\n'
-              )
-           || E'\n);' AS ddl
-    FROM cols;
-  `,
+                AND a.atthasdef
+            ) AS default_value,
+            a.attnotnull AS not_null
+          FROM pg_catalog.pg_attribute a
+          JOIN pg_catalog.pg_class c ON a.attrelid = c.oid
+          JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+          WHERE n.nspname = $1
+            AND c.relname = $2
+            AND a.attnum > 0
+            AND NOT a.attisdropped
+          ORDER BY a.attnum
+        )
+        SELECT
+          'CREATE TABLE "' || quote_ident($1) || '"."' || quote_ident($2) || '" (' ||
+          E'\n' ||
+          string_agg(
+            '  "' || column_name || '" ' ||
+            data_type ||
+            CASE WHEN not_null THEN ' NOT NULL' ELSE '' END ||
+            COALESCE(' DEFAULT ' || default_value, ''),
+            E',\n'
+          ) ||
+          E'\n);' AS ddl
+        FROM cols;
+        `,
         [schema, table],
       );
-      let ddl = createTable.rows[0]?.ddl || '';
 
-      // 2. Constraints (PK, CHECK, FK, etc.)
+      ddl += (createTable.rows[0]?.ddl || '').replace(
+        /nextval\('([^']+)'::regclass\)/gi,
+        (match, seqFull) => {
+          if (!seqFull.includes('.')) {
+            // no schema present, e.g. 'actor_actor_id_seq'
+            return `nextval('${schema}.${seqFull}'::regclass)`;
+          } else {
+            // schema already present, e.g. 'public.actor_actor_id_seq'
+            return `nextval('${seqFull}'::regclass)`;
+          }
+        },
+      );
+
+      ddl += '\n\n';
+
+      // 3. Constraints (PK, CHECK, FK, etc.)
+      ddl += `-- Constraints for: ${schema}.${table}\n`;
       const constraints = await client.query(
         `
         SELECT
@@ -208,10 +311,13 @@ export class PGDumpService {
           );
         }
 
-        ddl += `\nALTER TABLE ONLY "${schema}"."${table}" ADD CONSTRAINT "${row.conname}" ${def};`;
+        ddl += `ALTER TABLE ONLY "${schema}"."${table}" ADD CONSTRAINT "${row.conname}" ${def};\n`;
       });
 
-      // 3. Indexes
+      ddl += '\n';
+
+      // 4. Indexes
+      ddl += `-- Indexes for: ${schema}.${table}\n`;
       const indexes = await client.query(
         `
         SELECT
@@ -254,10 +360,13 @@ export class PGDumpService {
           finalDef += ';';
         }
 
-        ddl += `\n${finalDef}`;
+        ddl += `${finalDef}\n`;
       });
 
-      // 4. Triggers
+      ddl += '\n';
+
+      // 5. Triggers
+      ddl += `-- Triggers for: ${schema}.${table}\n`;
       const triggers = await client.query(
         `
     SELECT
@@ -303,10 +412,13 @@ export class PGDumpService {
           `EXECUTE FUNCTION "${row.schema_name}"."$2"(`,
         );
 
-        ddl += `\n${def};`;
+        ddl += `${def};\n`;
       });
 
-      // 5. Extended Statistics
+      ddl += '\n';
+
+      // 6. Extended Statistics
+      ddl += `-- Extended Statistics for: ${schema}.${table}\n`;
       const stats = await client.query(
         `
         SELECT
@@ -401,10 +513,13 @@ export class PGDumpService {
         });
 
         // Finally, add the statement to your DDL buffer
-        ddl += `\n${def};`;
+        ddl += `${def};\n`;
       });
 
-      // 6. Comments
+      ddl += '\n';
+
+      // 7. Comments
+      ddl += `-- Comments for: ${schema}.${table}\n`;
       const comments = await client.query(
         `
         SELECT
@@ -493,43 +608,45 @@ WHERE nsp.nspname = $1
 
         switch (row.object_type) {
           case 'TABLE':
-            ddl += `\nCOMMENT ON TABLE "${row.schema_name}"."${row.object_name}" IS '${commentText}';`;
+            ddl += `COMMENT ON TABLE "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
             break;
 
           case 'COLUMN':
-            ddl += `\nCOMMENT ON COLUMN "${row.schema_name}"."${table}"."${row.object_name}" IS '${commentText}';`;
+            ddl += `COMMENT ON COLUMN "${row.schema_name}"."${table}"."${row.object_name}" IS '${commentText}';\n`;
             break;
 
           case 'TRIGGER':
-            ddl += `\nCOMMENT ON TRIGGER "${row.object_name}" ON "${row.schema_name}"."${table}" IS '${commentText}';`;
+            ddl += `COMMENT ON TRIGGER "${row.object_name}" ON "${row.schema_name}"."${table}" IS '${commentText}';\n`;
             break;
 
           case 'STATISTICS':
-            ddl += `\nCOMMENT ON STATISTICS "${row.schema_name}"."${row.object_name}" IS '${commentText}';`;
+            ddl += `COMMENT ON STATISTICS "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
             break;
 
           case 'CONSTRAINT':
-            ddl += `\nCOMMENT ON CONSTRAINT "${row.object_name}" ON "${row.schema_name}"."${table}" IS '${commentText}';`;
+            ddl += `COMMENT ON CONSTRAINT "${row.object_name}" ON "${row.schema_name}"."${table}" IS '${commentText}';\n`;
             break;
 
           case 'INDEX':
-            ddl += `\nCOMMENT ON INDEX "${row.schema_name}"."${row.object_name}" IS '${commentText}';`;
+            ddl += `COMMENT ON INDEX "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
             break;
 
           case 'SEQUENCE':
-            ddl += `\nCOMMENT ON SEQUENCE "${row.schema_name}"."${row.object_name}" IS '${commentText}';`;
+            ddl += `COMMENT ON SEQUENCE "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
             break;
 
           case 'VIEW':
           case 'MATERIALIZED VIEW':
-            ddl += `\nCOMMENT ON ${row.object_type} "${row.schema_name}"."${row.object_name}" IS '${commentText}';`;
+            ddl += `COMMENT ON ${row.object_type} "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
             break;
 
           default:
             // Handle other or unknown object types if necessary
-            ddl += `\n-- Unknown object type: ${row.object_type} for "${row.schema_name}"."${row.object_name}"`;
+            ddl += `-- Unknown object type: ${row.object_type} for "${row.schema_name}"."${row.object_name}"\n`;
         }
       });
+
+      ddl += '\n';
 
       _dll.push(ddl);
     }

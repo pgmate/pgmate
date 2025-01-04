@@ -158,6 +158,7 @@ export class PGDumpService {
   `,
         [schema, table],
       );
+      let ddl = createTable.rows[0]?.ddl || '';
 
       // 2. Constraints (PK, CHECK, FK, etc.)
       const constraints = await client.query(
@@ -182,72 +183,6 @@ export class PGDumpService {
         [schema, table],
       );
 
-      // 3. Indexes
-      const indexes = await client.query(
-        `
-        SELECT
-      idxcls.relname AS index_name,
-      pg_catalog.pg_get_indexdef(idx.indexrelid, 0, true) AS index_def,
-      nsp.nspname AS schema_name,
-      tbl.relname AS table_name
-    FROM pg_catalog.pg_class tbl
-    JOIN pg_catalog.pg_namespace nsp ON nsp.oid = tbl.relnamespace
-    JOIN pg_catalog.pg_index idx ON tbl.oid = idx.indrelid
-    JOIN pg_catalog.pg_class idxcls ON idxcls.oid = idx.indexrelid
-    LEFT JOIN pg_catalog.pg_constraint con ON con.conindid = idx.indexrelid
-    WHERE nsp.nspname = $1
-      AND tbl.relname = $2
-      AND con.conindid IS NULL;
-      `,
-        [schema, table],
-      );
-
-      // 4. Extended Statistics
-      //     const stats = await client.query(
-      //       `
-      //   SELECT pg_catalog.pg_get_statisticsobjdef(s.oid) AS stats_def
-      //   FROM pg_catalog.pg_statistic_ext s
-      //   JOIN pg_catalog.pg_class tbl ON tbl.oid = s.stxrelid
-      //   JOIN pg_catalog.pg_namespace nsp ON nsp.oid = tbl.relnamespace
-      //   WHERE nsp.nspname = $1
-      //     AND tbl.relname = $2;
-      // `,
-      //       [schema, table],
-      //     );
-
-      // 5. Comments
-      //     const comments = await client.query(
-      //       `
-      //   SELECT obj_type, obj_name, pg_catalog.obj_description(obj_oid, obj_cat) AS comment
-      //   FROM (
-      //     SELECT 'TABLE' AS obj_type,
-      //            c.oid AS obj_oid,
-      //            'pg_class' AS obj_cat,
-      //            $2 AS obj_name
-      //     FROM pg_class c
-      //     JOIN pg_namespace n ON c.relnamespace = n.oid
-      //     WHERE n.nspname = $1
-      //       AND c.relname = $2
-      //     UNION
-      //     SELECT 'COLUMN' AS obj_type,
-      //            c.oid + att.attnum AS obj_oid,
-      //            'pg_attribute' AS obj_cat,
-      //            att.attname AS obj_name
-      //     FROM pg_class c
-      //     JOIN pg_namespace n ON c.relnamespace = n.oid
-      //     JOIN pg_attribute att ON att.attrelid = c.oid
-      //     WHERE n.nspname = $1
-      //       AND c.relname = $2
-      //       AND att.attnum > 0
-      //       AND NOT att.attisdropped
-      //   ) sub
-      //   WHERE pg_catalog.obj_description(obj_oid, obj_cat) IS NOT NULL;
-      // `,
-      //       [schema, table],
-      //     );
-
-      // Merge everything
-      let ddl = createTable.rows[0]?.ddl || '';
       constraints.rows.forEach((row: any) => {
         let def = row.constraint_def;
 
@@ -276,6 +211,26 @@ export class PGDumpService {
         ddl += `\nALTER TABLE ONLY "${schema}"."${table}" ADD CONSTRAINT "${row.conname}" ${def};`;
       });
 
+      // 3. Indexes
+      const indexes = await client.query(
+        `
+        SELECT
+      idxcls.relname AS index_name,
+      pg_catalog.pg_get_indexdef(idx.indexrelid, 0, true) AS index_def,
+      nsp.nspname AS schema_name,
+      tbl.relname AS table_name
+    FROM pg_catalog.pg_class tbl
+    JOIN pg_catalog.pg_namespace nsp ON nsp.oid = tbl.relnamespace
+    JOIN pg_catalog.pg_index idx ON tbl.oid = idx.indrelid
+    JOIN pg_catalog.pg_class idxcls ON idxcls.oid = idx.indexrelid
+    LEFT JOIN pg_catalog.pg_constraint con ON con.conindid = idx.indexrelid
+    WHERE nsp.nspname = $1
+      AND tbl.relname = $2
+      AND con.conindid IS NULL;
+      `,
+        [schema, table],
+      );
+
       indexes.rows.forEach((row) => {
         // Fix schema/table quoting in the CREATE INDEX statement
         let finalDef = row.index_def.replace(
@@ -301,14 +256,280 @@ export class PGDumpService {
 
         ddl += `\n${finalDef}`;
       });
-      // stats.rows.forEach((s) => (ddl += `\n${s.stats_def};`));
-      // comments.rows.forEach((comm) => {
-      //   if (comm.obj_type === 'TABLE') {
-      //     ddl += `\nCOMMENT ON TABLE "${schema}"."${table}" IS '${comm.comment.replace(/'/g, "''")}';`;
-      //   } else {
-      //     ddl += `\nCOMMENT ON COLUMN "${schema}"."${table}"."${comm.obj_name}" IS '${comm.comment.replace(/'/g, "''")}';`;
-      //   }
-      // });
+
+      // 4. Triggers
+      const triggers = await client.query(
+        `
+    SELECT
+      t.tgname AS trigger_name,
+      pg_catalog.pg_get_triggerdef(t.oid, false) AS trigger_def,
+      quote_ident(n.nspname) AS schema_name,
+      quote_ident(c.relname) AS table_name
+    FROM pg_catalog.pg_trigger t
+    JOIN pg_catalog.pg_class c ON t.tgrelid = c.oid
+    JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+    WHERE n.nspname = $1
+      AND c.relname = $2
+      AND NOT t.tgisinternal
+    ORDER BY t.tgname;
+  `,
+        [schema, table],
+      );
+
+      triggers.rows.forEach((row) => {
+        let def = row.trigger_def;
+
+        // Ensure trigger name is quoted
+        def = def.replace(
+          new RegExp(`^CREATE\\s+TRIGGER\\s+${row.trigger_name}`, 'i'),
+          `CREATE TRIGGER "${row.trigger_name}"`,
+        );
+
+        // Force quoting for the "ON schema.table"
+        // (handles cases like ON public.film_actor or ON "public"."film_actor")
+        def = def.replace(
+          new RegExp(
+            `ON\\s+(?:"?${row.schema_name}"?\\.)?"?${row.table_name}"?`,
+            'i',
+          ),
+          `ON "${row.schema_name}"."${row.table_name}"`,
+        );
+
+        // Force quoting for the function call:
+        //  EXECUTE FUNCTION "public"."some_func"(...)
+        // Matches optional quotes around (schema.)functionName
+        def = def.replace(
+          /EXECUTE\s+FUNCTION\s+(?:"?([^".]+)"?\.)?"?([^"(\s]+)"?\(/i,
+          `EXECUTE FUNCTION "${row.schema_name}"."$2"(`,
+        );
+
+        ddl += `\n${def};`;
+      });
+
+      // 5. Extended Statistics
+      const stats = await client.query(
+        `
+        SELECT
+          s.oid,
+          s.stxname,
+          s.stxkind,  -- array of chars like {n,d,m}
+          pg_catalog.pg_get_statisticsobjdef(s.oid) AS stats_def
+        FROM pg_catalog.pg_statistic_ext s
+        JOIN pg_catalog.pg_class tbl ON tbl.oid = s.stxrelid
+        JOIN pg_catalog.pg_namespace nsp ON nsp.oid = tbl.relnamespace
+        WHERE nsp.nspname = $1
+          AND tbl.relname = $2;
+  `,
+        [schema, table],
+      );
+
+      // This might be version-specific, so we need to map the stxkind chars to their full names
+      // it needs WAY more work...
+      const kindMap: Record<string, string> = {
+        n: 'ndistinct', // Extended statistics for distinct counts
+        d: 'dependencies', // Extended statistics for column dependencies
+        m: 'mcv', // Most Common Values
+        f: 'ndistinct', // Functional dependencies || ndistinct ?!?
+        e: 'expressions', // Expression statistics
+      };
+
+      stats.rows.forEach((row: any) => {
+        // Before using 'def', define it from row.stats_def:
+        let def = row.stats_def;
+
+        // Parse stxkind into an array of chars
+        let rawKinds: string[];
+        if (typeof row.stxkind === 'string') {
+          // stxkind might look like '{n,d,m}', so remove braces and split by comma
+          rawKinds = row.stxkind.replace(/[{}]/g, '').split(',');
+        } else {
+          // If it's already an array, just use it directly
+          rawKinds = row.stxkind;
+        }
+
+        // Build the list of statistic kinds (e.g. ndistinct, dependencies, mcv)
+        const statsKinds = rawKinds.map((k) => kindMap[k] || k).join(', ');
+
+        // 1. Extract & fix the CREATE STATISTICS line
+        //    Dynamically insert (kind1, kind2, ...) and quote schema + stats name
+        const createRegex = /^(CREATE\s+STATISTICS\s+)([^\s]+)/i;
+        const createMatch = createRegex.exec(def);
+        if (!createMatch) {
+          // If there's no match, skip this row
+          return;
+        }
+
+        const prefix = createMatch[1]; // e.g. "CREATE STATISTICS "
+        const rawStatsName = createMatch[2]; // e.g. "public.film_actor_stats"
+
+        // Quote the schema and statistic name
+        let fixedStatsName: string;
+        if (rawStatsName.includes('.')) {
+          // Already has a schema part like public.film_actor_stats
+          const [statsSchema, statsObjName] = rawStatsName.split('.');
+          fixedStatsName = `"${statsSchema}"."${statsObjName}"`;
+        } else {
+          // No explicit schema, use the given 'schema'
+          fixedStatsName = `"${schema}"."${rawStatsName}"`;
+        }
+
+        // Replace the CREATE STATISTICS line with quoted names + dynamic kinds
+        def = def.replace(
+          createRegex,
+          `${prefix}${fixedStatsName} (${statsKinds})`,
+        );
+
+        // 2. Quote columns in ON (...)
+        //    e.g. ON (actor_id, film_id) => ON ("actor_id", "film_id")
+        def = def.replace(/ON\s*\(([^)]+)\)/i, (_, cols) => {
+          const quotedCols = cols
+            .split(',')
+            .map((col) => `"${col.trim().replace(/"/g, '')}"`)
+            .join(', ');
+          return `ON (${quotedCols})`;
+        });
+
+        // 3. Quote the table in FROM ...
+        //    Might be FROM film_actor or FROM public.film_actor => FROM "public"."film_actor"
+        const fromRegex = /\bFROM\s+([^\s]+)/i;
+        def = def.replace(fromRegex, (_, tableName) => {
+          if (tableName.includes('.')) {
+            const [tblSchema, tbl] = tableName.split('.');
+            return `FROM "${tblSchema}"."${tbl}"`;
+          }
+          return `FROM "${schema}"."${tableName}"`;
+        });
+
+        // Finally, add the statement to your DDL buffer
+        ddl += `\n${def};`;
+      });
+
+      // 6. Comments
+      const comments = await client.query(
+        `
+        SELECT
+  pg_description.description AS comment,
+  nsp.nspname AS schema_name,
+  cls.relname AS object_name,
+  CASE
+    WHEN cls.relkind = 'r' THEN 'TABLE'
+    WHEN cls.relkind = 'i' THEN 'INDEX'
+    WHEN cls.relkind = 'S' THEN 'SEQUENCE'
+    WHEN cls.relkind = 'v' THEN 'VIEW'
+    WHEN cls.relkind = 'm' THEN 'MATERIALIZED VIEW'
+    ELSE 'OTHER'
+  END AS object_type
+FROM pg_description
+JOIN pg_class cls ON pg_description.objoid = cls.oid
+JOIN pg_namespace nsp ON cls.relnamespace = nsp.oid
+WHERE nsp.nspname = $1
+  AND cls.relname = $2
+
+UNION ALL
+
+SELECT
+  col_description(a.attrelid, a.attnum) AS comment,
+  nsp.nspname AS schema_name,
+  a.attname AS object_name,
+  'COLUMN' AS object_type
+FROM pg_attribute a
+JOIN pg_class c ON a.attrelid = c.oid
+JOIN pg_namespace nsp ON c.relnamespace = nsp.oid
+WHERE nsp.nspname = $1
+  AND c.relname = $2
+  AND a.attnum > 0
+  AND NOT a.attisdropped
+
+UNION ALL
+
+SELECT
+  pg_description.description AS comment,
+  nsp.nspname AS schema_name,
+  t.tgname AS object_name,
+  'TRIGGER' AS object_type
+FROM pg_trigger t
+JOIN pg_class c ON t.tgrelid = c.oid
+JOIN pg_namespace nsp ON c.relnamespace = nsp.oid
+LEFT JOIN pg_description ON t.oid = pg_description.objoid
+WHERE nsp.nspname = $1
+  AND c.relname = $2
+  AND NOT t.tgisinternal
+
+UNION ALL
+
+SELECT
+  pg_description.description AS comment,
+  nsp.nspname AS schema_name,
+  s.stxname AS object_name,
+  'STATISTICS' AS object_type
+FROM pg_statistic_ext s
+JOIN pg_class c ON s.stxrelid = c.oid
+JOIN pg_namespace nsp ON c.relnamespace = nsp.oid
+LEFT JOIN pg_description ON s.oid = pg_description.objoid
+WHERE nsp.nspname = $1
+  AND c.relname = $2
+
+UNION ALL
+
+SELECT
+  pg_description.description AS comment,
+  nsp.nspname AS schema_name,
+  con.conname AS object_name,
+  'CONSTRAINT' AS object_type
+FROM pg_constraint con
+JOIN pg_class c ON con.conrelid = c.oid
+JOIN pg_namespace nsp ON c.relnamespace = nsp.oid
+LEFT JOIN pg_description ON con.oid = pg_description.objoid
+WHERE nsp.nspname = $1
+  AND c.relname = $2;
+        `,
+        [schema, table],
+      );
+
+      comments.rows.forEach((row: any) => {
+        if (!row.comment) return;
+
+        const commentText = row.comment.replace(/'/g, "''"); // Escape single quotes
+
+        switch (row.object_type) {
+          case 'TABLE':
+            ddl += `\nCOMMENT ON TABLE "${row.schema_name}"."${row.object_name}" IS '${commentText}';`;
+            break;
+
+          case 'COLUMN':
+            ddl += `\nCOMMENT ON COLUMN "${row.schema_name}"."${table}"."${row.object_name}" IS '${commentText}';`;
+            break;
+
+          case 'TRIGGER':
+            ddl += `\nCOMMENT ON TRIGGER "${row.object_name}" ON "${row.schema_name}"."${table}" IS '${commentText}';`;
+            break;
+
+          case 'STATISTICS':
+            ddl += `\nCOMMENT ON STATISTICS "${row.schema_name}"."${row.object_name}" IS '${commentText}';`;
+            break;
+
+          case 'CONSTRAINT':
+            ddl += `\nCOMMENT ON CONSTRAINT "${row.object_name}" ON "${row.schema_name}"."${table}" IS '${commentText}';`;
+            break;
+
+          case 'INDEX':
+            ddl += `\nCOMMENT ON INDEX "${row.schema_name}"."${row.object_name}" IS '${commentText}';`;
+            break;
+
+          case 'SEQUENCE':
+            ddl += `\nCOMMENT ON SEQUENCE "${row.schema_name}"."${row.object_name}" IS '${commentText}';`;
+            break;
+
+          case 'VIEW':
+          case 'MATERIALIZED VIEW':
+            ddl += `\nCOMMENT ON ${row.object_type} "${row.schema_name}"."${row.object_name}" IS '${commentText}';`;
+            break;
+
+          default:
+            // Handle other or unknown object types if necessary
+            ddl += `\n-- Unknown object type: ${row.object_type} for "${row.schema_name}"."${row.object_name}"`;
+        }
+      });
 
       _dll.push(ddl);
     }

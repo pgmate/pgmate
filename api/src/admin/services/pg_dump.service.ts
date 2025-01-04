@@ -183,18 +183,24 @@ export class PGDumpService {
       );
 
       // 3. Indexes
-      //     const indexes = await client.query(
-      //       `
-      //   SELECT pg_catalog.pg_get_indexdef(idx.indexrelid, 0, true) AS index_def
-      //   FROM pg_catalog.pg_class tbl
-      //   JOIN pg_catalog.pg_namespace nsp ON nsp.oid = tbl.relnamespace
-      //   JOIN pg_catalog.pg_index idx ON tbl.oid = idx.indrelid
-      //   JOIN pg_catalog.pg_class idxcls ON idxcls.oid = idx.indexrelid
-      //   WHERE nsp.nspname = $1
-      //     AND tbl.relname = $2;
-      // `,
-      //       [schema, table],
-      //     );
+      const indexes = await client.query(
+        `
+        SELECT
+      idxcls.relname AS index_name,
+      pg_catalog.pg_get_indexdef(idx.indexrelid, 0, true) AS index_def,
+      nsp.nspname AS schema_name,
+      tbl.relname AS table_name
+    FROM pg_catalog.pg_class tbl
+    JOIN pg_catalog.pg_namespace nsp ON nsp.oid = tbl.relnamespace
+    JOIN pg_catalog.pg_index idx ON tbl.oid = idx.indrelid
+    JOIN pg_catalog.pg_class idxcls ON idxcls.oid = idx.indexrelid
+    LEFT JOIN pg_catalog.pg_constraint con ON con.conindid = idx.indexrelid
+    WHERE nsp.nspname = $1
+      AND tbl.relname = $2
+      AND con.conindid IS NULL;
+      `,
+        [schema, table],
+      );
 
       // 4. Extended Statistics
       //     const stats = await client.query(
@@ -269,7 +275,32 @@ export class PGDumpService {
 
         ddl += `\nALTER TABLE ONLY "${schema}"."${table}" ADD CONSTRAINT "${row.conname}" ${def};`;
       });
-      // indexes.rows.forEach((i) => (ddl += `\n${i.index_def};`));
+
+      indexes.rows.forEach((row) => {
+        // Fix schema/table quoting in the CREATE INDEX statement
+        let finalDef = row.index_def.replace(
+          /^(CREATE\s+INDEX\s+)(\S+)(\s+ON\s+)(\S+)/i,
+          `$1"${row.index_name}"$3"${row.schema_name}"."${row.table_name}"`,
+        );
+
+        // Quote column names inside (...)
+        finalDef = finalDef.replace(/\(([^()]+)\)/g, (_, cols) => {
+          return (
+            '(' +
+            cols
+              .split(',')
+              .map((c) => `"${c.trim().replace(/"/g, '')}"`)
+              .join(', ') +
+            ')'
+          );
+        });
+
+        if (!finalDef.endsWith(';')) {
+          finalDef += ';';
+        }
+
+        ddl += `\n${finalDef}`;
+      });
       // stats.rows.forEach((s) => (ddl += `\n${s.stats_def};`));
       // comments.rows.forEach((comm) => {
       //   if (comm.obj_type === 'TABLE') {

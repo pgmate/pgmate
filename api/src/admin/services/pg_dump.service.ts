@@ -311,7 +311,7 @@ CACHE ${seqcache} ${seqcycle ? 'CYCLE' : 'NO CYCLE'};\n`;
           );
         }
 
-        ddl += `ALTER TABLE ONLY "${schema}"."${table}" ADD CONSTRAINT "${row.conname}" ${def};\n`;
+        ddl += `ALTER TABLE ONLY "${schema}"."${table}"\nADD CONSTRAINT "${row.conname}" ${def};\n`;
       });
 
       ddl += '\n';
@@ -398,10 +398,10 @@ CACHE ${seqcache} ${seqcycle ? 'CYCLE' : 'NO CYCLE'};\n`;
         // (handles cases like ON public.film_actor or ON "public"."film_actor")
         def = def.replace(
           new RegExp(
-            `ON\\s+(?:"?${row.schema_name}"?\\.)?"?${row.table_name}"?`,
+            ` ON\\s+(?:"?${row.schema_name}"?\\.)?"?${row.table_name}"? `,
             'i',
           ),
-          `ON "${row.schema_name}"."${row.table_name}"`,
+          `ON "${row.schema_name}"."${row.table_name}"\n`,
         );
 
         // Force quoting for the function call:

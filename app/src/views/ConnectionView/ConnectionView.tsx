@@ -9,10 +9,13 @@ export const ConnectionView: React.FC = () => {
   const params = useParams<{ conn: string }>();
   const conn = useConnection(params.conn!);
 
+  if (!conn) return null;
+
   return (
     <PageLayout
       disablePadding
-      title={conn?.desc || conn?.name}
+      meta={{ title: `conn: ${conn.name}` }}
+      title={conn.desc || conn.name}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">
           <MUILink

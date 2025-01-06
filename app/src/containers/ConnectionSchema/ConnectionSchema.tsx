@@ -29,11 +29,7 @@ export const ConnectionSchema: React.FC<{ conn: Connection }> = ({ conn }) => {
 
   return (
     <List>
-      <ListSubheader>
-        {conn.name}
-        {" > "}
-        {conn.database}
-      </ListSubheader>
+      <ListSubheader>Tables</ListSubheader>
       {schema.map((schema) => {
         const isExpanded = expandedSchemas.has(schema.name);
 

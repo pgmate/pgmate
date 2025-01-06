@@ -1,9 +1,9 @@
 import Editor, { Monaco } from "@monaco-editor/react";
 import { useState, useRef } from "react";
-import { useParams } from "react-router-dom";
+// import { useParams } from "react-router-dom";
 import { Button, ButtonGroup, Box, Alert, useTheme } from "@mui/material";
 import { useDynamicQueries } from "hooks/use-query";
-import { useConnection } from "hooks/use-connections";
+// import { useConnection } from "hooks/use-connections";
 import { SplitPane } from "components/SplitPane";
 import { SizedBox } from "components/SizedBox";
 import { ResultsTable } from "./containers/ResultsTable";
@@ -68,10 +68,10 @@ interface QueryResult {
   error: any | null;
 }
 
-export const QueryView = () => {
+export const QueryView = ({ conn }: { conn: Connection }) => {
   const theme = useTheme();
-  const params = useParams<{ conn: string; db: string }>();
-  const conn = useConnection(params.conn!, params.db!);
+  // const params = useParams<{ conn: string; db: string }>();
+  // const conn = useConnection(params.conn!, params.db!);
   const query = useDynamicQueries(conn!, { disableAnalyze: false });
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
   const [editorContent, setEditorContent] = useState(

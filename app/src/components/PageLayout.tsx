@@ -11,14 +11,17 @@ import {
 import { useDevice } from "hooks/use-device";
 
 interface PageLayoutProps {
-  title: React.ReactNode | string;
   children: React.ReactNode;
+  title: React.ReactNode | string;
   subtitle?: React.ReactNode | string;
   tray?: React.ReactNode | string;
   disableMargins?: boolean;
   disablePadding?: boolean;
   stickyHeader?: boolean; // New prop for sticky header
   bodyProps?: BoxProps;
+  meta?: {
+    title?: string;
+  };
 }
 
 export const PageLayout: React.FC<PageLayoutProps> = ({
@@ -30,18 +33,21 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
   tray,
   stickyHeader,
   bodyProps = {},
+  meta = {},
 }) => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const { isDesktop } = useDevice();
 
   useEffect(() => {
-    if (typeof title === "string") {
-      document.title = `${title} - CYBER`;
+    if (meta.title) {
+      document.title = `${meta.title} - PGMate`;
+    } else if (typeof title === "string") {
+      document.title = `${title} - PGMate`;
     } else {
-      document.title = "CYBER";
+      document.title = "PGMate";
     }
-  }, [title]);
+  }, [title, meta.title]);
 
   return (
     <Paper

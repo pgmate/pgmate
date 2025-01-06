@@ -14,12 +14,15 @@ export const DatabaseView = () => {
   const params = useParams<{ conn: string; db: string }>();
   const conn = useConnection(params.conn!, params.db!);
 
+  if (!conn) return null;
+
   return (
     <PageLayout
       disablePadding
       disableMargins
       stickyHeader
-      title={params.db}
+      meta={{ title: `db: ${conn.database}` }}
+      title={conn.database}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">
           <MUILink
@@ -42,19 +45,17 @@ export const DatabaseView = () => {
         </Breadcrumbs>
       }
     >
-      {conn && (
-        <Box sx={{ flexGrow: 1, mb: 4 }}>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <SunburstChart conn={conn} />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <DiskCharts conn={conn} />
-            </Grid>
+      <Box sx={{ flexGrow: 1, mb: 4 }}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SunburstChart conn={conn} />
           </Grid>
-        </Box>
-      )}
-      {conn && <SchemasList conn={conn} />}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <DiskCharts conn={conn} />
+          </Grid>
+        </Grid>
+      </Box>
+      <SchemasList conn={conn} />
     </PageLayout>
   );
 };

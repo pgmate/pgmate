@@ -20,7 +20,6 @@ export const TableDLL = () => {
       schema,
       tables: [table],
     }).then((res: any) => {
-      // console.log(res.data);
       setData(res.data);
     });
   }, [conn, schema, table]);
@@ -42,7 +41,7 @@ export const TableDLL = () => {
             🫣 This is super stable, but the Docker image grows up to 2.4Gb! 🫣
           </Typography>
         </Stack>
-        <CodeViewer code={data.sql} language="sql" height={300} />
+        <CodeViewer code={data.sql_pg} language="sql" height={300} />
       </Stack>
       <Stack flex={1} spacing={1}>
         <Stack>

@@ -16,7 +16,7 @@ export const SunburstChart: React.FC<SunburstChartProps> = ({ conn }) => {
       height={350}
       value={"total_size"}
       data={items}
-      onClick={({ depth, path, ...a }: any) => {
+      onClick={({ depth, path }: any) => {
         if (depth === 1) {
           navigate(`/${conn.name}/${conn.database}/${path[0]}`);
         } else if (depth === 2) {

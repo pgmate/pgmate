@@ -1,1 +1,1 @@
-export { QueryView } from "./QueryView";
+export { QueryViewWrapper as QueryView } from "./QueryViewWrapper";

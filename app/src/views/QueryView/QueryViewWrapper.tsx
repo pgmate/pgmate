@@ -1,5 +1,6 @@
 import { useParams } from "react-router-dom";
 import {
+  Box,
   Breadcrumbs,
   Link as MUILink,
   Typography,
@@ -60,15 +61,25 @@ export const QueryViewWrapper = () => {
         </Breadcrumbs>
       }
       tray={
-        <Button
-          variant="contained"
-          color="primary"
-          size="small"
-          endIcon={<Icon>play_circle_filled</Icon>}
-          onClick={() => bus.emit("QueryView.run")}
+        <Box
+          flex={1}
+          sx={{
+            height: "100%",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "flex-end",
+          }}
         >
-          Run Selection
-        </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            endIcon={<Icon>play_circle_filled</Icon>}
+            onClick={() => bus.emit("QueryView.run")}
+          >
+            Run Selection
+          </Button>
+        </Box>
       }
     >
       <QueryView conn={conn} />

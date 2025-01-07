@@ -1,11 +1,20 @@
 import { useParams } from "react-router-dom";
-import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
+import {
+  Box,
+  Breadcrumbs,
+  Link as MUILink,
+  Typography,
+  Button,
+  Icon,
+} from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { useConnection } from "hooks/use-connections";
+import { usePubSub } from "hooks/use-pubsub";
 import { PageLayout } from "components/PageLayout";
 import { QueryView } from "./QueryView";
 
 export const QueryViewWrapper = () => {
+  const bus = usePubSub();
   const params = useParams<{
     conn: string;
     db: string;
@@ -19,6 +28,7 @@ export const QueryViewWrapper = () => {
       disablePadding
       disableMargins
       stickyHeader
+      forceStickyHeader
       meta={{ title: `${conn.database}: SQL Studio` }}
       title={"SQL Studio"}
       subtitle={
@@ -49,6 +59,27 @@ export const QueryViewWrapper = () => {
           </MUILink>
           <Typography color="text.primary">SQL Studio</Typography>
         </Breadcrumbs>
+      }
+      tray={
+        <Box
+          flex={1}
+          sx={{
+            height: "100%",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            endIcon={<Icon>play_circle_filled</Icon>}
+            onClick={() => bus.emit("QueryView.run")}
+          >
+            Run Selection
+          </Button>
+        </Box>
       }
     >
       <QueryView conn={conn} />

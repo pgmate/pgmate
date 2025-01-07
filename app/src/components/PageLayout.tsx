@@ -8,7 +8,7 @@ import {
   useMediaQuery,
   BoxProps,
 } from "@mui/material";
-import { useDevice } from "hooks/use-device";
+// import { useDevice } from "hooks/use-device";
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -18,6 +18,7 @@ interface PageLayoutProps {
   disableMargins?: boolean;
   disablePadding?: boolean;
   stickyHeader?: boolean; // New prop for sticky header
+  forceStickyHeader?: boolean; // forces stiky header behavior even in mobile
   bodyProps?: BoxProps;
   meta?: {
     title?: string;
@@ -32,12 +33,13 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
   subtitle,
   tray,
   stickyHeader,
+  forceStickyHeader,
   bodyProps = {},
   meta = {},
 }) => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
-  const { isDesktop } = useDevice();
+  // const { isDesktop } = useDevice();
 
   useEffect(() => {
     if (meta.title) {
@@ -54,7 +56,9 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
       elevation={isSmallScreen ? 0 : 3}
       sx={{
         // height: "100vh",
-        ...(stickyHeader && isDesktop ? { height: "100vh" } : {}),
+        ...(forceStickyHeader || (stickyHeader && !isSmallScreen)
+          ? { height: "100vh" }
+          : {}),
         display: "flex",
         flexDirection: "column",
         marginX: isSmallScreen || disableMargins ? 0 : 2,
@@ -71,7 +75,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
           padding: 2,
           borderBottom: "1px solid",
           borderBottomColor: "divider",
-          ...(stickyHeader && isDesktop
+          ...(forceStickyHeader || (stickyHeader && !isSmallScreen)
             ? {
                 position: "sticky",
                 top: 0,
@@ -102,8 +106,13 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
         sx={{
           ...bodyProps.sx,
           flex: 1,
-          overflowY: stickyHeader && isDesktop ? "auto" : "visible", // Enable scrolling when header is sticky
+          overflowY:
+            forceStickyHeader || (stickyHeader && !isSmallScreen)
+              ? "auto"
+              : "visible", // Enable scrolling when header is sticky
           padding: disablePadding ? 0 : 2,
+          // background: "green",
+          // borderBottom: "5px solid fuchsia",
         }}
       >
         {children}

@@ -1,13 +1,6 @@
 import * as React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Button from "@mui/material/Button";
-import ButtonGroup from "@mui/material/ButtonGroup";
-import ClickAwayListener from "@mui/material/ClickAwayListener";
-import Grow from "@mui/material/Grow";
-import Paper from "@mui/material/Paper";
-import Popper from "@mui/material/Popper";
-import MenuItem from "@mui/material/MenuItem";
-import MenuList from "@mui/material/MenuList";
+import { Box, Button, ButtonGroup, Tooltip } from "@mui/material";
 import { Icon } from "components/Icon";
 
 const options = [
@@ -44,84 +37,44 @@ export function ToggleTableMode() {
     mode: string;
   }>();
 
-  const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef<HTMLDivElement>(null);
   const [selectedIndex, setSelectedIndex] = React.useState(
     options.findIndex((option) => option.mode === mode)
   );
 
-  const handleMenuItemClick = (
-    _: React.MouseEvent<HTMLLIElement, MouseEvent>,
-    index: number
-  ) => {
+  const handleMenuItemClick = (_: any, index: number) => {
     setSelectedIndex(index);
-    setOpen(false);
     navigate(`/${conn}/${db}/${schema}/${table}/${options[index].mode}`);
   };
 
-  const handleToggle = () => {
-    setOpen((prevOpen) => !prevOpen);
-  };
-
-  const handleClose = (event: Event) => {
-    if (
-      anchorRef.current &&
-      anchorRef.current.contains(event.target as HTMLElement)
-    ) {
-      return;
-    }
-
-    setOpen(false);
-  };
-
   return (
-    <React.Fragment>
+    <Box
+      flex={1}
+      sx={{
+        height: "100%",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "flex-end",
+      }}
+    >
       <ButtonGroup variant="outlined" size="small" ref={anchorRef}>
-        <Button
-          onClick={handleToggle}
-          startIcon={<Icon>{options[selectedIndex].icon}</Icon>}
-        >
-          {options[selectedIndex].label}
-        </Button>
-        <Button onClick={handleToggle}>
-          <Icon>arrow_drop_down</Icon>
-        </Button>
+        {options.map((option, index) => (
+          <Tooltip key={option.mode} title={option.label}>
+            <Button
+              variant={index === selectedIndex ? "contained" : "outlined"}
+              onClick={(event) => handleMenuItemClick(event, index)}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1, // Add spacing between icon and label if needed
+              }}
+            >
+              <Icon>{option.icon}</Icon>
+            </Button>
+          </Tooltip>
+        ))}
       </ButtonGroup>
-      <Popper
-        sx={{ zIndex: 1 }}
-        open={open}
-        anchorEl={anchorRef.current}
-        role={undefined}
-        transition
-        disablePortal
-      >
-        {({ TransitionProps, placement }) => (
-          <Grow
-            {...TransitionProps}
-            style={{
-              transformOrigin:
-                placement === "bottom" ? "center top" : "center bottom",
-            }}
-          >
-            <Paper>
-              <ClickAwayListener onClickAway={handleClose}>
-                <MenuList autoFocusItem>
-                  {options.map((option, index) => (
-                    <MenuItem
-                      key={option.mode}
-                      selected={index === selectedIndex}
-                      onClick={(event) => handleMenuItemClick(event, index)}
-                    >
-                      <Icon sx={{ mr: 2 }}>{option.icon}</Icon>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </MenuList>
-              </ClickAwayListener>
-            </Paper>
-          </Grow>
-        )}
-      </Popper>
-    </React.Fragment>
+    </Box>
   );
 }

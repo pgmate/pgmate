@@ -1,11 +1,19 @@
 import { useParams } from "react-router-dom";
-import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
+import {
+  Breadcrumbs,
+  Link as MUILink,
+  Typography,
+  Button,
+  Icon,
+} from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { useConnection } from "hooks/use-connections";
+import { usePubSub } from "hooks/use-pubsub";
 import { PageLayout } from "components/PageLayout";
 import { QueryView } from "./QueryView";
 
 export const QueryViewWrapper = () => {
+  const bus = usePubSub();
   const params = useParams<{
     conn: string;
     db: string;
@@ -50,6 +58,17 @@ export const QueryViewWrapper = () => {
           </MUILink>
           <Typography color="text.primary">SQL Studio</Typography>
         </Breadcrumbs>
+      }
+      tray={
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          endIcon={<Icon>play_circle_filled</Icon>}
+          onClick={() => bus.emit("QueryView.run")}
+        >
+          Run Selection
+        </Button>
       }
     >
       <QueryView conn={conn} />

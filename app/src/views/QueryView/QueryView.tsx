@@ -1,7 +1,9 @@
 import Editor, { Monaco } from "@monaco-editor/react";
 import { useState, useRef } from "react";
-import { Button, ButtonGroup, Box, Alert, useTheme } from "@mui/material";
+import { Box, Alert, useTheme } from "@mui/material";
 import { useDynamicQueries } from "hooks/use-query";
+import { useSubscribe } from "hooks/use-pubsub";
+import { useStorage } from "hooks/use-storage";
 import { SplitPane } from "components/SplitPane";
 import { SizedBox } from "components/SizedBox";
 import { ResultsTable } from "./containers/ResultsTable";
@@ -9,7 +11,6 @@ import { ResultsEmpty } from "./containers/ResultsEmpty";
 // import { splitIntoStatements1 as splitIntoStatements } from "./utils";
 
 const SQL = `
-
 SELECT * FROM now();
 SELECT 'marco' AS name;
 SELECT 1 + 1 AS sum;
@@ -20,6 +21,9 @@ FROM "public"."city" limit 5;
 SELECT "city_id", "city", "country_id", "last_update"
 FROM "public"."city" limit 15;
 `;
+
+// This dummy SQL is used to test the query splitter and identify the correct statements
+// based on the cursor position.
 // const SQL = `
 // SELECT * FROM now();
 // SELECT 'marco' AS name;
@@ -81,11 +85,15 @@ interface QueryResult {
 
 export const QueryView = ({ conn }: { conn: Connection }) => {
   const theme = useTheme();
+  const storage = useStorage();
+  const storageKey = `sql.${conn.name}.${conn.database}`;
 
   const query = useDynamicQueries(conn!, { disableAnalyze: false });
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
+
   const [editorContent, setEditorContent] = useState(
-    import.meta.env.VITE_NODE_ENV === "development" ? SQL : ""
+    storage.getItem(storageKey) ||
+      (import.meta.env.VITE_NODE_ENV === "development" ? SQL : "")
   );
 
   const [results, setResults] = useState<QueryResult[] | null>(null);
@@ -124,6 +132,16 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
       editor.layout(editorSizeRef.current);
       editor.focus();
     }, 10);
+  };
+
+  const handleEditorChange = (value: string | undefined) => {
+    // Persist content to localStorage
+    if (value !== undefined) {
+      // localStorage.setItem("editorContent", value);
+      console.log("Editor Content:", value);
+      setEditorContent(value || "");
+      storage.setItem(storageKey, value);
+    }
   };
 
   const runSelection = () => {
@@ -257,14 +275,18 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
     );
   };
 
-  const saveToDatabase = async () => {
-    console.log("Saving Content to Database:", editorContent);
-  };
+  // const saveToDatabase = async () => {
+  //   console.log("Saving Content to Database:", editorContent);
+  // };
 
   const handlePaneSizeChange = (size: { width: number; height: number }) => {
     editorRef.current?.layout(size);
     editorSizeRef.current = size;
   };
+
+  useSubscribe("QueryView.run", () => {
+    runSelection();
+  });
 
   return (
     <SplitPane storageKey="query" direction="vertical">
@@ -295,29 +317,11 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
                     contextmenu: false,
                   }}
                   onMount={handleEditorMount}
-                  onChange={(value) => {
-                    setEditorContent(value || "");
-                  }}
+                  onChange={handleEditorChange}
                 />
               )
             }
           </SizedBox>
-        </Box>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          px={2}
-          py={1}
-        >
-          <ButtonGroup variant="contained" size="small">
-            <Button onClick={runSelection}>Run Selection</Button>
-            <Button onClick={runAll}>Run All</Button>
-            <Button onClick={() => runStatement()}>Run Statement</Button>
-          </ButtonGroup>
-          <Button variant="outlined" onClick={saveToDatabase} size="small">
-            Save Query
-          </Button>
         </Box>
       </Box>
       {showResults && (

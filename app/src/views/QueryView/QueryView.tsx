@@ -1,9 +1,7 @@
 import Editor, { Monaco } from "@monaco-editor/react";
 import { useState, useRef } from "react";
-// import { useParams } from "react-router-dom";
 import { Button, ButtonGroup, Box, Alert, useTheme } from "@mui/material";
 import { useDynamicQueries } from "hooks/use-query";
-// import { useConnection } from "hooks/use-connections";
 import { SplitPane } from "components/SplitPane";
 import { SizedBox } from "components/SizedBox";
 import { ResultsTable } from "./containers/ResultsTable";
@@ -78,18 +76,18 @@ FROM "public"."city" limit 15;
 interface QueryResult {
   rows: any[] | null;
   error: any | null;
+  meta?: { [key: number]: any };
 }
 
 export const QueryView = ({ conn }: { conn: Connection }) => {
   const theme = useTheme();
-  // const params = useParams<{ conn: string; db: string }>();
-  // const conn = useConnection(params.conn!, params.db!);
+
   const query = useDynamicQueries(conn!, { disableAnalyze: false });
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
   const [editorContent, setEditorContent] = useState(
     import.meta.env.VITE_NODE_ENV === "development" ? SQL : ""
   );
-  // const [editorContent, setEditorContent] = useState("");
+
   const [results, setResults] = useState<QueryResult[] | null>(null);
   const [showResults, setShowResults] = useState(false);
 
@@ -246,15 +244,15 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
         console.log("Queries:", queries);
         setResults(queries);
         setShowResults(true);
-        queries.forEach((item: any) => {
-          console.log(item.query.statement);
-          if (item.rows) {
-            console.table(item.rows);
-          }
-          if (item.error) {
-            console.error(item.error.message);
-          }
-        });
+        // queries.forEach((item: any) => {
+        //   console.log(item.query.statement);
+        //   if (item.rows) {
+        //     console.table(item.rows);
+        //   }
+        //   if (item.error) {
+        //     console.error(item.error.message);
+        //   }
+        // });
       }
     );
   };
@@ -267,34 +265,6 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
     editorRef.current?.layout(size);
     editorSizeRef.current = size;
   };
-
-  // return (
-  //   <SplitPane storageKey="query" direction="vertical">
-  //     <Box>
-  //       <p>1</p>
-  //       <p>2</p>
-  //       <p>3</p>
-  //       <p>4</p>
-  //       <p>5</p>
-  //       <p>6</p>
-  //       <p>7</p>
-  //       <p>8</p>
-  //       <p>9</p>
-  //     </Box>
-
-  //     <Box>
-  //       <p>1</p>
-  //       <p>2</p>
-  //       <p>3</p>
-  //       <p>4</p>
-  //       <p>5</p>
-  //       {/* <p>6</p>
-  //       <p>7</p>
-  //       <p>8</p>
-  //       <p>9</p> */}
-  //     </Box>
-  //   </SplitPane>
-  // );
 
   return (
     <SplitPane storageKey="query" direction="vertical">
@@ -351,22 +321,37 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
         </Box>
       </Box>
       {showResults && (
-        <>
-          {results && results.length === 1 && (
-            <Box>
-              {results[0].error && (
-                <Alert severity="error">{results[0].error.message}</Alert>
-              )}
-              {results[0].rows && results[0].rows.length > 0 ? (
-                <ResultsTable rows={results[0].rows} />
-              ) : (
-                <ResultsEmpty data={results[0]} />
-              )}
-            </Box>
-          )}
+        <SizedBox>
+          {({ height }) => {
+            if (!height) return null;
+            return (
+              <Box height={height}>
+                {results && results[0].error && (
+                  <Alert severity="error">{results[0].error.message}</Alert>
+                )}
+                {results && results[0].rows && results[0].rows.length > 0 && (
+                  <ResultsTable rows={results[0].rows} />
+                )}
+                {results &&
+                  !results[0].rows &&
+                  results[0].meta &&
+                  (() => {
+                    const keys = Object.keys(results[0].meta);
+                    const lastKey = keys.length > 0 ? keys.pop() : undefined;
 
-          {results && results.length > 1 && <Box>Multiple results</Box>}
-        </>
+                    return lastKey !== undefined ? (
+                      <ResultsTable
+                        rows={results[0].meta[Number(lastKey)].rows}
+                      />
+                    ) : null;
+                  })()}
+                {results && results[0].rows && results[0].rows.length === 0 && (
+                  <ResultsEmpty data={results[0]} />
+                )}
+              </Box>
+            );
+          }}
+        </SizedBox>
       )}
     </SplitPane>
   );

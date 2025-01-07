@@ -34,15 +34,32 @@ export const SplitPane: React.FC<SplitPaneProps> = ({
     height: "100%",
     width: "100%",
   };
+  // const box1Style = {
+  //   flex: `${currentSize} 1 0%`,
+  //   display: "flex",
+  //   flexDirection: "column",
+  //   overwlow: "auto",
+  // };
+  // const box2Style = {
+  //   flex: `${100 - currentSize} 1 0%`,
+  //   display: "flex",
+  //   flexDirection: "column",
+  //   overwlow: "auto",
+  // };
   const box1Style = {
     flex: `${currentSize} 1 0%`,
     display: "flex",
     flexDirection: "column",
+    overflow: "auto", // Enable scrolling for overflow content
+    minHeight: 0, // Ensure the box can shrink below its content size
   };
+
   const box2Style = {
     flex: `${100 - currentSize} 1 0%`,
     display: "flex",
     flexDirection: "column",
+    overflow: "auto", // Enable scrolling for overflow content
+    minHeight: 0, // Ensure the box can shrink below its content size
   };
   const dividerStyle = {
     cursor: isVertical ? "row-resize" : "col-resize",

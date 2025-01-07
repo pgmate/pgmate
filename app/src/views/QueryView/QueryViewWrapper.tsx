@@ -19,6 +19,7 @@ export const QueryViewWrapper = () => {
       disablePadding
       disableMargins
       stickyHeader
+      forceStickyHeader
       meta={{ title: `${conn.database}: SQL Studio` }}
       title={"SQL Studio"}
       subtitle={

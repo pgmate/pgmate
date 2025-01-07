@@ -8,60 +8,72 @@ import { SplitPane } from "components/SplitPane";
 import { SizedBox } from "components/SizedBox";
 import { ResultsTable } from "./containers/ResultsTable";
 import { ResultsEmpty } from "./containers/ResultsEmpty";
-import { splitIntoStatements1 as splitIntoStatements } from "./utils";
+// import { splitIntoStatements1 as splitIntoStatements } from "./utils";
 
 const SQL = `
+
 SELECT * FROM now();
 SELECT 'marco' AS name;
 SELECT 1 + 1 AS sum;
 
--- error here
-select foo from hoho;
+SELECT "city_id", "city", "country_id", "last_update"
+FROM "public"."city" limit 5;
 
-SELECT
-*
-FROM
-pgmate.migrations;
-
-create table
-if not exists
-"users" (name text primary key, age int);
-
-SELECT
-*
-FROM
-pgmate.facts;
-
--- Simple SQL function
-CREATE OR REPLACE FUNCTION add_one(num integer)
-RETURNS integer AS $$
-BEGIN
-  RETURN num + 1;
-END;
-$$ LANGUAGE plpgsql;
-
--- Simple SQL DO block
-DO $$
-BEGIN
-  RAISE NOTICE 'Hello from DO block';
-END;
-$$;
-
--- Begin/Rollback transaction
-BEGIN;
-INSERT INTO pgmate.settings (key, value)
-VALUES ('foo', '"bar"');
-ROLLBACK;
-
--- Begin/Commit transaction
-BEGIN;
-INSERT INTO pgmate.settings (key, value)
-VALUES ('foo', '"bar"')
-ON CONFLICT ON CONSTRAINT settings_pkey
-DO UPDATE SET value = EXCLUDED.value
-RETURNING *;
-COMMIT;
+SELECT "city_id", "city", "country_id", "last_update"
+FROM "public"."city" limit 15;
 `;
+// const SQL = `
+// SELECT * FROM now();
+// SELECT 'marco' AS name;
+// SELECT 1 + 1 AS sum;
+
+// -- error here
+// select foo from hoho;
+
+// SELECT
+// *
+// FROM
+// pgmate.migrations;
+
+// create table
+// if not exists
+// "users" (name text primary key, age int);
+
+// SELECT
+// *
+// FROM
+// pgmate.facts;
+
+// -- Simple SQL function
+// CREATE OR REPLACE FUNCTION add_one(num integer)
+// RETURNS integer AS $$
+// BEGIN
+//   RETURN num + 1;
+// END;
+// $$ LANGUAGE plpgsql;
+
+// -- Simple SQL DO block
+// DO $$
+// BEGIN
+//   RAISE NOTICE 'Hello from DO block';
+// END;
+// $$;
+
+// -- Begin/Rollback transaction
+// BEGIN;
+// INSERT INTO pgmate.settings (key, value)
+// VALUES ('foo', '"bar"');
+// ROLLBACK;
+
+// -- Begin/Commit transaction
+// BEGIN;
+// INSERT INTO pgmate.settings (key, value)
+// VALUES ('foo', '"bar"')
+// ON CONFLICT ON CONSTRAINT settings_pkey
+// DO UPDATE SET value = EXCLUDED.value
+// RETURNING *;
+// COMMIT;
+// `;
 
 interface QueryResult {
   rows: any[] | null;
@@ -81,11 +93,13 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
   const [results, setResults] = useState<QueryResult[] | null>(null);
   const [showResults, setShowResults] = useState(false);
 
+  const monacoRef = useRef<Monaco | null>(null);
   const editorRef = useRef<any>(null);
   const editorSizeRef = useRef<{ width: number; height: number } | null>(null);
 
   const handleEditorMount = (editor: any, monaco: Monaco) => {
     editorRef.current = editor; // Assign editor instance to the ref
+    monacoRef.current = monaco; // Assign monaco instance to the ref
 
     // Add keybinding for Cmd+Enter or Ctrl+Enter
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
@@ -95,7 +109,7 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
       if (selection && model.getValueInRange(selection).trim()) {
         runSelection();
       } else {
-        runStatement(monaco);
+        runStatement();
       }
     });
 
@@ -120,7 +134,7 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
     const selection = editor?.getSelection();
 
     if (!model || !selection) {
-      console.log("Model or selection is not defined.");
+      console.error("Model or selection is not defined.");
       return;
     }
 
@@ -138,20 +152,17 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
     }
 
     const fullContent = model.getValue();
-    const statements = splitIntoStatements(fullContent);
-
-    console.log(statements);
-    // execStatements(statements);
+    execStatements([fullContent]);
   };
 
-  const runStatement = (monaco: Monaco) => {
+  const runStatement = () => {
     console.log("Running Statement", conn?.name, conn?.database);
     const editor = editorRef.current;
     const model = editor?.getModel();
     const position = editor?.getPosition();
 
     if (!model || !position) {
-      console.log("Editor or position is not defined.");
+      console.error("Editor or position is not defined.");
       return;
     }
 
@@ -166,7 +177,7 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
       lines[startLine].trim().startsWith("--") ||
       lines[startLine].trim() == ""
     ) {
-      console.log("empty line? what do we do???");
+      alert("Please place the cursor on a valid SQL statement");
       return;
     }
 
@@ -212,15 +223,17 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
     }
 
     // Highlight the full statement by selecting it
-    const range = new monaco.Range(
-      startLine + 1,
-      1,
-      endLine + 1,
-      lines[endLine].length + 1
-    );
+    if (monacoRef.current) {
+      const range = new monacoRef.current.Range(
+        startLine + 1,
+        1,
+        endLine + 1,
+        lines[endLine].length + 1
+      );
 
-    editor.setSelection(range);
-    editor.revealRange(range); // Ensure the range is visible in the editor
+      editor.setSelection(range);
+      editor.revealRange(range); // Ensure the range is visible in the editor
+    }
 
     execStatements([statement]);
   };
@@ -255,11 +268,33 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
     editorSizeRef.current = size;
   };
 
-  // useEffect(() => {
-  //   execStatements(["select * from pgmate.migrations where 1 = 2"]);
-  // }, []);
+  // return (
+  //   <SplitPane storageKey="query" direction="vertical">
+  //     <Box>
+  //       <p>1</p>
+  //       <p>2</p>
+  //       <p>3</p>
+  //       <p>4</p>
+  //       <p>5</p>
+  //       <p>6</p>
+  //       <p>7</p>
+  //       <p>8</p>
+  //       <p>9</p>
+  //     </Box>
 
-  // if (!conn?.name) return;
+  //     <Box>
+  //       <p>1</p>
+  //       <p>2</p>
+  //       <p>3</p>
+  //       <p>4</p>
+  //       <p>5</p>
+  //       {/* <p>6</p>
+  //       <p>7</p>
+  //       <p>8</p>
+  //       <p>9</p> */}
+  //     </Box>
+  //   </SplitPane>
+  // );
 
   return (
     <SplitPane storageKey="query" direction="vertical">
@@ -308,9 +343,7 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
           <ButtonGroup variant="contained" size="small">
             <Button onClick={runSelection}>Run Selection</Button>
             <Button onClick={runAll}>Run All</Button>
-            <Button onClick={() => runStatement(editorRef.current.monaco)}>
-              Run Statement
-            </Button>
+            <Button onClick={() => runStatement()}>Run Statement</Button>
           </ButtonGroup>
           <Button variant="outlined" onClick={saveToDatabase} size="small">
             Save Query
@@ -318,7 +351,7 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
         </Box>
       </Box>
       {showResults && (
-        <Box>
+        <>
           {results && results.length === 1 && (
             <Box>
               {results[0].error && (
@@ -333,7 +366,7 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
           )}
 
           {results && results.length > 1 && <Box>Multiple results</Box>}
-        </Box>
+        </>
       )}
     </SplitPane>
   );

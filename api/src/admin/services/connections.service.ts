@@ -120,9 +120,13 @@ export class ConnectionsService {
       url.pathname = `/${database}`;
     }
 
+    // Fallback to the user's database name if not provided
+    if (url.pathname.trim() === '/') {
+      url.pathname = `/${url.username}`;
+    }
+
     // Final connection string with optional database override
     const connectionString = url.toString();
-    // console.log(connectionString);
 
     // Create a new client with the updated connection string
     const client = new Client({
@@ -131,13 +135,20 @@ export class ConnectionsService {
     });
 
     // Connect to the database
-    await client.connect();
+    try {
+      await client.connect();
+      const timerEnd = performance.now();
+      return [
+        client,
+        `${(timerEnd - timerStart).toFixed(3)} ms`,
+        connectionString,
+      ];
+    } catch (err) {
+      client.end();
 
-    const timerEnd = performance.now();
-    return [
-      client,
-      `${(timerEnd - timerStart).toFixed(3)} ms`,
-      connectionString,
-    ];
+      throw new Error(
+        `Failed to connect to the database: ${name}${database ? `/${database}` : ''}`,
+      );
+    }
   }
 }

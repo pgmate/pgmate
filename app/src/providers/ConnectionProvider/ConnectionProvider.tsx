@@ -1,6 +1,8 @@
 import { createContext, useCallback } from "react";
 import { useGet } from "hooks/use-axios";
 import { useSubscribe } from "hooks/use-pubsub";
+import { useConnectionParams } from "./hooks/use-connection-params";
+import { ConnectionError } from "./components/ConnectionError";
 
 export const ConnectionContext = createContext<{
   items: Connection[];
@@ -13,6 +15,8 @@ export const ConnectionContext = createContext<{
 export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const conn = useConnectionParams();
+
   // Fetches connections and keeps them up-to-date
   const { data, refetch } = useGet("/connections");
   useSubscribe("connections::changed", refetch);
@@ -33,7 +37,15 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
     <ConnectionContext.Provider
       value={{ items: data?.connections || [], getByName }}
     >
-      {children}
+      {conn.ready ? (
+        conn.error ? (
+          <ConnectionError error={conn.error} />
+        ) : (
+          children
+        )
+      ) : (
+        "loading..."
+      )}
     </ConnectionContext.Provider>
   );
 };

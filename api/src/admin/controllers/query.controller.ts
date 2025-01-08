@@ -1,4 +1,12 @@
-import { Body, Controller, Post, UseGuards, Inject } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  Inject,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { Pool } from 'pg';
 import { performance } from 'perf_hooks';
 import { AdminGuard } from '../admin.guard';
@@ -58,91 +66,103 @@ export class QueryController {
       connection: string;
     };
   }> {
-    // console.log('@createClient:', body.conn, body.database);
-    const [client, aquisitionTime] = await this.connectionsService.createClient(
-      body.conn,
-      body.database,
-    );
-
     try {
-      const queries = [];
-      for (const query of body.queries) {
-        try {
-          // Run query:
-          // console.log('@query:', query.statement)
-          const [{ rows, ...meta }, queryTime] = await this._query(
-            client,
-            query.statement,
-            query.variables,
-          );
+      // console.log('@createClient:', body.conn, body.database);
+      const [client, aquisitionTime] =
+        await this.connectionsService.createClient(body.conn, body.database);
 
-          // Analyze query:
-          let explained: any,
-            executionTimeRow: any,
-            executionTime: string,
-            planningTimeRow: any,
-            planningTime: string;
+      try {
+        const queries = [];
+        for (const query of body.queries) {
+          try {
+            // Run query:
+            // console.log('@query:', query.statement)
+            const [{ rows, ...meta }, queryTime] = await this._query(
+              client,
+              query.statement,
+              query.variables,
+            );
 
-          // TODO: skip analyze queries that will surely fail (create table, ...)
-          if (!body.disableAnalyze && shouldAnalyze(query.statement)) {
-            try {
-              // console.log('@explain:', 'EXPLAIN ANALYZE ' + query.statement)
-              explained = await this._query(
-                client,
-                'EXPLAIN ANALYZE ' + query.statement,
-                query.variables,
-              );
-              // console.log('@analyzeDone')
-              executionTimeRow = explained[0].rows.pop();
-              executionTime = executionTimeRow['QUERY PLAN'].split(':').pop();
-              planningTimeRow = explained[0].rows.pop();
-              planningTime = planningTimeRow['QUERY PLAN'].split(':').pop();
-            } catch (err) {
-              console.log('Analyze failed for:', query.statement, err.message);
-              explained = null;
+            // Analyze query:
+            let explained: any,
+              executionTimeRow: any,
+              executionTime: string,
+              planningTimeRow: any,
+              planningTime: string;
+
+            // TODO: skip analyze queries that will surely fail (create table, ...)
+            if (!body.disableAnalyze && shouldAnalyze(query.statement)) {
+              try {
+                // console.log('@explain:', 'EXPLAIN ANALYZE ' + query.statement)
+                explained = await this._query(
+                  client,
+                  'EXPLAIN ANALYZE ' + query.statement,
+                  query.variables,
+                );
+                // console.log('@analyzeDone')
+                executionTimeRow = explained[0].rows.pop();
+                executionTime = executionTimeRow['QUERY PLAN'].split(':').pop();
+                planningTimeRow = explained[0].rows.pop();
+                planningTime = planningTimeRow['QUERY PLAN'].split(':').pop();
+              } catch (err) {
+                console.log(
+                  'Analyze failed for:',
+                  query.statement,
+                  err.message,
+                );
+                explained = null;
+              }
             }
+
+            queries.push({
+              query,
+              rows,
+              error: null,
+              plan:
+                explained &&
+                [...explained[0].rows, planningTimeRow, executionTimeRow].map(
+                  (r) => r['QUERY PLAN'],
+                ),
+              stats: {
+                query: queryTime,
+                planning: planningTime,
+                execution: executionTime,
+              },
+              meta,
+            });
+          } catch (error) {
+            queries.push({
+              query,
+              rows: null,
+              error: { message: error.message, error },
+              plan: null,
+              stats: {
+                query: 0,
+                planning: 0,
+                execution: 0,
+              },
+              meta: null,
+            });
           }
-
-          queries.push({
-            query,
-            rows,
-            error: null,
-            plan:
-              explained &&
-              [...explained[0].rows, planningTimeRow, executionTimeRow].map(
-                (r) => r['QUERY PLAN'],
-              ),
-            stats: {
-              query: queryTime,
-              planning: planningTime,
-              execution: executionTime,
-            },
-            meta,
-          });
-        } catch (error) {
-          queries.push({
-            query,
-            rows: null,
-            error: { message: error.message, error },
-            plan: null,
-            stats: {
-              query: 0,
-              planning: 0,
-              execution: 0,
-            },
-            meta: null,
-          });
         }
-      }
 
-      return {
-        queries,
-        stats: {
-          connection: aquisitionTime,
+        return {
+          queries,
+          stats: {
+            connection: aquisitionTime,
+          },
+        };
+      } finally {
+        await client.end(); // Ensure the client is properly closed
+      }
+    } catch (error) {
+      throw new HttpException(
+        {
+          // code: 'SERVICE_UNAVAILABLE',
+          message: error.message,
         },
-      };
-    } finally {
-      await client.end(); // Ensure the client is properly closed
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
     }
   }
 }

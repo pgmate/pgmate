@@ -206,59 +206,98 @@ CACHE ${seqcache} ${seqcycle ? 'CYCLE' : 'NO CYCLE'};\n`;
 
       ddl += sequencesDDL + '\n';
 
-      // 2. Create Table Statement (columns, types, options)
-      ddl += `-- Table structure for: ${schema}.${table}\n`;
-      const createTable = await client.query(
+      // 2. export table / view / materialized view DDL
+      // Detect object type and generate DDL accordingly
+      ddl += `-- DDL for: ${schema}.${table}\n`;
+
+      const objectTypeQuery = await client.query(
         `
-        WITH cols AS (
-          SELECT
-            a.attname AS column_name,
-            pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
-            (
-              SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid)
-              FROM pg_catalog.pg_attrdef d
-              WHERE d.adrelid = a.attrelid
-                AND d.adnum = a.attnum
-                AND a.atthasdef
-            ) AS default_value,
-            a.attnotnull AS not_null
-          FROM pg_catalog.pg_attribute a
-          JOIN pg_catalog.pg_class c ON a.attrelid = c.oid
-          JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
-          WHERE n.nspname = $1
-            AND c.relname = $2
-            AND a.attnum > 0
-            AND NOT a.attisdropped
-          ORDER BY a.attnum
-        )
-        SELECT
-          'CREATE TABLE "' || quote_ident($1) || '"."' || quote_ident($2) || '" (' ||
-          E'\n' ||
-          string_agg(
-            '  "' || column_name || '" ' ||
-            data_type ||
-            CASE WHEN not_null THEN ' NOT NULL' ELSE '' END ||
-            COALESCE(' DEFAULT ' || default_value, ''),
-            E',\n'
-          ) ||
-          E'\n);' AS ddl
-        FROM cols;
-        `,
+  SELECT
+    relkind
+  FROM pg_catalog.pg_class c
+  JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+  WHERE n.nspname = $1 AND c.relname = $2;
+  `,
         [schema, table],
       );
 
-      ddl += (createTable.rows[0]?.ddl || '').replace(
-        /nextval\('([^']+)'::regclass\)/gi,
-        (match, seqFull) => {
-          if (!seqFull.includes('.')) {
-            // no schema present, e.g. 'actor_actor_id_seq'
-            return `nextval('${schema}.${seqFull}'::regclass)`;
-          } else {
-            // schema already present, e.g. 'public.actor_actor_id_seq'
-            return `nextval('${seqFull}'::regclass)`;
-          }
-        },
-      );
+      const objectType = objectTypeQuery.rows[0]?.relkind;
+
+      if (objectType === 'r') {
+        // Regular table
+        const createTable = await client.query(
+          `
+    WITH cols AS (
+      SELECT
+        a.attname AS column_name,
+        pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
+        (
+          SELECT pg_catalog.pg_get_expr(d.adbin, d.adrelid)
+          FROM pg_catalog.pg_attrdef d
+          WHERE d.adrelid = a.attrelid
+            AND d.adnum = a.attnum
+            AND a.atthasdef
+        ) AS default_value,
+        a.attnotnull AS not_null
+      FROM pg_catalog.pg_attribute a
+      JOIN pg_catalog.pg_class c ON a.attrelid = c.oid
+      JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+      WHERE n.nspname = $1
+        AND c.relname = $2
+        AND a.attnum > 0
+        AND NOT a.attisdropped
+      ORDER BY a.attnum
+    )
+    SELECT
+      'CREATE TABLE "' || quote_ident($1) || '"."' || quote_ident($2) || '" (' ||
+      E'\n' ||
+      string_agg(
+        '  "' || column_name || '" ' ||
+        data_type ||
+        CASE WHEN not_null THEN ' NOT NULL' ELSE '' END ||
+        COALESCE(' DEFAULT ' || default_value, ''),
+        E',\n'
+      ) ||
+      E'\n);' AS ddl
+    FROM cols;
+    `,
+          [schema, table],
+        );
+
+        ddl += createTable.rows[0]?.ddl || '';
+      } else if (objectType === 'v') {
+        // View
+        const createView = await client.query(
+          `
+    SELECT
+      'CREATE VIEW "' || quote_ident($1) || '"."' || quote_ident($2) || '" AS ' || 
+      pg_catalog.pg_get_viewdef(c.oid, true) AS ddl
+    FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+    WHERE n.nspname = $1 AND c.relname = $2;
+    `,
+          [schema, table],
+        );
+
+        ddl += createView.rows[0]?.ddl || '';
+      } else if (objectType === 'm') {
+        // Materialized view
+        const createMaterializedView = await client.query(
+          `
+    SELECT
+      'CREATE MATERIALIZED VIEW "' || quote_ident($1) || '"."' || quote_ident($2) || '" AS ' || 
+      pg_catalog.pg_get_viewdef(c.oid, true) AS ddl
+    FROM pg_catalog.pg_class c
+    JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+    WHERE n.nspname = $1 AND c.relname = $2;
+    `,
+          [schema, table],
+        );
+
+        ddl += createMaterializedView.rows[0]?.ddl || '';
+      } else {
+        ddl += `-- Unsupported object type: ${objectType}\n`;
+      }
 
       ddl += '\n\n';
 

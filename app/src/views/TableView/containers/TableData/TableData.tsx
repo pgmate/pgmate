@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Stack, IconButton, Icon } from "@mui/material";
+import { Stack, IconButton, Icon, Button } from "@mui/material";
 import {
   DataGrid,
   GridRowsProp,
@@ -156,6 +156,9 @@ export const TableData: React.FC<TableDataProps> = ({ conn }) => {
         onProcessRowUpdateError={onProcessRowUpdateError}
         onColumnWidthChange={onColumnWidthChange}
       />
+      <Button variant="outlined" onClick={() => data.addRow()}>
+        Add new row
+      </Button>
     </Stack>
   );
 };

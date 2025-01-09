@@ -132,46 +132,59 @@ export const useTableData = (
 
   const updateRow = useCallback(
     async (updatedRow: any, originalRow: any) => {
-      console.log("Updating row:", updatedRow, originalRow);
+      console.log("Updating row:", updatedRow.id, updatedRow, originalRow);
       const pkeys = columns.filter((c) => c.is_primary_key);
       const identifyingKeys = pkeys.length > 0 ? pkeys : columns;
 
-      // Prepare SET clause
-      const fields: string[] = [];
-      const values: any[] = [];
-      columns.forEach((c) => {
-        if (updatedRow[c.column_name] !== originalRow[c.column_name]) {
-          fields.push(c.column_name);
-          values.push(updatedRow[c.column_name]);
-        }
-      });
+      let query: string = "";
+      let values: any[] = [];
+      if (Object.keys(originalRow).length === 1) {
+        // Handle INSERT
+        const fields = Object.keys(updatedRow).filter((key) => key !== "id");
+        values = fields.map((field) => updatedRow[field]);
 
-      // Prepare WHERE clause
-      const whereValues: any[] = [];
-      const whereClause = identifyingKeys
-        .map((c, i) => {
-          const columnName = `"${c.column_name}"`;
-          if (c.data_type === "json" || c.data_type === "jsonb") {
-            whereValues.push(originalRow[c.column_name]);
-            return `${columnName}::text = $${i + fields.length + 1}`;
+        // Build the query
+        const fieldClause = fields.map((f) => `"${f}"`).join(", ");
+        const valuePlaceholders = fields.map((_, i) => `$${i + 1}`).join(", ");
+        query = `INSERT INTO "${schema}"."${table}" (${fieldClause}) VALUES (${valuePlaceholders}) RETURNING *`;
+        console.log("@insert", query, values);
+      } else {
+        // Prepare SET clause
+        const fields: string[] = [];
+        columns.forEach((c) => {
+          if (updatedRow[c.column_name] !== originalRow[c.column_name]) {
+            fields.push(c.column_name);
+            values.push(updatedRow[c.column_name]);
           }
-          whereValues.push(originalRow[c.column_name]);
-          return `${columnName} = $${i + fields.length + 1}`;
-        })
-        .join(" AND ");
+        });
 
-      // Combine all values
-      const allValues = [...values, ...whereValues];
+        // Prepare WHERE clause
+        const whereValues: any[] = [];
+        const whereClause = identifyingKeys
+          .map((c, i) => {
+            const columnName = `"${c.column_name}"`;
+            if (c.data_type === "json" || c.data_type === "jsonb") {
+              whereValues.push(originalRow[c.column_name]);
+              return `${columnName}::text = $${i + fields.length + 1}`;
+            }
+            whereValues.push(originalRow[c.column_name]);
+            return `${columnName} = $${i + fields.length + 1}`;
+          })
+          .join(" AND ");
 
-      // Build the query
-      const setClause = fields.map((f, i) => `"${f}" = $${i + 1}`).join(", ");
-      const query = `UPDATE "${schema}"."${table}" SET ${setClause} WHERE ${whereClause}`;
-      console.log("@update", query, allValues);
+        // Combine all values
+        values = [...values, ...whereValues];
+
+        // Build the query
+        const setClause = fields.map((f, i) => `"${f}" = $${i + 1}`).join(", ");
+        query = `UPDATE "${schema}"."${table}" SET ${setClause} WHERE ${whereClause}`;
+        console.log("@update", query, values);
+      }
 
       // Persist the update
       try {
         // Detecting an error:
-        const [_, res] = await fetch(query, allValues);
+        const [_, res] = await fetch(query, values);
         if (res.data.queries[0].error) {
           throw new Error(res.data.queries[0].error.message);
         }
@@ -270,6 +283,12 @@ export const useTableData = (
     [schema, table, columns]
   );
 
+  const addRow = useCallback(() => {
+    const id = Date.now();
+    setRows((prevRows) => [...prevRows, { id }]);
+    return id;
+  }, [schema, table, columns]);
+
   return {
     query,
     columns,
@@ -282,5 +301,6 @@ export const useTableData = (
     setSorting,
     updateRow,
     deleteRow,
+    addRow,
   };
 };

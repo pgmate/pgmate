@@ -1,5 +1,6 @@
 export const typography = {
-  fontFamily: "Nunito, Arial, sans-serif",
+  // fontFamily: "Nunito, Arial, sans-serif",
+  fontFamily: '"Space Grotesk", "Roboto", "Helvetica", "Arial", sans-serif',
   h1: {
     fontSize: "2rem",
   },

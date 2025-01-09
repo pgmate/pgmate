@@ -166,33 +166,17 @@ export const useTableData = (
       // Build the query
       const setClause = fields.map((f, i) => `"${f}" = $${i + 1}`).join(", ");
       const query = `UPDATE "${schema}"."${table}" SET ${setClause} WHERE ${whereClause}`;
-      console.log(query, allValues);
-
-      // Optimistic update
-      setRows((prevRows) =>
-        prevRows.map((row) => {
-          const matches = identifyingKeys.every((key) => {
-            const value =
-              key.data_type === "json" || key.data_type === "jsonb"
-                ? JSON.stringify(row[key.column_name])
-                : row[key.column_name];
-            const originalValue =
-              key.data_type === "json" || key.data_type === "jsonb"
-                ? JSON.stringify(originalRow[key.column_name])
-                : originalRow[key.column_name];
-            return value === originalValue;
-          });
-          return matches ? updatedRow : row;
-        })
-      );
+      console.log("@update", query, allValues);
 
       // Persist the update
       try {
-        await fetch(query, allValues);
-      } catch (error) {
-        console.error("Error updating row:", error);
+        // Detecting an error:
+        const [_, res] = await fetch(query, allValues);
+        if (res.data.queries[0].error) {
+          throw new Error(res.data.queries[0].error.message);
+        }
 
-        // Rollback on failure
+        // Update the dataset
         setRows((prevRows) =>
           prevRows.map((row) => {
             const matches = identifyingKeys.every((key) => {
@@ -206,12 +190,82 @@ export const useTableData = (
                   : originalRow[key.column_name];
               return value === originalValue;
             });
-            return matches ? originalRow : row;
+            return matches ? updatedRow : row;
           })
         );
+      } catch (error: any) {
+        alert("Failed to update row:\n" + error.message);
       }
 
       return updatedRow;
+    },
+    [schema, table, columns]
+  );
+
+  const deleteRow = useCallback(
+    async (deletedRow: any) => {
+      // Identifying primary keys:
+      const metaPkeys = columns.filter((c) => c.is_primary_key);
+      const tablePKeys = metaPkeys.length > 0 ? metaPkeys : columns;
+
+      // Build WHERE conditions for primary keys
+      const whereClauses = tablePKeys
+        .map((key) => {
+          const value = deletedRow[key.column_name];
+          if (value === null || value === undefined) {
+            throw new Error(
+              `Missing value for primary key: ${key.column_name}`
+            );
+          }
+
+          // Handle value formatting for SQL (strings need quotes)
+          const formattedValue =
+            typeof value === "string"
+              ? `'${value.replace(/'/g, "''")}'`
+              : value;
+
+          return `${key.column_name} = ${formattedValue}`;
+        })
+        .join(" AND ");
+
+      // Construct the DELETE query
+      const query = `DELETE FROM "${schema}"."${table}" WHERE ${whereClauses};`;
+      console.log("@deleteRow:", query);
+
+      if (
+        !window.confirm(`Are you sure you want to delete this row?\n${query}`)
+      ) {
+        return;
+      }
+
+      // Persist the update
+      try {
+        // Detecting an error:
+        const [_, res] = await fetch(query);
+        if (res.data.queries[0].error) {
+          throw new Error(res.data.queries[0].error.message);
+        }
+
+        // Update the dataset
+        setRows((prevRows) =>
+          prevRows.filter(
+            (row) =>
+              !tablePKeys.every((key) => {
+                const rowValue =
+                  key.data_type === "json" || key.data_type === "jsonb"
+                    ? JSON.stringify(row[key.column_name])
+                    : row[key.column_name];
+                const deletedValue =
+                  key.data_type === "json" || key.data_type === "jsonb"
+                    ? JSON.stringify(deletedRow[key.column_name])
+                    : deletedRow[key.column_name];
+                return rowValue === deletedValue;
+              })
+          )
+        );
+      } catch (error: any) {
+        alert("Failed to delete row:\n" + error.message);
+      }
     },
     [schema, table, columns]
   );
@@ -227,5 +281,6 @@ export const useTableData = (
     sorting,
     setSorting,
     updateRow,
+    deleteRow,
   };
 };

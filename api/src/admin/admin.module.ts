@@ -6,8 +6,10 @@ import { AdminController } from './controllers/admin.controller';
 import { ConnectionsController } from './controllers/connections.controller';
 import { QueryController } from './controllers/query.controller';
 import { PGDumpController } from './controllers/pg_dump.controller';
+import { PGSchemaController } from './controllers/pg_schema.controller';
 import { ConnectionsService } from './services/connections.service';
 import { PGDumpService } from './services/pg_dump.service';
+import { PGSchemaService } from './services/pg_schema.service';
 
 @Module({
   imports: [ConfigModule, DatabaseModule],
@@ -16,7 +18,8 @@ import { PGDumpService } from './services/pg_dump.service';
     ConnectionsController,
     QueryController,
     PGDumpController,
+    PGSchemaController,
   ],
-  providers: [AdminGuard, ConnectionsService, PGDumpService],
+  providers: [AdminGuard, ConnectionsService, PGDumpService, PGSchemaService],
 })
 export class AdminModule {}

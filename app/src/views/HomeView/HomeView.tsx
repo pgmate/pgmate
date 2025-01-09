@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import {
   List,
   ListItem,
@@ -7,16 +8,19 @@ import {
   Divider,
   Icon,
   IconButton,
+  Stack,
+  Tooltip,
 } from "@mui/material";
-import { Link } from "react-router-dom";
 
 import { usePubSub } from "hooks/use-pubsub";
-import { PageLayout } from "components/PageLayout";
 import { useConnections } from "hooks/use-connections";
+import { useClipboard } from "hooks/use-clipboard";
+import { PageLayout } from "components/PageLayout";
 import { DidYouKnow } from "./containers/DidYouKnow";
 
 export const HomeView = () => {
   const bus = usePubSub();
+  const clipboard = useClipboard();
   const { items } = useConnections();
 
   return (
@@ -26,9 +30,21 @@ export const HomeView = () => {
         disablePadding
         title="Connection Manager"
         tray={
-          <IconButton onClick={() => bus.emit("connections::manager")}>
-            <Icon>edit</Icon>
-          </IconButton>
+          <Stack direction="row" spacing={1}>
+            <Tooltip title="Import connection from clipboard">
+              <IconButton
+                onClick={() => {
+                  bus.emit("connections::manager");
+                  clipboard.paste();
+                }}
+              >
+                <Icon>content_paste</Icon>
+              </IconButton>
+            </Tooltip>
+            <IconButton onClick={() => bus.emit("connections::manager")}>
+              <Icon>edit</Icon>
+            </IconButton>
+          </Stack>
         }
       >
         <List>

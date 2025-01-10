@@ -21,8 +21,15 @@ export class PGSchemaController {
     );
 
     try {
-      const res = await this.PGSchemaService.getSchema(client);
-      console.log(res);
+      const timerStart = performance.now();
+      const schema = await this.PGSchemaService.getSchema(client);
+      const timerEnd = performance.now();
+
+      return {
+        schema,
+        aquisitionTime,
+        queryTime: `${(timerEnd - timerStart).toFixed(3)} ms`,
+      };
     } catch (e: any) {
       console.error(e);
     }

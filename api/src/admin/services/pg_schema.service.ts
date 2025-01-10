@@ -59,17 +59,52 @@ export class PGSchemaService {
     return rows[0];
   }
 
+  private async getTables(client: Client): Promise<PGSchema['tables']> {
+    const { rows } = await client.query(queries.TABLES_LIST);
+    return rows;
+  }
+
+  private async getColumns(client: Client): Promise<PGSchema['columns']> {
+    const { rows } = await client.query(queries.COLUMNS_LIST_BY_TABLE);
+    return rows;
+  }
+
+  private async getConstraints(
+    client: Client,
+  ): Promise<PGSchema['constraints']> {
+    const { rows } = await client.query(queries.CONSTRAINTS_LIST_BY_TABLE);
+    return rows;
+  }
+
+  private async getIndexes(client: Client): Promise<PGSchema['indexes']> {
+    const { rows } = await client.query(queries.INDEXES_LIST_BY_TABLE);
+    return rows;
+  }
+
   async getSchema(client: Client): Promise<PGSchema> {
-    const [server, cpu, memory, disk, extensions, database] = await Promise.all(
-      [
-        this.getServerInfo(client),
-        this.getCpuInfo(client),
-        this.getMemoryInfo(client),
-        this.getDiskInfo(client),
-        this.getExtensions(client),
-        this.getDatabaseInfo(client),
-      ],
-    );
+    const [
+      server,
+      cpu,
+      memory,
+      disk,
+      extensions,
+      database,
+      tables,
+      columns,
+      constraints,
+      indexes,
+    ] = await Promise.all([
+      this.getServerInfo(client),
+      this.getCpuInfo(client),
+      this.getMemoryInfo(client),
+      this.getDiskInfo(client),
+      this.getExtensions(client),
+      this.getDatabaseInfo(client),
+      this.getTables(client),
+      this.getColumns(client),
+      this.getConstraints(client),
+      this.getIndexes(client),
+    ]);
 
     return {
       server,
@@ -78,6 +113,10 @@ export class PGSchemaService {
       disk,
       extensions,
       database,
+      tables,
+      columns,
+      constraints,
+      indexes,
     };
   }
 }

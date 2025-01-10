@@ -117,7 +117,7 @@ SELECT
     n.nspname AS schema_name,
     c.relname AS table_name,
     pg_catalog.obj_description(c.oid, 'pg_class') AS comment, -- Table comment
-    c.relkind AS relation_kind,                               -- Relation kind (table, partition)
+    c.relkind AS type,                                        -- Relation kind (table, partition)
     EXISTS (
       SELECT 1
       FROM pg_inherits i
@@ -346,3 +346,203 @@ ORDER BY
     n.nspname, c.relname;                              -- Order by schema and table
 
 
+
+-- Indexes List
+SELECT
+    n.nspname AS schema_name,                                -- Schema name
+    t.relname AS table_name,                                 -- Table name
+    i.relname AS name,                                       -- Index name
+    obj_description(i.oid, 'pg_class') AS comment,           -- Comment on the index
+    pg_relation_size(i.oid) AS size_bytes,                   -- Index size in bytes
+    pg_size_pretty(pg_relation_size(i.oid)) AS size_pretty,  -- Index size in a human-readable format
+    ix.indisunique AS is_unique,                             -- Whether the index enforces uniqueness
+    ix.indisprimary AS is_primary,                           -- Whether the index is a primary key
+    pg_get_indexdef(ix.indexrelid) AS definition,            -- Index definition
+    ARRAY(
+        SELECT a.attname
+        FROM pg_attribute a
+        JOIN unnest(ix.indkey) WITH ORDINALITY AS k (attnum, ord) ON a.attnum = k.attnum
+        WHERE a.attrelid = t.oid
+        ORDER BY k.ord
+    ) AS columns,                                            -- Columns used in the index
+    am.amname AS access_method,                              -- Access method (e.g., btree, gin, etc.)
+    CASE
+        WHEN ix.indisvalid THEN 'valid'
+        ELSE 'invalid'
+    END AS validity                                          -- Validity of the index
+FROM
+    pg_class t                                               -- Table
+JOIN
+    pg_namespace n ON t.relnamespace = n.oid                 -- Schema
+JOIN
+    pg_index ix ON t.oid = ix.indrelid                       -- Index metadata
+JOIN
+    pg_class i ON ix.indexrelid = i.oid                      -- Index
+JOIN
+    pg_am am ON i.relam = am.oid                             -- Access method
+WHERE
+    n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
+    AND t.relkind IN ('r', 'p', 'm')                         -- Only include regular and partitioned tables and materialized views
+ORDER BY
+    schema_name, table_name, name;
+    
+
+
+-- Indexes List (aggregated by table)
+SELECT
+    n.nspname AS schema_name,                                -- Schema name
+    t.relname AS table_name,                                 -- Table name
+    json_agg(
+        json_build_object(
+            'name', i.relname,                               -- Index name
+            'comment', obj_description(i.oid, 'pg_class'),   -- Comment on the index
+            'size_bytes', pg_relation_size(i.oid),           -- Index size in bytes
+            'size_pretty', pg_size_pretty(pg_relation_size(i.oid)), -- Index size in a human-readable format
+            'is_unique', ix.indisunique,                     -- Whether the index enforces uniqueness
+            'is_primary', ix.indisprimary,                   -- Whether the index is a primary key
+            'definition', pg_get_indexdef(ix.indexrelid),    -- Index definition
+            'columns', ARRAY(
+                SELECT a.attname
+                FROM pg_attribute a
+                JOIN unnest(ix.indkey) WITH ORDINALITY AS k (attnum, ord) ON a.attnum = k.attnum
+                WHERE a.attrelid = t.oid
+                ORDER BY k.ord
+            ),                                              -- Columns used in the index
+            'access_method', am.amname,                     -- Access method (e.g., btree, gin, etc.)
+            'validity', CASE
+                WHEN ix.indisvalid THEN 'valid'
+                ELSE 'invalid'
+            END                                             -- Validity of the index
+        )
+        ORDER BY i.relname                                   -- Sort indexes by name
+    ) AS indexes                                             -- JSON array of index details
+FROM
+    pg_class t                                               -- Table
+JOIN
+    pg_namespace n ON t.relnamespace = n.oid                 -- Schema
+JOIN
+    pg_index ix ON t.oid = ix.indrelid                       -- Index metadata
+JOIN
+    pg_class i ON ix.indexrelid = i.oid                      -- Index
+JOIN
+    pg_am am ON i.relam = am.oid                             -- Access method
+WHERE
+    n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
+    AND t.relkind IN ('r', 'p', 'm')                         -- Only include regular and partitioned tables and materialized views
+GROUP BY
+    n.nspname, t.relname                                     -- Group by schema and table
+ORDER BY
+    n.nspname, t.relname;                                    -- Sort by schema and table
+
+
+-- Sequences List
+SELECT
+    n.nspname AS schema_name,                            -- Schema name
+    s.relname AS sequence_name,                          -- Sequence name
+    obj_description(s.oid, 'pg_class') AS comment,       -- Comment on the sequence
+    'bigint' AS data_type,                               -- Default data type for sequences in PostgreSQL
+    seq.seqstart AS start_value,                         -- Starting value of the sequence
+    seq.seqmin AS min_value,                             -- Minimum value
+    seq.seqmax AS max_value,                             -- Maximum value
+    seq.seqincrement AS increment,                       -- Increment value
+    seq.seqcycle AS is_cycled,                           -- Whether the sequence cycles
+    last_value,                                          -- Last value of the sequence
+    pg_relation_size(s.oid) AS size_bytes,               -- Size of the sequence in bytes
+    pg_size_pretty(pg_relation_size(s.oid)) AS size_pretty -- Human-readable size of the sequence
+FROM
+    pg_class s                                           -- System catalog for relations
+JOIN
+    pg_namespace n ON n.oid = s.relnamespace             -- Join to get the schema
+JOIN
+    pg_sequence seq ON s.oid = seq.seqrelid              -- Join to get sequence-specific details
+JOIN
+    pg_sequences ps ON ps.schemaname = n.nspname AND ps.sequencename = s.relname -- Get last value
+WHERE
+    s.relkind = 'S'                                      -- 'S' indicates sequences
+    AND n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
+ORDER BY
+    schema_name, sequence_name;                          -- Order by schema and sequence name    
+
+
+-- Enums List
+SELECT
+    n.nspname AS schema_name,                                  -- Schema name
+    t.typname AS type_name,                                    -- Enum type name
+    obj_description(t.oid, 'pg_type') AS comment,              -- Enum type comment
+    json_agg(e.enumlabel ORDER BY e.enumsortorder) AS values   -- Enum values in order
+FROM
+    pg_type t
+JOIN
+    pg_namespace n ON n.oid = t.typnamespace                   -- Join to get schema
+JOIN
+    pg_enum e ON t.oid = e.enumtypid                           -- Join to get enum values
+WHERE
+    t.typtype = 'e'                                            -- Only enums
+    AND n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
+GROUP BY
+    n.nspname, t.typname, t.oid                                -- Group by schema and type
+ORDER BY
+    schema_name, type_name;                                    -- Order by schema and type name
+
+-- Ranges List
+SELECT
+    n.nspname AS schema_name,                           -- Schema name
+    t.typname AS type_name,                             -- Range type name
+    obj_description(t.oid, 'pg_type') AS comment,       -- Comment on the range type
+    r.rngsubtype::regtype AS subtype,                   -- Subtype of the range (base type)
+    r.rngcollation::regcollation AS collation,          -- Collation for the range type
+    r.rngsubopc::regoperator AS subtype_operator_class, -- Operator class for the subtype
+    r.rngcanonical::regprocedure AS canonical_function, -- Canonical function
+    r.rngsubdiff::regprocedure AS subtype_diff_function -- Subtype difference function
+FROM
+    pg_type t
+JOIN
+    pg_range r ON t.oid = r.rngtypid                    -- Join range-specific details
+JOIN
+    pg_namespace n ON n.oid = t.typnamespace            -- Join to get schema
+WHERE
+    t.typtype = 'r'                                     -- Only range types
+    AND n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
+ORDER BY
+    schema_name, type_name;
+
+
+-- Functions List
+SELECT
+    n.nspname AS schema,                                  -- Schema name
+    p.proname AS name,                                    -- Function name
+    obj_description(p.oid, 'pg_proc') AS comment,         -- Comment on the function (if available)
+    pg_catalog.pg_get_function_result(p.oid) AS return_type, -- Function return type
+    pg_catalog.pg_get_function_arguments(p.oid) AS arguments, -- Function arguments
+    CASE
+        WHEN p.prokind = 'a' THEN 'aggregate'              -- Aggregate function
+        WHEN p.prokind = 'w' THEN 'window'                 -- Window function
+        WHEN p.prokind = 'f' THEN 'normal'                 -- Regular function
+        ELSE 'other'                                       -- Other types
+    END AS function_type,                                  -- Function type
+    CASE
+        WHEN p.provolatile = 'i' THEN 'immutable'          -- Volatility: Immutable
+        WHEN p.provolatile = 's' THEN 'stable'             -- Volatility: Stable
+        WHEN p.provolatile = 'v' THEN 'volatile'           -- Volatility: Volatile
+    END AS volatility,                                     -- Volatility information
+    l.lanname AS language,                                 -- Language of the function
+    p.prosrc AS definition                                 -- Function definition/source
+FROM
+    pg_proc p
+JOIN
+    pg_namespace n ON n.oid = p.pronamespace               -- Join to get schema
+JOIN
+    pg_language l ON l.oid = p.prolang                     -- Join to get language
+WHERE
+    n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
+    AND p.prokind IN ('f', 'a', 'w')                       -- Include normal, aggregate, and window functions
+    AND l.lanname NOT IN ('internal', 'c')                 -- Exclude functions written in 'internal' or 'C' languages
+    AND p.proname NOT LIKE 'pg_%'                          -- Exclude functions with 'pg_' prefix (likely built-in)
+    AND NOT EXISTS (                                       -- Exclude functions with citext in arguments
+        SELECT 1
+        FROM unnest(string_to_array(pg_catalog.pg_get_function_arguments(p.oid), ',')) arg
+        WHERE arg ILIKE '%citext%'
+    )
+ORDER BY
+    schema, name;
+    

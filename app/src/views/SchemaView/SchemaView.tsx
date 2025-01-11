@@ -17,8 +17,13 @@ export const SchemaView = () => {
     { schema: params.schema, table: null },
     300
   );
+
+  if (!conn) return null;
+
   return (
     <PageLayout
+      disableMargins
+      stickyHeader
       title={params.schema}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">
@@ -49,10 +54,11 @@ export const SchemaView = () => {
           <Typography color="text.primary">{params.schema}</Typography>
         </Breadcrumbs>
       }
+      meta={{ title: `schema: ${params.schema}` }}
     >
-      {conn && <TablesList conn={conn} schema={params.schema!} />}
-      {conn && <ViewsList conn={conn} schema={params.schema!} />}
-      {conn && <MViewsList conn={conn} schema={params.schema!} />}
+      <TablesList conn={conn} schema={params.schema!} />
+      <ViewsList conn={conn} schema={params.schema!} />
+      <MViewsList conn={conn} schema={params.schema!} />
     </PageLayout>
   );
 };

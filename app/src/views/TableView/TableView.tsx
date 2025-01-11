@@ -18,14 +18,21 @@ export const TableView = () => {
     table: string;
     mode: string;
   }>();
-  const conn = useConnection(params.conn!, params.db!);
+
   useEmit(
     "ConnectionSchema.focus",
     { schema: params.schema, table: params.table },
     300
   );
+
+  const conn = useConnection(params.conn!, params.db!);
+  if (!conn) return null;
+
   return (
     <PageLayout
+      disableMargins
+      stickyHeader
+      meta={{ title: `${params.mode}: ${params.table}` }}
       title={params.table}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">
@@ -66,10 +73,10 @@ export const TableView = () => {
       }
       tray={<ToggleTableMode />}
     >
-      {conn && params.mode === "data" && <TableData conn={conn} />}
-      {conn && params.mode === "structure" && <TableStructure />}
-      {conn && params.mode === "dll" && <TableDLL />}
-      {conn && params.mode === "info" && <TableInfo />}
+      {params.mode === "data" && <TableData conn={conn} />}
+      {params.mode === "structure" && <TableStructure />}
+      {params.mode === "dll" && <TableDLL />}
+      {params.mode === "info" && <TableInfo />}
     </PageLayout>
   );
 };

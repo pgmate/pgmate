@@ -1,18 +1,28 @@
 import { useParams } from "react-router-dom";
-import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
+import { Box, Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import { Link as RouterLink } from "react-router-dom";
 import { useConnection } from "hooks/use-connections";
 
 import { PageLayout } from "components/PageLayout";
 import { SchemasList } from "./containers/SchemasList";
+import { DiskCharts } from "./containers/DiskCharts";
+import { SunburstChart } from "./containers/SunburstChart";
+// import { TreeMap } from "./containers/TreeMap";
 
 export const DatabaseView = () => {
   const params = useParams<{ conn: string; db: string }>();
   const conn = useConnection(params.conn!, params.db!);
 
+  if (!conn) return null;
+
   return (
     <PageLayout
-      title={params.db}
+      disablePadding
+      disableMargins
+      stickyHeader
+      meta={{ title: `db: ${conn.database}` }}
+      title={conn.database}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">
           <MUILink
@@ -35,7 +45,17 @@ export const DatabaseView = () => {
         </Breadcrumbs>
       }
     >
-      {conn && <SchemasList conn={conn} />}
+      <Box sx={{ flexGrow: 1, mb: 4 }}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SunburstChart conn={conn} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <DiskCharts conn={conn} />
+          </Grid>
+        </Grid>
+      </Box>
+      <SchemasList conn={conn} />
     </PageLayout>
   );
 };

@@ -1,0 +1,14 @@
+### List all packages
+GET http://localhost:8080/admin/v1/packages
+Accept: application/json
+
+###
+
+### Add a new package
+POST http://localhost:8080/packages/new-package
+Content-Type: application/json
+
+{
+  "name": "new-package",
+  "version": "1.0.0"
+}

@@ -137,6 +137,36 @@ export interface Sequence {
   size_pretty: string; // Human-readable size of the sequence
 }
 
+export interface Enum {
+  schema: string; // Schema name
+  name: string; // Enum type name
+  comment: string | null; // Enum type comment (nullable)
+  values: string[]; // List of enum values in order
+}
+
+export interface Range {
+  schema: string; // Schema name
+  name: string; // Range type name
+  comment: string | null; // Comment on the range type (nullable)
+  subtype: string; // Subtype of the range (base type)
+  collation: string | null; // Collation for the range type (nullable)
+  subtype_operator_class: string; // Operator class for the subtype
+  canonical_function: string | null; // Canonical function (nullable, may not be defined)
+  subtype_diff_function: string | null; // Subtype difference function (nullable, may not be defined)
+}
+
+export interface Function {
+  schema: string; // Schema name
+  name: string; // Function name
+  comment: string | null; // Comment on the function (nullable)
+  return: string; // Function return type
+  arguments: string; // Function arguments as a string
+  type: 'aggregate' | 'window' | 'normal' | 'other'; // Function type
+  volatility: 'immutable' | 'stable' | 'volatile'; // Volatility information
+  language: string; // Language of the function
+  definition: string; // Function definition/source
+}
+
 export interface TableColumn {
   schema_name: string; // Name of the schema
   table_name: string; // Name of the table or view
@@ -167,4 +197,7 @@ export interface PGSchema {
   constraints: TableConstraint[];
   indexes: TableIndex[];
   sequences: Sequence[];
+  enums: Enum[];
+  ranges: Range[];
+  functions: Function[];
 }

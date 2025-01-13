@@ -86,6 +86,21 @@ export class PGSchemaService {
     return rows;
   }
 
+  private async getEnums(client: Client): Promise<PGSchema['enums']> {
+    const { rows } = await client.query(queries.ENUMS_LIST);
+    return rows;
+  }
+
+  private async getRanges(client: Client): Promise<PGSchema['ranges']> {
+    const { rows } = await client.query(queries.RANGES_LIST);
+    return rows;
+  }
+
+  private async getFunctions(client: Client): Promise<PGSchema['functions']> {
+    const { rows } = await client.query(queries.FUNCTIONS_LIST);
+    return rows;
+  }
+
   async getSchema(client: Client): Promise<PGSchema> {
     const [
       server,
@@ -99,6 +114,9 @@ export class PGSchemaService {
       constraints,
       indexes,
       sequences,
+      enums,
+      ranges,
+      functions,
     ] = await Promise.all([
       this.getServerInfo(client),
       this.getCpuInfo(client),
@@ -111,6 +129,9 @@ export class PGSchemaService {
       this.getConstraints(client),
       this.getIndexes(client),
       this.getSequences(client),
+      this.getEnums(client),
+      this.getRanges(client),
+      this.getFunctions(client),
     ]);
 
     return {
@@ -125,6 +146,9 @@ export class PGSchemaService {
       constraints,
       indexes,
       sequences,
+      enums,
+      ranges,
+      functions,
     };
   }
 }

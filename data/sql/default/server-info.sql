@@ -466,8 +466,8 @@ ORDER BY
 
 -- Enums List
 SELECT
-    n.nspname AS schema_name,                                  -- Schema name
-    t.typname AS type_name,                                    -- Enum type name
+    n.nspname AS schema,                                  -- Schema name
+    t.typname AS name,                                    -- Enum type name
     obj_description(t.oid, 'pg_type') AS comment,              -- Enum type comment
     json_agg(e.enumlabel ORDER BY e.enumsortorder) AS values   -- Enum values in order
 FROM
@@ -482,12 +482,12 @@ WHERE
 GROUP BY
     n.nspname, t.typname, t.oid                                -- Group by schema and type
 ORDER BY
-    schema_name, type_name;                                    -- Order by schema and type name
+    schema, name;                                    -- Order by schema and type name
 
 -- Ranges List
 SELECT
-    n.nspname AS schema_name,                           -- Schema name
-    t.typname AS type_name,                             -- Range type name
+    n.nspname AS schema,                           -- Schema name
+    t.typname AS name,                             -- Range type name
     obj_description(t.oid, 'pg_type') AS comment,       -- Comment on the range type
     r.rngsubtype::regtype AS subtype,                   -- Subtype of the range (base type)
     r.rngcollation::regcollation AS collation,          -- Collation for the range type
@@ -504,7 +504,7 @@ WHERE
     t.typtype = 'r'                                     -- Only range types
     AND n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
 ORDER BY
-    schema_name, type_name;
+    schema, name;
 
 
 -- Functions List
@@ -512,14 +512,14 @@ SELECT
     n.nspname AS schema,                                  -- Schema name
     p.proname AS name,                                    -- Function name
     obj_description(p.oid, 'pg_proc') AS comment,         -- Comment on the function (if available)
-    pg_catalog.pg_get_function_result(p.oid) AS return_type, -- Function return type
+    pg_catalog.pg_get_function_result(p.oid) AS return, -- Function return type
     pg_catalog.pg_get_function_arguments(p.oid) AS arguments, -- Function arguments
     CASE
         WHEN p.prokind = 'a' THEN 'aggregate'              -- Aggregate function
         WHEN p.prokind = 'w' THEN 'window'                 -- Window function
         WHEN p.prokind = 'f' THEN 'normal'                 -- Regular function
         ELSE 'other'                                       -- Other types
-    END AS function_type,                                  -- Function type
+    END AS type,                                  -- Function type
     CASE
         WHEN p.provolatile = 'i' THEN 'immutable'          -- Volatility: Immutable
         WHEN p.provolatile = 's' THEN 'stable'             -- Volatility: Stable
@@ -545,4 +545,5 @@ WHERE
     )
 ORDER BY
     schema, name;
+    
     

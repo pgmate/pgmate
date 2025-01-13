@@ -305,3 +305,81 @@ WHERE
     s.relkind = 'S'                                      -- 'S' indicates sequences
     AND n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
 `;
+
+export const ENUMS_LIST = `
+SELECT
+  n.nspname AS schema,                                  -- Schema name
+  t.typname AS name,                                    -- Enum type name
+  obj_description(t.oid, 'pg_type') AS comment,              -- Enum type comment
+  json_agg(e.enumlabel ORDER BY e.enumsortorder) AS values   -- Enum values in order
+FROM
+  pg_type t
+JOIN
+  pg_namespace n ON n.oid = t.typnamespace                   -- Join to get schema
+JOIN
+  pg_enum e ON t.oid = e.enumtypid                           -- Join to get enum values
+WHERE
+  t.typtype = 'e'                                            -- Only enums
+  AND n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
+GROUP BY
+  n.nspname, t.typname, t.oid
+`;
+
+export const RANGES_LIST = `
+SELECT
+  n.nspname AS schema,                           -- Schema name
+  t.typname AS name,                             -- Range type name
+  obj_description(t.oid, 'pg_type') AS comment,       -- Comment on the range type
+  r.rngsubtype::regtype AS subtype,                   -- Subtype of the range (base type)
+  r.rngcollation::regcollation AS collation,          -- Collation for the range type
+  r.rngsubopc::regoperator AS subtype_operator_class, -- Operator class for the subtype
+  r.rngcanonical::regprocedure AS canonical_function, -- Canonical function
+  r.rngsubdiff::regprocedure AS subtype_diff_function -- Subtype difference function
+FROM
+  pg_type t
+JOIN
+  pg_range r ON t.oid = r.rngtypid                    -- Join range-specific details
+JOIN
+  pg_namespace n ON n.oid = t.typnamespace            -- Join to get schema
+WHERE
+  t.typtype = 'r'                                     -- Only range types
+  AND n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
+`;
+
+export const FUNCTIONS_LIST = `
+SELECT
+    n.nspname AS schema,                                  -- Schema name
+    p.proname AS name,                                    -- Function name
+    obj_description(p.oid, 'pg_proc') AS comment,         -- Comment on the function (if available)
+    pg_catalog.pg_get_function_result(p.oid) AS return, -- Function return type
+    pg_catalog.pg_get_function_arguments(p.oid) AS arguments, -- Function arguments
+    CASE
+        WHEN p.prokind = 'a' THEN 'aggregate'              -- Aggregate function
+        WHEN p.prokind = 'w' THEN 'window'                 -- Window function
+        WHEN p.prokind = 'f' THEN 'normal'                 -- Regular function
+        ELSE 'other'                                       -- Other types
+    END AS type,                                  -- Function type
+    CASE
+        WHEN p.provolatile = 'i' THEN 'immutable'          -- Volatility: Immutable
+        WHEN p.provolatile = 's' THEN 'stable'             -- Volatility: Stable
+        WHEN p.provolatile = 'v' THEN 'volatile'           -- Volatility: Volatile
+    END AS volatility,                                     -- Volatility information
+    l.lanname AS language,                                 -- Language of the function
+    p.prosrc AS definition                                 -- Function definition/source
+FROM
+    pg_proc p
+JOIN
+    pg_namespace n ON n.oid = p.pronamespace               -- Join to get schema
+JOIN
+    pg_language l ON l.oid = p.prolang                     -- Join to get language
+WHERE
+    n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
+    AND p.prokind IN ('f', 'a', 'w')                       -- Include normal, aggregate, and window functions
+    AND l.lanname NOT IN ('internal', 'c')                 -- Exclude functions written in 'internal' or 'C' languages
+    AND p.proname NOT LIKE 'pg_%'                          -- Exclude functions with 'pg_' prefix (likely built-in)
+    AND NOT EXISTS (                                       -- Exclude functions with citext in arguments
+        SELECT 1
+        FROM unnest(string_to_array(pg_catalog.pg_get_function_arguments(p.oid), ',')) arg
+        WHERE arg ILIKE '%citext%'
+    )
+`;

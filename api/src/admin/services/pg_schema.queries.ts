@@ -278,3 +278,30 @@ GROUP BY
 ORDER BY
   n.nspname, t.relname;
 `;
+
+export const SEQUENCES_LIST = `
+SELECT
+    n.nspname AS schema,                            -- Schema name
+    s.relname AS name,                          -- Sequence name
+    obj_description(s.oid, 'pg_class') AS comment,       -- Comment on the sequence
+    'bigint' AS data_type,                               -- Default data type for sequences in PostgreSQL
+    seq.seqstart AS start_value,                         -- Starting value of the sequence
+    seq.seqmin AS min_value,                             -- Minimum value
+    seq.seqmax AS max_value,                             -- Maximum value
+    seq.seqincrement AS increment,                       -- Increment value
+    seq.seqcycle AS is_cycled,                           -- Whether the sequence cycles
+    last_value,                                          -- Last value of the sequence
+    pg_relation_size(s.oid) AS size_bytes,               -- Size of the sequence in bytes
+    pg_size_pretty(pg_relation_size(s.oid)) AS size_pretty -- Human-readable size of the sequence
+FROM
+    pg_class s                                           -- System catalog for relations
+JOIN
+    pg_namespace n ON n.oid = s.relnamespace             -- Join to get the schema
+JOIN
+    pg_sequence seq ON s.oid = seq.seqrelid              -- Join to get sequence-specific details
+JOIN
+    pg_sequences ps ON ps.schemaname = n.nspname AND ps.sequencename = s.relname -- Get last value
+WHERE
+    s.relkind = 'S'                                      -- 'S' indicates sequences
+    AND n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
+`;

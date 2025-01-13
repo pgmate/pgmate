@@ -122,6 +122,21 @@ export interface Index {
   validity: 'valid' | 'invalid'; // Index validity status
 }
 
+export interface Sequence {
+  schema: string; // Schema name
+  name: string; // Sequence name
+  comment: string | null; // Comment on the sequence
+  data_type: string; // Data type (default is bigint for sequences)
+  start_value: string; // Starting value of the sequence
+  min_value: string; // Minimum value of the sequence
+  max_value: string; // Maximum value of the sequence
+  increment: string; // Increment value of the sequence
+  is_cycled: boolean; // Whether the sequence cycles
+  last_value: string; // Last value of the sequence
+  size_bytes: number; // Size of the sequence in bytes
+  size_pretty: string; // Human-readable size of the sequence
+}
+
 export interface TableColumn {
   schema_name: string; // Name of the schema
   table_name: string; // Name of the table or view
@@ -151,4 +166,5 @@ export interface PGSchema {
   columns: TableColumn[];
   constraints: TableConstraint[];
   indexes: TableIndex[];
+  sequences: Sequence[];
 }

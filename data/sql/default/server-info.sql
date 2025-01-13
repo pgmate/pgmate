@@ -437,8 +437,8 @@ ORDER BY
 
 -- Sequences List
 SELECT
-    n.nspname AS schema_name,                            -- Schema name
-    s.relname AS sequence_name,                          -- Sequence name
+    n.nspname AS schema,                            -- Schema name
+    s.relname AS name,                          -- Sequence name
     obj_description(s.oid, 'pg_class') AS comment,       -- Comment on the sequence
     'bigint' AS data_type,                               -- Default data type for sequences in PostgreSQL
     seq.seqstart AS start_value,                         -- Starting value of the sequence
@@ -461,7 +461,7 @@ WHERE
     s.relkind = 'S'                                      -- 'S' indicates sequences
     AND n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema') -- Exclude system schemas
 ORDER BY
-    schema_name, sequence_name;                          -- Order by schema and sequence name    
+    schema, name;                          -- Order by schema and sequence name    
 
 
 -- Enums List

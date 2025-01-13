@@ -81,6 +81,11 @@ export class PGSchemaService {
     return rows;
   }
 
+  private async getSequences(client: Client): Promise<PGSchema['sequences']> {
+    const { rows } = await client.query(queries.SEQUENCES_LIST);
+    return rows;
+  }
+
   async getSchema(client: Client): Promise<PGSchema> {
     const [
       server,
@@ -93,6 +98,7 @@ export class PGSchemaService {
       columns,
       constraints,
       indexes,
+      sequences,
     ] = await Promise.all([
       this.getServerInfo(client),
       this.getCpuInfo(client),
@@ -104,6 +110,7 @@ export class PGSchemaService {
       this.getColumns(client),
       this.getConstraints(client),
       this.getIndexes(client),
+      this.getSequences(client),
     ]);
 
     return {
@@ -117,6 +124,7 @@ export class PGSchemaService {
       columns,
       constraints,
       indexes,
+      sequences,
     };
   }
 }

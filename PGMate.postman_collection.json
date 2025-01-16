@@ -34,6 +34,30 @@
 					"response": []
 				},
 				{
+					"name": "pg_schema",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-pgmate-admin-secret",
+								"value": "{{PGMATE_ADMIN_SECRET}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"conn\": \"default\",\n    \"disableAnalyze\": true,\n    \"queries\": [\n        {\n            \"statement\": \"select table_schema, table_name, table_type from information_schema.tables;\"\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "localhost:8080/admin/v1/pg_schema"
+					},
+					"response": []
+				},
+				{
 					"name": "pg_dump::table::structure",
 					"request": {
 						"method": "POST",

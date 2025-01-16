@@ -279,6 +279,48 @@ ORDER BY
   n.nspname, t.relname;
 `;
 
+export const TRIGGERS_LIST_BY_TABLE = `
+SELECT
+  n.nspname AS "schema_name",
+  c.relname AS "table_name",
+  json_agg(json_build_object(
+      'name', t.tgname,
+      'comment', obj_description(t.oid, 'pg_trigger'),
+      'definition', pg_catalog.pg_get_triggerdef(t.oid, true),
+      'enabled', t.tgenabled,
+      'tgtype', t.tgtype,
+      'timing', CASE
+          WHEN position('BEFORE' IN pg_catalog.pg_get_triggerdef(t.oid)) > 0 THEN 'BEFORE'
+          WHEN position('AFTER' IN pg_catalog.pg_get_triggerdef(t.oid)) > 0 THEN 'AFTER'
+          WHEN position('INSTEAD OF' IN pg_catalog.pg_get_triggerdef(t.oid)) > 0 THEN 'INSTEAD'
+      END,
+      'events', ARRAY(
+          SELECT event
+          FROM unnest(ARRAY[
+              CASE WHEN position('INSERT' IN pg_catalog.pg_get_triggerdef(t.oid)) > 0 THEN 'INSERT' END,
+              CASE WHEN position('DELETE' IN pg_catalog.pg_get_triggerdef(t.oid)) > 0 THEN 'DELETE' END,
+              CASE WHEN position('UPDATE' IN pg_catalog.pg_get_triggerdef(t.oid)) > 0 THEN 'UPDATE' END,
+              CASE WHEN position('TRUNCATE' IN pg_catalog.pg_get_triggerdef(t.oid)) > 0 THEN 'TRUNCATE' END
+          ]) AS event
+          WHERE event IS NOT NULL
+      ),
+      'function_name', pg_proc.proname,
+      'function_definition', pg_proc.prosrc
+  )) AS triggers
+FROM
+  pg_trigger t
+JOIN
+  pg_class c ON t.tgrelid = c.oid
+JOIN
+  pg_namespace n ON c.relnamespace = n.oid
+JOIN
+  pg_proc ON t.tgfoid = pg_proc.oid
+WHERE
+  NOT t.tgisinternal
+  AND n.nspname NOT IN ('pg_toast', 'pg_catalog', 'information_schema')
+GROUP BY
+  n.nspname, c.relname`;
+
 export const SEQUENCES_LIST = `
 SELECT
     n.nspname AS schema,                            -- Schema name

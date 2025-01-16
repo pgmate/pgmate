@@ -81,6 +81,11 @@ export class PGSchemaService {
     return rows;
   }
 
+  private async getTriggers(client: Client): Promise<PGSchema['triggers']> {
+    const { rows } = await client.query(queries.TRIGGERS_LIST_BY_TABLE);
+    return rows;
+  }
+
   private async getSequences(client: Client): Promise<PGSchema['sequences']> {
     const { rows } = await client.query(queries.SEQUENCES_LIST);
     return rows;
@@ -113,6 +118,7 @@ export class PGSchemaService {
       columns,
       constraints,
       indexes,
+      triggers,
       sequences,
       enums,
       ranges,
@@ -128,6 +134,7 @@ export class PGSchemaService {
       this.getColumns(client),
       this.getConstraints(client),
       this.getIndexes(client),
+      this.getTriggers(client),
       this.getSequences(client),
       this.getEnums(client),
       this.getRanges(client),
@@ -145,6 +152,7 @@ export class PGSchemaService {
       columns,
       constraints,
       indexes,
+      triggers,
       sequences,
       enums,
       ranges,

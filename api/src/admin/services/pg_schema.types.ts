@@ -122,6 +122,21 @@ export interface Index {
   validity: 'valid' | 'invalid'; // Index validity status
 }
 
+export type TriggerTiming = 'BEFORE' | 'AFTER' | 'INSTEAD';
+export type TriggerEvent = 'INSERT' | 'UPDATE' | 'DELETE' | 'TRUNCATE';
+
+export type Trigger = {
+  name: string; // Trigger name
+  comment: string | null; // Trigger comment (if available)
+  definition: string; // SQL definition of the trigger
+  enabled: string; // Trigger enabled status ('D', 'A', 'O', 'R')
+  tgtype: number; // Trigger type (bitmask)
+  timing: TriggerTiming; // Trigger timing
+  events: TriggerEvent[]; // List of events (INSERT, UPDATE, DELETE, TRUNCATE)
+  function_name: string; // Trigger function name
+  function_definition: string; // Trigger function source code
+};
+
 export interface Sequence {
   schema: string; // Schema name
   name: string; // Sequence name
@@ -185,6 +200,12 @@ export interface TableIndex {
   indexes: Index[];
 }
 
+export type TableTriggers = {
+  schema_name: string; // Schema name
+  table_name: string; // Table name
+  triggers: Trigger[]; // List of triggers for the table
+};
+
 export interface PGSchema {
   server: ServerInfo;
   cpu: CpuInfo;
@@ -196,6 +217,7 @@ export interface PGSchema {
   columns: TableColumn[];
   constraints: TableConstraint[];
   indexes: TableIndex[];
+  triggers: TableTriggers[];
   sequences: Sequence[];
   enums: Enum[];
   ranges: Range[];

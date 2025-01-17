@@ -122,13 +122,14 @@ export class PGDumpService {
 
     const _dll: string[] = [];
 
-    for (const table of tables) {
-      let ddl = '';
+    try {
+      for (const table of tables) {
+        let ddl = '';
 
-      // 1. export series
-      ddl += `-- Series for: ${schema}.${table}\n`;
-      const seqReferences = await client.query(
-        `
+        // 1. export series
+        ddl += `-- Series for: ${schema}.${table}\n`;
+        const seqReferences = await client.query(
+          `
         SELECT
           quote_ident(n.nspname) AS schema_name,
           quote_ident(c.relname) AS table_name,
@@ -144,34 +145,34 @@ export class PGDumpService {
           AND NOT a.attisdropped
           AND a.attnum > 0;
         `,
-        [schema, table],
-      );
+          [schema, table],
+        );
 
-      const sequencesFound: { seqSchema: string; seqName: string }[] = [];
+        const sequencesFound: { seqSchema: string; seqName: string }[] = [];
 
-      seqReferences.rows.forEach((row) => {
-        const match = /nextval\('([^']+)'::regclass\)/.exec(row.default_expr);
-        if (match) {
-          const seqFull = match[1]; // e.g. "public.actor_actor_id_seq" or just "actor_actor_id_seq"
-          if (seqFull.includes('.')) {
-            const [seqSchema, seqName] = seqFull.split('.');
-            sequencesFound.push({ seqSchema, seqName });
-          } else {
-            // If no schema is given, use the table's schema (row.schema_name)
-            sequencesFound.push({
-              seqSchema: row.schema_name.replace(/"/g, ''),
-              seqName: seqFull,
-            });
+        seqReferences.rows.forEach((row) => {
+          const match = /nextval\('([^']+)'::regclass\)/.exec(row.default_expr);
+          if (match) {
+            const seqFull = match[1]; // e.g. "public.actor_actor_id_seq" or just "actor_actor_id_seq"
+            if (seqFull.includes('.')) {
+              const [seqSchema, seqName] = seqFull.split('.');
+              sequencesFound.push({ seqSchema, seqName });
+            } else {
+              // If no schema is given, use the table's schema (row.schema_name)
+              sequencesFound.push({
+                seqSchema: row.schema_name.replace(/"/g, ''),
+                seqName: seqFull,
+              });
+            }
           }
-        }
-      });
+        });
 
-      let sequencesDDL = '';
+        let sequencesDDL = '';
 
-      for (const { seqSchema, seqName } of sequencesFound) {
-        // Query the sequence metadata
-        const seqData = await client.query(
-          `
+        for (const { seqSchema, seqName } of sequencesFound) {
+          // Query the sequence metadata
+          const seqData = await client.query(
+            `
     SELECT
       s.seqstart,
       s.seqincrement,
@@ -186,47 +187,47 @@ export class PGDumpService {
       AND c.relname = $2
       AND c.relkind = 'S';
     `,
-          [seqSchema, seqName],
-        );
+            [seqSchema, seqName],
+          );
 
-        if (!seqData.rows.length) continue; // No sequence found or not valid
+          if (!seqData.rows.length) continue; // No sequence found or not valid
 
-        const { seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle } =
-          seqData.rows[0];
+          const { seqstart, seqincrement, seqmax, seqmin, seqcache, seqcycle } =
+            seqData.rows[0];
 
-        // Build CREATE SEQUENCE statement
-        // Note: Always quote schema & sequence name
-        sequencesDDL += `CREATE SEQUENCE "${seqSchema}"."${seqName}"
+          // Build CREATE SEQUENCE statement
+          // Note: Always quote schema & sequence name
+          sequencesDDL += `CREATE SEQUENCE "${seqSchema}"."${seqName}"
 START WITH ${seqstart}
 INCREMENT BY ${seqincrement}
 MINVALUE ${seqmin}
 MAXVALUE ${seqmax}
 CACHE ${seqcache} ${seqcycle ? 'CYCLE' : 'NO CYCLE'};\n`;
-      }
+        }
 
-      ddl += sequencesDDL + '\n';
+        ddl += sequencesDDL + '\n';
 
-      // 2. export table / view / materialized view DDL
-      // Detect object type and generate DDL accordingly
-      ddl += `-- DDL for: ${schema}.${table}\n`;
+        // 2. export table / view / materialized view DDL
+        // Detect object type and generate DDL accordingly
+        ddl += `-- DDL for: ${schema}.${table}\n`;
 
-      const objectTypeQuery = await client.query(
-        `
+        const objectTypeQuery = await client.query(
+          `
   SELECT
     relkind
   FROM pg_catalog.pg_class c
   JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
   WHERE n.nspname = $1 AND c.relname = $2;
   `,
-        [schema, table],
-      );
+          [schema, table],
+        );
 
-      const objectType = objectTypeQuery.rows[0]?.relkind;
+        const objectType = objectTypeQuery.rows[0]?.relkind;
 
-      if (objectType === 'r') {
-        // Regular table
-        const createTable = await client.query(
-          `
+        if (objectType === 'r') {
+          // Regular table
+          const createTable = await client.query(
+            `
     WITH cols AS (
       SELECT
         a.attname AS column_name,
@@ -261,14 +262,14 @@ CACHE ${seqcache} ${seqcycle ? 'CYCLE' : 'NO CYCLE'};\n`;
       E'\n);' AS ddl
     FROM cols;
     `,
-          [schema, table],
-        );
+            [schema, table],
+          );
 
-        ddl += createTable.rows[0]?.ddl || '';
-      } else if (objectType === 'v') {
-        // View
-        const createView = await client.query(
-          `
+          ddl += createTable.rows[0]?.ddl || '';
+        } else if (objectType === 'v') {
+          // View
+          const createView = await client.query(
+            `
     SELECT
       'CREATE VIEW "' || quote_ident($1) || '"."' || quote_ident($2) || '" AS ' || 
       pg_catalog.pg_get_viewdef(c.oid, true) AS ddl
@@ -276,14 +277,14 @@ CACHE ${seqcache} ${seqcycle ? 'CYCLE' : 'NO CYCLE'};\n`;
     JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
     WHERE n.nspname = $1 AND c.relname = $2;
     `,
-          [schema, table],
-        );
+            [schema, table],
+          );
 
-        ddl += createView.rows[0]?.ddl || '';
-      } else if (objectType === 'm') {
-        // Materialized view
-        const createMaterializedView = await client.query(
-          `
+          ddl += createView.rows[0]?.ddl || '';
+        } else if (objectType === 'm') {
+          // Materialized view
+          const createMaterializedView = await client.query(
+            `
     SELECT
       'CREATE MATERIALIZED VIEW "' || quote_ident($1) || '"."' || quote_ident($2) || '" AS ' || 
       pg_catalog.pg_get_viewdef(c.oid, true) AS ddl
@@ -291,20 +292,20 @@ CACHE ${seqcache} ${seqcycle ? 'CYCLE' : 'NO CYCLE'};\n`;
     JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
     WHERE n.nspname = $1 AND c.relname = $2;
     `,
-          [schema, table],
-        );
+            [schema, table],
+          );
 
-        ddl += createMaterializedView.rows[0]?.ddl || '';
-      } else {
-        ddl += `-- Unsupported object type: ${objectType}\n`;
-      }
+          ddl += createMaterializedView.rows[0]?.ddl || '';
+        } else {
+          ddl += `-- Unsupported object type: ${objectType}\n`;
+        }
 
-      ddl += '\n\n';
+        ddl += '\n\n';
 
-      // 3. Constraints (PK, CHECK, FK, etc.)
-      ddl += `-- Constraints for: ${schema}.${table}\n`;
-      const constraints = await client.query(
-        `
+        // 3. Constraints (PK, CHECK, FK, etc.)
+        ddl += `-- Constraints for: ${schema}.${table}\n`;
+        const constraints = await client.query(
+          `
         SELECT
         con.conname,
         con.contype,
@@ -322,43 +323,43 @@ CACHE ${seqcache} ${seqcycle ? 'CYCLE' : 'NO CYCLE'};\n`;
           AND rel.relname = $2
         ORDER BY con.contype;
       `,
-        [schema, table],
-      );
+          [schema, table],
+        );
 
-      constraints.rows.forEach((row: any) => {
-        let def = row.constraint_def;
+        constraints.rows.forEach((row: any) => {
+          let def = row.constraint_def;
 
-        // Quote column names in (...), e.g. (actor_id, film_id) -> ("actor_id", "film_id")
-        def = def.replace(/\(([^()]+)\)/g, (_, cols) => {
-          return (
-            '(' +
-            cols
-              .split(',')
-              .map((c) => `"${c.trim()}"`)
-              .join(', ') +
-            ')'
-          );
+          // Quote column names in (...), e.g. (actor_id, film_id) -> ("actor_id", "film_id")
+          def = def.replace(/\(([^()]+)\)/g, (_, cols) => {
+            return (
+              '(' +
+              cols
+                .split(',')
+                .map((c) => `"${c.trim()}"`)
+                .join(', ') +
+              ')'
+            );
+          });
+
+          // Fully qualify foreign key references
+          if (row.contype === 'f') {
+            // Example of raw: FOREIGN KEY ("actor_id") REFERENCES actor(actor_id)
+            // We want: FOREIGN KEY ("actor_id") REFERENCES "public"."actor"("actor_id")
+            def = def.replace(
+              /REFERENCES\s+(\S+)\s*\(([^()]+)\)/,
+              `REFERENCES "${row.ref_schema}"."${row.ref_table}"($2)`,
+            );
+          }
+
+          ddl += `ALTER TABLE ONLY "${schema}"."${table}"\nADD CONSTRAINT "${row.conname}" ${def};\n`;
         });
 
-        // Fully qualify foreign key references
-        if (row.contype === 'f') {
-          // Example of raw: FOREIGN KEY ("actor_id") REFERENCES actor(actor_id)
-          // We want: FOREIGN KEY ("actor_id") REFERENCES "public"."actor"("actor_id")
-          def = def.replace(
-            /REFERENCES\s+(\S+)\s*\(([^()]+)\)/,
-            `REFERENCES "${row.ref_schema}"."${row.ref_table}"($2)`,
-          );
-        }
+        ddl += '\n';
 
-        ddl += `ALTER TABLE ONLY "${schema}"."${table}"\nADD CONSTRAINT "${row.conname}" ${def};\n`;
-      });
-
-      ddl += '\n';
-
-      // 4. Indexes
-      ddl += `-- Indexes for: ${schema}.${table}\n`;
-      const indexes = await client.query(
-        `
+        // 4. Indexes
+        ddl += `-- Indexes for: ${schema}.${table}\n`;
+        const indexes = await client.query(
+          `
         SELECT
       idxcls.relname AS index_name,
       pg_catalog.pg_get_indexdef(idx.indexrelid, 0, true) AS index_def,
@@ -373,41 +374,41 @@ CACHE ${seqcache} ${seqcycle ? 'CYCLE' : 'NO CYCLE'};\n`;
       AND tbl.relname = $2
       AND con.conindid IS NULL;
       `,
-        [schema, table],
-      );
-
-      indexes.rows.forEach((row) => {
-        // Fix schema/table quoting in the CREATE INDEX statement
-        let finalDef = row.index_def.replace(
-          /^(CREATE\s+INDEX\s+)(\S+)(\s+ON\s+)(\S+)/i,
-          `$1"${row.index_name}"$3"${row.schema_name}"."${row.table_name}"`,
+          [schema, table],
         );
 
-        // Quote column names inside (...)
-        finalDef = finalDef.replace(/\(([^()]+)\)/g, (_, cols) => {
-          return (
-            '(' +
-            cols
-              .split(',')
-              .map((c) => `"${c.trim().replace(/"/g, '')}"`)
-              .join(', ') +
-            ')'
+        indexes.rows.forEach((row) => {
+          // Fix schema/table quoting in the CREATE INDEX statement
+          let finalDef = row.index_def.replace(
+            /^(CREATE\s+INDEX\s+)(\S+)(\s+ON\s+)(\S+)/i,
+            `$1"${row.index_name}"$3"${row.schema_name}"."${row.table_name}"`,
           );
+
+          // Quote column names inside (...)
+          finalDef = finalDef.replace(/\(([^()]+)\)/g, (_, cols) => {
+            return (
+              '(' +
+              cols
+                .split(',')
+                .map((c) => `"${c.trim().replace(/"/g, '')}"`)
+                .join(', ') +
+              ')'
+            );
+          });
+
+          if (!finalDef.endsWith(';')) {
+            finalDef += ';';
+          }
+
+          ddl += `${finalDef}\n`;
         });
 
-        if (!finalDef.endsWith(';')) {
-          finalDef += ';';
-        }
+        ddl += '\n';
 
-        ddl += `${finalDef}\n`;
-      });
-
-      ddl += '\n';
-
-      // 5. Triggers
-      ddl += `-- Triggers for: ${schema}.${table}\n`;
-      const triggers = await client.query(
-        `
+        // 5. Triggers
+        ddl += `-- Triggers for: ${schema}.${table}\n`;
+        const triggers = await client.query(
+          `
     SELECT
       t.tgname AS trigger_name,
       pg_catalog.pg_get_triggerdef(t.oid, false) AS trigger_def,
@@ -421,45 +422,45 @@ CACHE ${seqcache} ${seqcycle ? 'CYCLE' : 'NO CYCLE'};\n`;
       AND NOT t.tgisinternal
     ORDER BY t.tgname;
   `,
-        [schema, table],
-      );
-
-      triggers.rows.forEach((row) => {
-        let def = row.trigger_def;
-
-        // Ensure trigger name is quoted
-        def = def.replace(
-          new RegExp(`^CREATE\\s+TRIGGER\\s+${row.trigger_name}`, 'i'),
-          `CREATE TRIGGER "${row.trigger_name}"`,
+          [schema, table],
         );
 
-        // Force quoting for the "ON schema.table"
-        // (handles cases like ON public.film_actor or ON "public"."film_actor")
-        def = def.replace(
-          new RegExp(
-            ` ON\\s+(?:"?${row.schema_name}"?\\.)?"?${row.table_name}"? `,
-            'i',
-          ),
-          `ON "${row.schema_name}"."${row.table_name}"\n`,
-        );
+        triggers.rows.forEach((row) => {
+          let def = row.trigger_def;
 
-        // Force quoting for the function call:
-        //  EXECUTE FUNCTION "public"."some_func"(...)
-        // Matches optional quotes around (schema.)functionName
-        def = def.replace(
-          /EXECUTE\s+FUNCTION\s+(?:"?([^".]+)"?\.)?"?([^"(\s]+)"?\(/i,
-          `EXECUTE FUNCTION "${row.schema_name}"."$2"(`,
-        );
+          // Ensure trigger name is quoted
+          def = def.replace(
+            new RegExp(`^CREATE\\s+TRIGGER\\s+${row.trigger_name}`, 'i'),
+            `CREATE TRIGGER "${row.trigger_name}"`,
+          );
 
-        ddl += `${def};\n`;
-      });
+          // Force quoting for the "ON schema.table"
+          // (handles cases like ON public.film_actor or ON "public"."film_actor")
+          def = def.replace(
+            new RegExp(
+              ` ON\\s+(?:"?${row.schema_name}"?\\.)?"?${row.table_name}"? `,
+              'i',
+            ),
+            `ON "${row.schema_name}"."${row.table_name}"\n`,
+          );
 
-      ddl += '\n';
+          // Force quoting for the function call:
+          //  EXECUTE FUNCTION "public"."some_func"(...)
+          // Matches optional quotes around (schema.)functionName
+          def = def.replace(
+            /EXECUTE\s+FUNCTION\s+(?:"?([^".]+)"?\.)?"?([^"(\s]+)"?\(/i,
+            `EXECUTE FUNCTION "${row.schema_name}"."$2"(`,
+          );
 
-      // 6. Extended Statistics
-      ddl += `-- Extended Statistics for: ${schema}.${table}\n`;
-      const stats = await client.query(
-        `
+          ddl += `${def};\n`;
+        });
+
+        ddl += '\n';
+
+        // 6. Extended Statistics
+        ddl += `-- Extended Statistics for: ${schema}.${table}\n`;
+        const stats = await client.query(
+          `
         SELECT
           s.oid,
           s.stxname,
@@ -471,96 +472,96 @@ CACHE ${seqcache} ${seqcycle ? 'CYCLE' : 'NO CYCLE'};\n`;
         WHERE nsp.nspname = $1
           AND tbl.relname = $2;
   `,
-        [schema, table],
-      );
-
-      // This might be version-specific, so we need to map the stxkind chars to their full names
-      // it needs WAY more work...
-      const kindMap: Record<string, string> = {
-        n: 'ndistinct', // Extended statistics for distinct counts
-        d: 'dependencies', // Extended statistics for column dependencies
-        m: 'mcv', // Most Common Values
-        f: 'ndistinct', // Functional dependencies || ndistinct ?!?
-        e: 'expressions', // Expression statistics
-      };
-
-      stats.rows.forEach((row: any) => {
-        // Before using 'def', define it from row.stats_def:
-        let def = row.stats_def;
-
-        // Parse stxkind into an array of chars
-        let rawKinds: string[];
-        if (typeof row.stxkind === 'string') {
-          // stxkind might look like '{n,d,m}', so remove braces and split by comma
-          rawKinds = row.stxkind.replace(/[{}]/g, '').split(',');
-        } else {
-          // If it's already an array, just use it directly
-          rawKinds = row.stxkind;
-        }
-
-        // Build the list of statistic kinds (e.g. ndistinct, dependencies, mcv)
-        const statsKinds = rawKinds.map((k) => kindMap[k] || k).join(', ');
-
-        // 1. Extract & fix the CREATE STATISTICS line
-        //    Dynamically insert (kind1, kind2, ...) and quote schema + stats name
-        const createRegex = /^(CREATE\s+STATISTICS\s+)([^\s]+)/i;
-        const createMatch = createRegex.exec(def);
-        if (!createMatch) {
-          // If there's no match, skip this row
-          return;
-        }
-
-        const prefix = createMatch[1]; // e.g. "CREATE STATISTICS "
-        const rawStatsName = createMatch[2]; // e.g. "public.film_actor_stats"
-
-        // Quote the schema and statistic name
-        let fixedStatsName: string;
-        if (rawStatsName.includes('.')) {
-          // Already has a schema part like public.film_actor_stats
-          const [statsSchema, statsObjName] = rawStatsName.split('.');
-          fixedStatsName = `"${statsSchema}"."${statsObjName}"`;
-        } else {
-          // No explicit schema, use the given 'schema'
-          fixedStatsName = `"${schema}"."${rawStatsName}"`;
-        }
-
-        // Replace the CREATE STATISTICS line with quoted names + dynamic kinds
-        def = def.replace(
-          createRegex,
-          `${prefix}${fixedStatsName} (${statsKinds})`,
+          [schema, table],
         );
 
-        // 2. Quote columns in ON (...)
-        //    e.g. ON (actor_id, film_id) => ON ("actor_id", "film_id")
-        def = def.replace(/ON\s*\(([^)]+)\)/i, (_, cols) => {
-          const quotedCols = cols
-            .split(',')
-            .map((col) => `"${col.trim().replace(/"/g, '')}"`)
-            .join(', ');
-          return `ON (${quotedCols})`;
-        });
+        // This might be version-specific, so we need to map the stxkind chars to their full names
+        // it needs WAY more work...
+        const kindMap: Record<string, string> = {
+          n: 'ndistinct', // Extended statistics for distinct counts
+          d: 'dependencies', // Extended statistics for column dependencies
+          m: 'mcv', // Most Common Values
+          f: 'ndistinct', // Functional dependencies || ndistinct ?!?
+          e: 'expressions', // Expression statistics
+        };
 
-        // 3. Quote the table in FROM ...
-        //    Might be FROM film_actor or FROM public.film_actor => FROM "public"."film_actor"
-        const fromRegex = /\bFROM\s+([^\s]+)/i;
-        def = def.replace(fromRegex, (_, tableName) => {
-          if (tableName.includes('.')) {
-            const [tblSchema, tbl] = tableName.split('.');
-            return `FROM "${tblSchema}"."${tbl}"`;
+        stats.rows.forEach((row: any) => {
+          // Before using 'def', define it from row.stats_def:
+          let def = row.stats_def;
+
+          // Parse stxkind into an array of chars
+          let rawKinds: string[];
+          if (typeof row.stxkind === 'string') {
+            // stxkind might look like '{n,d,m}', so remove braces and split by comma
+            rawKinds = row.stxkind.replace(/[{}]/g, '').split(',');
+          } else {
+            // If it's already an array, just use it directly
+            rawKinds = row.stxkind;
           }
-          return `FROM "${schema}"."${tableName}"`;
+
+          // Build the list of statistic kinds (e.g. ndistinct, dependencies, mcv)
+          const statsKinds = rawKinds.map((k) => kindMap[k] || k).join(', ');
+
+          // 1. Extract & fix the CREATE STATISTICS line
+          //    Dynamically insert (kind1, kind2, ...) and quote schema + stats name
+          const createRegex = /^(CREATE\s+STATISTICS\s+)([^\s]+)/i;
+          const createMatch = createRegex.exec(def);
+          if (!createMatch) {
+            // If there's no match, skip this row
+            return;
+          }
+
+          const prefix = createMatch[1]; // e.g. "CREATE STATISTICS "
+          const rawStatsName = createMatch[2]; // e.g. "public.film_actor_stats"
+
+          // Quote the schema and statistic name
+          let fixedStatsName: string;
+          if (rawStatsName.includes('.')) {
+            // Already has a schema part like public.film_actor_stats
+            const [statsSchema, statsObjName] = rawStatsName.split('.');
+            fixedStatsName = `"${statsSchema}"."${statsObjName}"`;
+          } else {
+            // No explicit schema, use the given 'schema'
+            fixedStatsName = `"${schema}"."${rawStatsName}"`;
+          }
+
+          // Replace the CREATE STATISTICS line with quoted names + dynamic kinds
+          def = def.replace(
+            createRegex,
+            `${prefix}${fixedStatsName} (${statsKinds})`,
+          );
+
+          // 2. Quote columns in ON (...)
+          //    e.g. ON (actor_id, film_id) => ON ("actor_id", "film_id")
+          def = def.replace(/ON\s*\(([^)]+)\)/i, (_, cols) => {
+            const quotedCols = cols
+              .split(',')
+              .map((col) => `"${col.trim().replace(/"/g, '')}"`)
+              .join(', ');
+            return `ON (${quotedCols})`;
+          });
+
+          // 3. Quote the table in FROM ...
+          //    Might be FROM film_actor or FROM public.film_actor => FROM "public"."film_actor"
+          const fromRegex = /\bFROM\s+([^\s]+)/i;
+          def = def.replace(fromRegex, (_, tableName) => {
+            if (tableName.includes('.')) {
+              const [tblSchema, tbl] = tableName.split('.');
+              return `FROM "${tblSchema}"."${tbl}"`;
+            }
+            return `FROM "${schema}"."${tableName}"`;
+          });
+
+          // Finally, add the statement to your DDL buffer
+          ddl += `${def};\n`;
         });
 
-        // Finally, add the statement to your DDL buffer
-        ddl += `${def};\n`;
-      });
+        ddl += '\n';
 
-      ddl += '\n';
-
-      // 7. Comments
-      ddl += `-- Comments for: ${schema}.${table}\n`;
-      const comments = await client.query(
-        `
+        // 7. Comments
+        ddl += `-- Comments for: ${schema}.${table}\n`;
+        const comments = await client.query(
+          `
         SELECT
   pg_description.description AS comment,
   nsp.nspname AS schema_name,
@@ -637,57 +638,63 @@ LEFT JOIN pg_description ON con.oid = pg_description.objoid
 WHERE nsp.nspname = $1
   AND c.relname = $2;
         `,
-        [schema, table],
-      );
+          [schema, table],
+        );
 
-      comments.rows.forEach((row: any) => {
-        if (!row.comment) return;
+        comments.rows.forEach((row: any) => {
+          if (!row.comment) return;
 
-        const commentText = row.comment.replace(/'/g, "''"); // Escape single quotes
+          const commentText = row.comment.replace(/'/g, "''"); // Escape single quotes
 
-        switch (row.object_type) {
-          case 'TABLE':
-            ddl += `COMMENT ON TABLE "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
-            break;
+          switch (row.object_type) {
+            case 'TABLE':
+              ddl += `COMMENT ON TABLE "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
+              break;
 
-          case 'COLUMN':
-            ddl += `COMMENT ON COLUMN "${row.schema_name}"."${table}"."${row.object_name}" IS '${commentText}';\n`;
-            break;
+            case 'COLUMN':
+              ddl += `COMMENT ON COLUMN "${row.schema_name}"."${table}"."${row.object_name}" IS '${commentText}';\n`;
+              break;
 
-          case 'TRIGGER':
-            ddl += `COMMENT ON TRIGGER "${row.object_name}" ON "${row.schema_name}"."${table}" IS '${commentText}';\n`;
-            break;
+            case 'TRIGGER':
+              ddl += `COMMENT ON TRIGGER "${row.object_name}" ON "${row.schema_name}"."${table}" IS '${commentText}';\n`;
+              break;
 
-          case 'STATISTICS':
-            ddl += `COMMENT ON STATISTICS "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
-            break;
+            case 'STATISTICS':
+              ddl += `COMMENT ON STATISTICS "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
+              break;
 
-          case 'CONSTRAINT':
-            ddl += `COMMENT ON CONSTRAINT "${row.object_name}" ON "${row.schema_name}"."${table}" IS '${commentText}';\n`;
-            break;
+            case 'CONSTRAINT':
+              ddl += `COMMENT ON CONSTRAINT "${row.object_name}" ON "${row.schema_name}"."${table}" IS '${commentText}';\n`;
+              break;
 
-          case 'INDEX':
-            ddl += `COMMENT ON INDEX "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
-            break;
+            case 'INDEX':
+              ddl += `COMMENT ON INDEX "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
+              break;
 
-          case 'SEQUENCE':
-            ddl += `COMMENT ON SEQUENCE "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
-            break;
+            case 'SEQUENCE':
+              ddl += `COMMENT ON SEQUENCE "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
+              break;
 
-          case 'VIEW':
-          case 'MATERIALIZED VIEW':
-            ddl += `COMMENT ON ${row.object_type} "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
-            break;
+            case 'VIEW':
+            case 'MATERIALIZED VIEW':
+              ddl += `COMMENT ON ${row.object_type} "${row.schema_name}"."${row.object_name}" IS '${commentText}';\n`;
+              break;
 
-          default:
-            // Handle other or unknown object types if necessary
-            ddl += `-- Unknown object type: ${row.object_type} for "${row.schema_name}"."${row.object_name}"\n`;
-        }
-      });
+            default:
+              // Handle other or unknown object types if necessary
+              ddl += `-- Unknown object type: ${row.object_type} for "${row.schema_name}"."${row.object_name}"\n`;
+          }
+        });
 
-      ddl += '\n';
+        ddl += '\n';
 
-      _dll.push(ddl);
+        _dll.push(ddl);
+      }
+    } catch (err: any) {
+      console.error(err);
+      throw new Error(err.message);
+    } finally {
+      await client.end();
     }
 
     return {

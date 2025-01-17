@@ -1,15 +1,18 @@
 import Editor from "@monaco-editor/react";
 import { IconButton, Tooltip, Box, useTheme } from "@mui/material";
 import { Icon } from "components/Icon";
+import { on } from "events";
 
 export const CodeViewer = ({
   code,
   language,
   height = 75,
+  onMount,
 }: {
   code: string;
   language: string;
-  height?: number;
+  height?: number | string;
+  onMount?: (editor: any) => void;
 }) => {
   const theme = useTheme();
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
@@ -47,6 +50,7 @@ export const CodeViewer = ({
         }}
         onMount={(editor) => {
           editor.addCommand(0, () => null);
+          onMount?.(editor);
         }}
       />
 

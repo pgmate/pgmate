@@ -52,7 +52,8 @@ export const useConnectionParams = () => {
     ready,
     error,
     version,
-    // conn: match?.params.conn,
-    // db: match?.params.db,
+    query,
+    conn: match?.params.conn,
+    db: match?.params.db,
   };
 };

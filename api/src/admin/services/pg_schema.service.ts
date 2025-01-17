@@ -1,15 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Client } from 'pg';
-import { ConnectionsService } from '../services/connections.service';
 import * as queries from './pg_schema.queries';
 import { PGSchema } from './pg_schema.types';
 
 @Injectable()
 export class PGSchemaService {
-  private readonly logger = new Logger(PGSchemaService.name);
-
-  constructor(private readonly connectionsService: ConnectionsService) {}
-
   private async getServerInfo(client: Client): Promise<PGSchema['server']> {
     const { rows } = await client.query(queries.SERVER_INFO);
     return {

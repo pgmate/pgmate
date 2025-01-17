@@ -32,6 +32,8 @@ export class PGSchemaController {
       };
     } catch (e: any) {
       console.error(e);
+    } finally {
+      await client.end();
     }
 
     return {

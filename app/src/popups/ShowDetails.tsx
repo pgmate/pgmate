@@ -11,6 +11,7 @@ import { useSubscribe } from "hooks/use-pubsub";
 interface ShowDetailsData {
   title: React.ReactNode;
   body: React.ReactNode;
+  bodyProps?: React.ComponentProps<typeof DialogContent>;
 }
 
 export const ShowDetails: React.FC = () => {
@@ -27,10 +28,12 @@ export const ShowDetails: React.FC = () => {
     setTimeout(() => setData(null), 500);
   };
 
+  console.log(data?.bodyProps);
+
   return (
     <Dialog open={open} onClose={handleClose}>
       <DialogTitle>{data?.title}</DialogTitle>
-      <DialogContent>{data?.body}</DialogContent>
+      <DialogContent {...data?.bodyProps}>{data?.body}</DialogContent>
       <DialogActions>
         <Button onClick={handleClose} autoFocus>
           Close

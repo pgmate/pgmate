@@ -60,6 +60,11 @@ const transformToNestedList = (
     return a.name.localeCompare(b.name); // Alphabetical for others
   });
 
+  // Sort tables within each schema alphabetically
+  sortedSchemas.forEach((schema) => {
+    schema.tables.sort((a, b) => a.name.localeCompare(b.name));
+  });
+
   return sortedSchemas;
 };
 

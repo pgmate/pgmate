@@ -20,6 +20,37 @@ function cleanItem(obj: any, keywordsToRemove: string[] = []): any {
   }, {});
 }
 
+// Function to sort tables by schema and table name
+// Function to sort tables by schema and table name
+function sortItems(originalSchema: any) {
+  const sortedTables = originalSchema.tables.sort((a: any, b: any) => {
+    const schemaOrder = (schemaName: string) => {
+      if (schemaName === "public") return 0;
+      if (schemaName === "pg_catalog") return 1;
+      if (schemaName === "pg_toast") return 2;
+      if (schemaName.startsWith("pg_")) return 3;
+      if (schemaName === "information_schema") return 4;
+      return 5; // Default order for other schemas
+    };
+
+    const orderA = schemaOrder(a.schema_name);
+    const orderB = schemaOrder(b.schema_name);
+
+    // Compare by schema order first
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
+    // If schemas are the same, compare table names alphabetically
+    return a.table_name.localeCompare(b.table_name);
+  });
+
+  return {
+    ...originalSchema,
+    tables: sortedTables, // Replace with the sorted list of tables
+  };
+}
+
 function filterFields(original: any) {
   // Filter tables with essential fields
   const tables = original.tables.map((table: any) =>
@@ -27,6 +58,7 @@ function filterFields(original: any) {
       "indexes_size",
       "heap_size",
       "total_relation_size",
+      "toast_size",
       "has_partitions",
     ])
   );
@@ -236,7 +268,8 @@ const splitResults = (tableMap: any) =>
 
 // Export function with reorganization and partition nesting
 export function filterSchema(originalSchema: any) {
-  const filteredSchema = filterFields(originalSchema);
+  const sortedSchema = sortItems(originalSchema); // S
+  const filteredSchema = filterFields(sortedSchema);
   const renamedSchema = renameFields(filteredSchema);
 
   // Create a map of tables for quick lookup

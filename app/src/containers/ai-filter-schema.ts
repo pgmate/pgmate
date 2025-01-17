@@ -1,91 +1,142 @@
-export function filterSchema(original: any) {
-  // Define the structure of tableMap
-  const tableMap: {
-    [key: string]: {
-      name: string;
-      comment: string | null;
-      type: string;
-      has_partitions: boolean;
-      partition_of: string | null;
-      row_estimate: number;
-      constraints: any[];
-      indexes: any[];
-      columns?: any[]; // Optional: Exclude for partitions
-      partitions: any[]; // For child partitions
-    };
-  } = {};
+// Helper function to move a field to the first position
+const moveToFirst = (obj: any, newField: string, value: any) => {
+  const { schema_name, table_name, ...rest } = obj; // Remove schema_name and table_name
+  return { [newField]: value, ...rest }; // Add new field at the start
+};
 
-  // Initialize the tables structure with their respective data
-  original.tables.forEach((table: any) => {
-    tableMap[`${table.schema_name}.${table.table_name}`] = {
-      name: `${table.schema_name}.${table.table_name}`,
-      comment: table.comment,
-      type: table.type,
-      has_partitions: table.has_partitions,
-      partition_of: table.partition_of,
-      row_estimate: table.row_estimate,
-      constraints: [],
-      indexes: [],
-      columns: table.partition_of ? undefined : [], // Omit columns for partitions
-      partitions: [], // Initialize an empty array for partitions
-    };
-  });
+function cleanItem(obj: any, keywordsToRemove: string[]): any {
+  return Object.keys(obj).reduce((acc: any, key: string) => {
+    const value = obj[key];
+    // Include key only if it's not in the list and not null/undefined
+    if (
+      !keywordsToRemove.includes(key) &&
+      value !== null &&
+      value !== undefined
+    ) {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
+}
 
-  // Integrate columns into their respective tables (if provided in the original structure)
-  if (original.columns) {
-    original.columns.forEach((column: any) => {
-      const key = `${column.schema_name}.${column.table_name}`;
-      if (tableMap[key] && tableMap[key].columns !== undefined) {
-        tableMap[key].columns = column.columns;
-      }
-    });
-  }
+function filterFields(original: any) {
+  // Filter tables with essential fields
+  const tables = original.tables.map((table: any) =>
+    cleanItem(table, [
+      "indexes_size",
+      "heap_size",
+      "total_relation_size",
+      "has_partitions",
+    ])
+  );
 
-  // Integrate constraints into their respective tables
-  original.constraints.forEach((constraint: any) => {
-    const key = `${constraint.schema_name}.${constraint.table_name}`;
-    if (tableMap[key]) {
-      tableMap[key].constraints = constraint.constraints.map(
-        (item: { definition: any; [key: string]: any }) => {
-          const { definition, ...rest } = item; // Explicitly type 'definition'
-          return rest;
-        }
-      );
+  // Filter constraints with essential fields and remove "definition" key
+  const constraints = original.constraints.map((constraint: any) => ({
+    schema_name: constraint.schema_name,
+    table_name: constraint.table_name,
+    constraints: constraint.constraints.map((con: any) =>
+      cleanItem(con, ["definition"])
+    ),
+  }));
+
+  // Filter indexes with essential fields and remove "definition" key
+  const indexes = original.indexes.map((index: any) => ({
+    schema_name: index.schema_name,
+    table_name: index.table_name,
+    indexes: index.indexes.map((idx: any) =>
+      cleanItem(idx, ["definition", "size_bytes", "size_pretty"])
+    ),
+  }));
+
+  // Pass columns as-is, but clean their first-level keys
+  const columns = original.columns
+    ? original.columns.map((column: any) => ({
+        schema_name: column.schema_name,
+        table_name: column.table_name,
+        columns: column.columns.map((col: any) => cleanItem(col, [])),
+      }))
+    : [];
+
+  return { tables, constraints, indexes, columns };
+}
+
+function renameFields(filtered: any) {
+  // Rename fields in tables
+  const tables = filtered.tables.map((table: any) =>
+    moveToFirst(
+      table,
+      "name",
+      `${table.schema_name}.${table.table_name}` // Add "name" field
+    )
+  );
+
+  // Rename fields in constraints
+  const constraints = filtered.constraints.map((constraint: any) =>
+    moveToFirst(
+      constraint,
+      "table",
+      `${constraint.schema_name}.${constraint.table_name}` // Add "table" field
+    )
+  );
+
+  // Rename fields in indexes
+  const indexes = filtered.indexes.map((index: any) =>
+    moveToFirst(
+      index,
+      "table",
+      `${index.schema_name}.${index.table_name}` // Add "table" field
+    )
+  );
+
+  // Rename fields in columns
+  const columns = filtered.columns.map((column: any) =>
+    moveToFirst(
+      column,
+      "table",
+      `${column.schema_name}.${column.table_name}` // Add "table" field
+    )
+  );
+
+  return { tables, constraints, indexes, columns };
+}
+
+function reorganizeSchema(filteredSchema: any) {
+  const { tables, columns, constraints, indexes } = filteredSchema;
+
+  // Create a map of tables for quick lookup
+  const tableMap = tables.reduce((map: any, table: any) => {
+    map[table.name] = { ...table, columns: [], constraints: [], indexes: [] };
+    return map;
+  }, {});
+
+  // Add columns to the respective table
+  columns.forEach((columnGroup: any) => {
+    if (tableMap[columnGroup.table]) {
+      tableMap[columnGroup.table].columns = columnGroup.columns;
     }
   });
 
-  // Integrate indexes into their respective tables
-  original.indexes.forEach((index: any) => {
-    const key = `${index.schema_name}.${index.table_name}`;
-    if (tableMap[key]) {
-      tableMap[key].indexes = index.indexes.map(
-        (item: {
-          definition: any;
-          size_bytes: any;
-          size_pretty: any;
-          [key: string]: any;
-        }) => {
-          const { definition, size_bytes, size_pretty, ...rest } = item; // Explicitly type these fields
-          return rest;
-        }
-      );
+  // Add constraints to the respective table
+  constraints.forEach((constraintGroup: any) => {
+    if (tableMap[constraintGroup.table]) {
+      tableMap[constraintGroup.table].constraints = constraintGroup.constraints;
     }
   });
 
-  // Reorganize partitioned tables
-  Object.keys(tableMap).forEach((key) => {
-    const table = tableMap[key];
-    if (table.partition_of) {
-      const parentKey = table.partition_of;
-      if (tableMap[parentKey]) {
-        // Add the table to the parent's partitions array
-        tableMap[parentKey].partitions.push(table);
-
-        // Remove the table from the top-level map
-        delete tableMap[key];
-      }
+  // Add indexes to the respective table
+  indexes.forEach((indexGroup: any) => {
+    if (tableMap[indexGroup.table]) {
+      tableMap[indexGroup.table].indexes = indexGroup.indexes;
     }
   });
 
+  // Return tables with reorganized structure
   return Object.values(tableMap);
+}
+
+// Export function with reorganization
+export function filterSchema(originalSchema: any) {
+  const filteredSchema = renameFields(filterFields(originalSchema));
+  const reorganizedSchema = reorganizeSchema(filteredSchema);
+  return reorganizedSchema;
 }

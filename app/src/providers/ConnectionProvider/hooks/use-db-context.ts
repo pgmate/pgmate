@@ -3,6 +3,12 @@ import { useAxios } from "hooks/use-axios";
 import { usePubSub } from "hooks/use-pubsub";
 import type { PGSchema } from "./pgschema.type";
 
+/**
+ * TODO: we should also accept an event to interrupt the loop and force an update.
+ *       it would be useful in association with the SQL Editor that detects a change in schema command.
+ */
+const POLL_INTERVAL = 5000;
+
 export const useDbContext = (
   isReady: boolean,
   conn: string | undefined,
@@ -21,7 +27,7 @@ export const useDbContext = (
     });
 
     dataRef.current = res.data?.schema as PGSchema;
-    loopRef.current = window.setTimeout(loop, 1000);
+    loopRef.current = window.setTimeout(loop, POLL_INTERVAL);
 
     bus.emit("pgschema:updated", dataRef.current);
   }, [conn, database]);

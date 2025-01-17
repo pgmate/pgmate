@@ -20,6 +20,19 @@ function cleanItem(obj: any, keywordsToRemove: string[] = []): any {
   }, {});
 }
 
+function renameKeys(obj: any, keyTuples: [string, string][]): any {
+  const result = { ...obj };
+
+  keyTuples.forEach(([oldKey, newKey]) => {
+    if (oldKey in result) {
+      result[newKey] = result[oldKey];
+      delete result[oldKey];
+    }
+  });
+
+  return result;
+}
+
 // Function to sort tables by schema and table name
 // Function to sort tables by schema and table name
 function sortItems(originalSchema: any) {
@@ -68,7 +81,7 @@ function filterFields(original: any) {
     schema_name: constraint.schema_name,
     table_name: constraint.table_name,
     constraints: constraint.constraints.map((con: any) =>
-      cleanItem(con, ["definition"])
+      renameKeys(cleanItem(con, ["definition"]), [["columns", "cols"]])
     ),
   }));
 
@@ -77,7 +90,10 @@ function filterFields(original: any) {
     schema_name: index.schema_name,
     table_name: index.table_name,
     indexes: index.indexes.map((idx: any) =>
-      cleanItem(idx, ["definition", "size_bytes", "size_pretty", "validity"])
+      renameKeys(
+        cleanItem(idx, ["definition", "size_bytes", "size_pretty", "validity"]),
+        [["columns", "cols"]]
+      )
     ),
   }));
 
@@ -86,7 +102,14 @@ function filterFields(original: any) {
     ? original.columns.map((column: any) => ({
         schema_name: column.schema_name,
         table_name: column.table_name,
-        columns: column.columns.map((col: any) => cleanItem(col, [])),
+        columns: column.columns.map((col: any) =>
+          renameKeys(cleanItem(col, ["position"]), [
+            ["data_type", "type"],
+            ["default_value", "def"],
+            ["is_pkey", "pk"],
+            ["is_null", "n"],
+          ])
+        ),
       }))
     : [];
 
@@ -97,10 +120,14 @@ function renameFields(filtered: any) {
   // Helper function to transform fkey_info
   const processFkeyInfo = (constraint: any) => {
     if (constraint.fkey_info) {
-      constraint.fkey = {
-        ...constraint.fkey_info,
-        table: `${constraint.fkey_info.schema}.${constraint.fkey_info.table}`,
-      };
+      constraint.fkey = cleanItem(
+        {
+          ...constraint.fkey_info,
+          table: `${constraint.fkey_info.schema}.${constraint.fkey_info.table}`,
+          cols: constraint.fkey_info.columns,
+        },
+        ["columns"]
+      );
       delete constraint.fkey_info; // Remove the original fkey_info
       delete constraint.fkey.schema; // Remove schema after merging
     }
@@ -190,7 +217,7 @@ function reorganizeSchema(
   // Add columns to the respective table
   columns.forEach((columnGroup: any) => {
     if (tableMap[columnGroup.table]) {
-      tableMap[columnGroup.table].columns = columnGroup.columns;
+      tableMap[columnGroup.table].cols = columnGroup.columns;
     }
   });
 
@@ -251,7 +278,7 @@ const splitResults = (tableMap: any) =>
       } else if (table.type === "v") {
         acc.views.push(cleanItem(table, ["type"]));
       } else if (table.type === "m") {
-        acc.materialized_views.push(cleanItem(table, ["type"]));
+        acc.materialized.push(cleanItem(table, ["type"]));
       } else {
         acc.others.push(cleanItem(table, ["type"]));
       }
@@ -261,7 +288,7 @@ const splitResults = (tableMap: any) =>
     {
       tables: [],
       views: [],
-      materialized_views: [],
+      materialized: [],
       others: [],
     }
   );
@@ -276,7 +303,7 @@ export function filterSchema(originalSchema: any) {
   const tableMap = renamedSchema.tables.reduce((map: any, table: any) => {
     map[table.name] = {
       ...table,
-      columns: [],
+      cols: [],
       constraints: [],
       indexes: [],
       partitions: [],

@@ -20,11 +20,11 @@ export const PGSchemaInfo = () => {
   return (
     <Tooltip title="Database Info">
       <IconButton
-        aria-label="show database info"
         color="inherit"
         onClick={() =>
           bus.emit("show::details", {
             title: "Database Info",
+            subtitle: "This is all we got from the database so far...",
             body: (
               <Box width={500}>
                 <CodeViewer

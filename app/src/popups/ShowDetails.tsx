@@ -5,11 +5,14 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Typography,
+  Stack,
 } from "@mui/material";
 import { useSubscribe } from "hooks/use-pubsub";
 
 interface ShowDetailsData {
   title: React.ReactNode;
+  subtitle?: React.ReactNode;
   body: React.ReactNode;
   bodyProps?: React.ComponentProps<typeof DialogContent>;
 }
@@ -28,11 +31,16 @@ export const ShowDetails: React.FC = () => {
     setTimeout(() => setData(null), 500);
   };
 
-  console.log(data?.bodyProps);
-
   return (
     <Dialog open={open} onClose={handleClose}>
-      <DialogTitle>{data?.title}</DialogTitle>
+      <DialogTitle>
+        <Stack>
+          {data?.title}
+          {data?.subtitle && (
+            <Typography variant="caption">{data.subtitle}</Typography>
+          )}
+        </Stack>
+      </DialogTitle>
       <DialogContent {...data?.bodyProps}>{data?.body}</DialogContent>
       <DialogActions>
         <Button onClick={handleClose} autoFocus>

@@ -183,24 +183,46 @@ function reorganizeSchema(filteredSchema: any) {
     }
   });
 
+  // Return the table map
+  return Object.values(tableMap).map((table) => cleanItem(table));
+}
+
+function nestPartitions(tables: any[]) {
+  // Create a map of tables for quick lookup
+  const tableMap = tables.reduce((map: any, table: any) => {
+    map[table.name] = table;
+    if (!table.partitions) {
+      table.partitions = []; // Ensure partitions is always initialized
+    }
+    return map;
+  }, {});
+
   // Move tables with "partition_of" into the "partitions" array of the target table
   tables.forEach((table: any) => {
     if (table.partition_of && tableMap[table.partition_of]) {
-      tableMap[table.partition_of].partitions.push(
+      const targetTable = tableMap[table.partition_of];
+
+      // Ensure the target table has a partitions array
+      if (!targetTable.partitions) {
+        targetTable.partitions = [];
+      }
+
+      targetTable.partitions.push(
         cleanItem(tableMap[table.name], ["columns", "type", "partition_of"])
       );
       delete tableMap[table.name]; // Remove the partition table from the top-level map
     }
   });
 
-  // Return tables with reorganized structure
+  // Return the updated table structure
   return Object.values(tableMap).map((table) => cleanItem(table));
 }
 
-// Export function with reorganization
+// Export function with reorganization and partition nesting
 export function filterSchema(originalSchema: any) {
   const filteredSchema = filterFields(originalSchema);
   const renamedSchema = renameFields(filteredSchema);
+
   const reorganizedSchema = reorganizeSchema(renamedSchema);
-  return reorganizedSchema;
+  return nestPartitions(reorganizedSchema);
 }

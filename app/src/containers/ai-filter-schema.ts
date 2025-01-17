@@ -45,7 +45,7 @@ function filterFields(original: any) {
     schema_name: index.schema_name,
     table_name: index.table_name,
     indexes: index.indexes.map((idx: any) =>
-      cleanItem(idx, ["definition", "size_bytes", "size_pretty"])
+      cleanItem(idx, ["definition", "size_bytes", "size_pretty", "validity"])
     ),
   }));
 
@@ -75,12 +75,28 @@ function renameFields(filtered: any) {
     return constraint;
   };
 
+  // Helper function to reorder keys in indexes
+  const reorderIndexKeys = (index: any) => {
+    const { name, type, is_unique, is_primary, columns, ...rest } = index;
+    return {
+      name,
+      type,
+      unique: is_unique, // Rename is_unique to unique
+      primary: is_primary, // Rename is_primary to primary
+      columns,
+      ...rest, // Include any additional keys
+    };
+  };
+
   // Rename fields in tables
   const tables = filtered.tables.map((table: any) =>
     moveToFirst(
-      table,
+      {
+        ...table,
+        name: `${table.schema_name}.${table.table_name}`, // Add "name" field
+      },
       "name",
-      `${table.schema_name}.${table.table_name}` // Add "name" field
+      `${table.schema_name}.${table.table_name}`
     )
   );
 
@@ -89,28 +105,42 @@ function renameFields(filtered: any) {
     moveToFirst(
       {
         ...constraint,
+        table: `${constraint.schema_name}.${constraint.table_name}`, // Add "table" field
         constraints: constraint.constraints.map(processFkeyInfo), // Process each fkey
       },
       "table",
-      `${constraint.schema_name}.${constraint.table_name}` // Add "table" field
+      `${constraint.schema_name}.${constraint.table_name}`
     )
   );
 
-  // Rename fields in indexes
+  // Rename fields in indexes and reorder keys
   const indexes = filtered.indexes.map((index: any) =>
     moveToFirst(
-      index,
+      {
+        ...index,
+        table: `${index.schema_name}.${index.table_name}`, // Add "table" field
+        indexes: index.indexes.map((idx: any) => {
+          const { access_method, ...rest } = idx;
+          return reorderIndexKeys({
+            ...rest,
+            type: access_method, // Rename access_method to type
+          });
+        }),
+      },
       "table",
-      `${index.schema_name}.${index.table_name}` // Add "table" field
+      `${index.schema_name}.${index.table_name}`
     )
   );
 
   // Rename fields in columns
   const columns = filtered.columns.map((column: any) =>
     moveToFirst(
-      column,
+      {
+        ...column,
+        table: `${column.schema_name}.${column.table_name}`, // Add "table" field
+      },
       "table",
-      `${column.schema_name}.${column.table_name}` // Add "table" field
+      `${column.schema_name}.${column.table_name}`
     )
   );
 
@@ -156,7 +186,9 @@ function reorganizeSchema(filteredSchema: any) {
   // Move tables with "partition_of" into the "partitions" array of the target table
   tables.forEach((table: any) => {
     if (table.partition_of && tableMap[table.partition_of]) {
-      tableMap[table.partition_of].partitions.push(tableMap[table.name]);
+      tableMap[table.partition_of].partitions.push(
+        cleanItem(tableMap[table.name], ["columns", "type", "partition_of"])
+      );
       delete tableMap[table.name]; // Remove the partition table from the top-level map
     }
   });
@@ -167,7 +199,8 @@ function reorganizeSchema(filteredSchema: any) {
 
 // Export function with reorganization
 export function filterSchema(originalSchema: any) {
-  const filteredSchema = renameFields(filterFields(originalSchema));
-  const reorganizedSchema = reorganizeSchema(filteredSchema);
+  const filteredSchema = filterFields(originalSchema);
+  const renamedSchema = renameFields(filteredSchema);
+  const reorganizedSchema = reorganizeSchema(renamedSchema);
   return reorganizedSchema;
 }

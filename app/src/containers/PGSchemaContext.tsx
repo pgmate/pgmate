@@ -32,9 +32,11 @@ export const PGSchemaContext = () => {
                   code={JSON.stringify(filterSchema(schema), null, 2)}
                   language="json"
                   height={500}
-                  onMount={(editor) =>
-                    editor.getAction("editor.foldLevel3").run()
-                  }
+                  onMount={(editor) => {
+                    editor.getAction("editor.foldLevel2").run();
+                    editor.getAction("editor.foldLevel4").run();
+                    editor.getAction("editor.foldLevel6").run();
+                  }}
                 />
               </Box>
             ),

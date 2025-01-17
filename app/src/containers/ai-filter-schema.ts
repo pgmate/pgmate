@@ -215,5 +215,26 @@ export function filterSchema(originalSchema: any) {
   reorganizeSchema(tableMap, renamedSchema);
   nestPartitions(tableMap);
 
-  return Object.values(tableMap).map((table) => cleanItem(table));
+  // return Object.values(tableMap).map((table) => cleanItem(table));
+  return Object.values(tableMap).reduce(
+    (acc: any, table: any) => {
+      if (table.type === "r" || table.type === "p") {
+        acc.tables.push(cleanItem(table, ["type"]));
+      } else if (table.type === "v") {
+        acc.views.push(cleanItem(table, ["type"]));
+      } else if (table.type === "m") {
+        acc.materialized_views.push(cleanItem(table, ["type"]));
+      } else {
+        acc.others.push(cleanItem(table, ["type"]));
+      }
+
+      return acc;
+    },
+    {
+      tables: [],
+      views: [],
+      materialized_views: [],
+      others: [],
+    }
+  );
 }

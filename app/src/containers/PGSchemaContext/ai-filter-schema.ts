@@ -210,6 +210,31 @@ function renameFields(filtered: any) {
   return { tables, constraints, indexes, columns };
 }
 
+function splitConstraints(tableMap: any) {
+  Object.values(tableMap).forEach((table: any) => {
+    if (table.constraints && table.constraints.length > 0) {
+      // Initialize separate lists for pkeys, fkeys, and other constraints
+      table.pkeys = [];
+      table.fkeys = [];
+      const otherConstraints: any[] = [];
+
+      // Iterate over each constraint and categorize it
+      table.constraints.forEach((constraint: any) => {
+        if (constraint.type === "p") {
+          table.pkeys.push(cleanItem(constraint, ["type"])); // Primary key
+        } else if (constraint.type === "f") {
+          table.fkeys.push(cleanItem(constraint, ["type"])); // Foreign key
+        } else {
+          otherConstraints.push(constraint); // Other constraints
+        }
+      });
+
+      // Remove the original constraints list
+      table.constraints = otherConstraints;
+    }
+  });
+}
+
 function reorganizeSchema(
   tableMap: any,
   { columns, constraints, indexes }: any
@@ -313,6 +338,7 @@ export function filterSchema(originalSchema: any) {
 
   // Reorganize and nest partitions
   reorganizeSchema(tableMap, renamedSchema);
+  splitConstraints(tableMap);
   nestPartitions(tableMap);
   calcPartitionRows(tableMap);
 

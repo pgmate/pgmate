@@ -10,7 +10,8 @@ export function filterSchema(original: any) {
       row_estimate: number;
       constraints: any[];
       indexes: any[];
-      columns: any[];
+      columns?: any[]; // Optional: Exclude for partitions
+      partitions: any[]; // For child partitions
     };
   } = {};
 
@@ -25,7 +26,8 @@ export function filterSchema(original: any) {
       row_estimate: table.row_estimate,
       constraints: [],
       indexes: [],
-      columns: [],
+      columns: table.partition_of ? undefined : [], // Omit columns for partitions
+      partitions: [], // Initialize an empty array for partitions
     };
   });
 
@@ -33,7 +35,7 @@ export function filterSchema(original: any) {
   if (original.columns) {
     original.columns.forEach((column: any) => {
       const key = `${column.schema_name}.${column.table_name}`;
-      if (tableMap[key]) {
+      if (tableMap[key] && tableMap[key].columns !== undefined) {
         tableMap[key].columns = column.columns;
       }
     });
@@ -70,8 +72,20 @@ export function filterSchema(original: any) {
     }
   });
 
-  // Convert the tableMap back to an array
-  const tables = Object.values(tableMap);
+  // Reorganize partitioned tables
+  Object.keys(tableMap).forEach((key) => {
+    const table = tableMap[key];
+    if (table.partition_of) {
+      const parentKey = table.partition_of;
+      if (tableMap[parentKey]) {
+        // Add the table to the parent's partitions array
+        tableMap[parentKey].partitions.push(table);
 
-  return tables;
+        // Remove the table from the top-level map
+        delete tableMap[key];
+      }
+    }
+  });
+
+  return Object.values(tableMap);
 }

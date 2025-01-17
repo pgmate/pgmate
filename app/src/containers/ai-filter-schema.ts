@@ -1,5 +1,3 @@
-import { table } from "console";
-
 // Helper function to move a field to the first position
 const moveToFirst = (obj: any, newField: string, value: any) => {
   const { schema_name, table_name, ...rest } = obj; // Remove schema_name and table_name
@@ -92,13 +90,17 @@ function renameFields(filtered: any) {
 
   // Rename fields in tables
   const tables = filtered.tables.map((table: any) =>
-    moveToFirst(
-      {
-        ...table,
-        name: `${table.schema_name}.${table.table_name}`, // Add "name" field
-      },
-      "name",
-      `${table.schema_name}.${table.table_name}`
+    cleanItem(
+      moveToFirst(
+        {
+          ...table,
+          name: `${table.schema_name}.${table.table_name}`, // Add "name" field
+          rows: table.row_estimate, // Rename row_estimate to rows
+        },
+        "name",
+        `${table.schema_name}.${table.table_name}`
+      ),
+      ["row_estimate"]
     )
   );
 
@@ -194,29 +196,23 @@ function nestPartitions(tableMap: any) {
   });
 }
 
-// Export function with reorganization and partition nesting
-export function filterSchema(originalSchema: any) {
-  const filteredSchema = filterFields(originalSchema);
-  const renamedSchema = renameFields(filteredSchema);
+function calcPartitionRows(tableMap: any) {
+  Object.values(tableMap).forEach((table: any) => {
+    if (table.partitions && table.partitions.length > 0) {
+      const partitionRows = table.partitions.reduce(
+        (sum: number, partition: any) => {
+          return sum + (partition.rows || 0); // Add rows from each partition
+        },
+        0
+      );
 
-  // Create a map of tables for quick lookup
-  const tableMap = renamedSchema.tables.reduce((map: any, table: any) => {
-    map[table.name] = {
-      ...table,
-      columns: [],
-      constraints: [],
-      indexes: [],
-      partitions: [],
-    };
-    return map;
-  }, {});
+      table.rows = (table.rows || 0) + partitionRows; // Update parent table's rows
+    }
+  });
+}
 
-  // Reorganize and nest partitions
-  reorganizeSchema(tableMap, renamedSchema);
-  nestPartitions(tableMap);
-
-  // return Object.values(tableMap).map((table) => cleanItem(table));
-  return Object.values(tableMap).reduce(
+const splitResults = (tableMap: any) =>
+  Object.values(tableMap).reduce(
     (acc: any, table: any) => {
       if (table.type === "r" || table.type === "p") {
         acc.tables.push(cleanItem(table, ["type"]));
@@ -237,4 +233,29 @@ export function filterSchema(originalSchema: any) {
       others: [],
     }
   );
+
+// Export function with reorganization and partition nesting
+export function filterSchema(originalSchema: any) {
+  const filteredSchema = filterFields(originalSchema);
+  const renamedSchema = renameFields(filteredSchema);
+
+  // Create a map of tables for quick lookup
+  const tableMap = renamedSchema.tables.reduce((map: any, table: any) => {
+    map[table.name] = {
+      ...table,
+      columns: [],
+      constraints: [],
+      indexes: [],
+      partitions: [],
+    };
+    return map;
+  }, {});
+
+  // Reorganize and nest partitions
+  reorganizeSchema(tableMap, renamedSchema);
+  nestPartitions(tableMap);
+  calcPartitionRows(tableMap);
+
+  // Split the results into different categories
+  return splitResults(tableMap);
 }

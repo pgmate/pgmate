@@ -62,6 +62,19 @@ function filterFields(original: any) {
 }
 
 function renameFields(filtered: any) {
+  // Helper function to transform fkey_info
+  const processFkeyInfo = (constraint: any) => {
+    if (constraint.fkey_info) {
+      constraint.fkey = {
+        ...constraint.fkey_info,
+        table: `${constraint.fkey_info.schema}.${constraint.fkey_info.table}`,
+      };
+      delete constraint.fkey_info; // Remove the original fkey_info
+      delete constraint.fkey.schema; // Remove schema after merging
+    }
+    return constraint;
+  };
+
   // Rename fields in tables
   const tables = filtered.tables.map((table: any) =>
     moveToFirst(
@@ -71,10 +84,13 @@ function renameFields(filtered: any) {
     )
   );
 
-  // Rename fields in constraints
+  // Rename fields in constraints and process fkey
   const constraints = filtered.constraints.map((constraint: any) =>
     moveToFirst(
-      constraint,
+      {
+        ...constraint,
+        constraints: constraint.constraints.map(processFkeyInfo), // Process each fkey
+      },
       "table",
       `${constraint.schema_name}.${constraint.table_name}` // Add "table" field
     )

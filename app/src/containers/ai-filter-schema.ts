@@ -4,14 +4,15 @@ const moveToFirst = (obj: any, newField: string, value: any) => {
   return { [newField]: value, ...rest }; // Add new field at the start
 };
 
-function cleanItem(obj: any, keywordsToRemove: string[]): any {
+function cleanItem(obj: any, keywordsToRemove: string[] = []): any {
   return Object.keys(obj).reduce((acc: any, key: string) => {
     const value = obj[key];
-    // Include key only if it's not in the list and not null/undefined
+    // Include key only if it's not in the list, not null/undefined, and not an empty array
     if (
       !keywordsToRemove.includes(key) &&
       value !== null &&
-      value !== undefined
+      value !== undefined &&
+      !(Array.isArray(value) && value.length === 0)
     ) {
       acc[key] = value;
     }
@@ -105,7 +106,13 @@ function reorganizeSchema(filteredSchema: any) {
 
   // Create a map of tables for quick lookup
   const tableMap = tables.reduce((map: any, table: any) => {
-    map[table.name] = { ...table, columns: [], constraints: [], indexes: [] };
+    map[table.name] = {
+      ...table,
+      columns: [],
+      constraints: [],
+      indexes: [],
+      partitions: [],
+    };
     return map;
   }, {});
 
@@ -130,8 +137,16 @@ function reorganizeSchema(filteredSchema: any) {
     }
   });
 
+  // Move tables with "partition_of" into the "partitions" array of the target table
+  tables.forEach((table: any) => {
+    if (table.partition_of && tableMap[table.partition_of]) {
+      tableMap[table.partition_of].partitions.push(tableMap[table.name]);
+      delete tableMap[table.name]; // Remove the partition table from the top-level map
+    }
+  });
+
   // Return tables with reorganized structure
-  return Object.values(tableMap);
+  return Object.values(tableMap).map((table) => cleanItem(table));
 }
 
 // Export function with reorganization

@@ -1,3 +1,5 @@
+import { table } from "console";
+
 // Helper function to move a field to the first position
 const moveToFirst = (obj: any, newField: string, value: any) => {
   const { schema_name, table_name, ...rest } = obj; // Remove schema_name and table_name
@@ -147,21 +149,10 @@ function renameFields(filtered: any) {
   return { tables, constraints, indexes, columns };
 }
 
-function reorganizeSchema(filteredSchema: any) {
-  const { tables, columns, constraints, indexes } = filteredSchema;
-
-  // Create a map of tables for quick lookup
-  const tableMap = tables.reduce((map: any, table: any) => {
-    map[table.name] = {
-      ...table,
-      columns: [],
-      constraints: [],
-      indexes: [],
-      partitions: [],
-    };
-    return map;
-  }, {});
-
+function reorganizeSchema(
+  tableMap: any,
+  { columns, constraints, indexes }: any
+) {
   // Add columns to the respective table
   columns.forEach((columnGroup: any) => {
     if (tableMap[columnGroup.table]) {
@@ -182,23 +173,11 @@ function reorganizeSchema(filteredSchema: any) {
       tableMap[indexGroup.table].indexes = indexGroup.indexes;
     }
   });
-
-  // Return the table map
-  return Object.values(tableMap).map((table) => cleanItem(table));
 }
 
-function nestPartitions(tables: any[]) {
-  // Create a map of tables for quick lookup
-  const tableMap = tables.reduce((map: any, table: any) => {
-    map[table.name] = table;
-    if (!table.partitions) {
-      table.partitions = []; // Ensure partitions is always initialized
-    }
-    return map;
-  }, {});
-
+function nestPartitions(tableMap: any) {
   // Move tables with "partition_of" into the "partitions" array of the target table
-  tables.forEach((table: any) => {
+  Object.values(tableMap).forEach((table: any) => {
     if (table.partition_of && tableMap[table.partition_of]) {
       const targetTable = tableMap[table.partition_of];
 
@@ -208,14 +187,11 @@ function nestPartitions(tables: any[]) {
       }
 
       targetTable.partitions.push(
-        cleanItem(tableMap[table.name], ["columns", "type", "partition_of"])
+        cleanItem(table, ["columns", "type", "partition_of"])
       );
       delete tableMap[table.name]; // Remove the partition table from the top-level map
     }
   });
-
-  // Return the updated table structure
-  return Object.values(tableMap).map((table) => cleanItem(table));
 }
 
 // Export function with reorganization and partition nesting
@@ -223,6 +199,21 @@ export function filterSchema(originalSchema: any) {
   const filteredSchema = filterFields(originalSchema);
   const renamedSchema = renameFields(filteredSchema);
 
-  const reorganizedSchema = reorganizeSchema(renamedSchema);
-  return nestPartitions(reorganizedSchema);
+  // Create a map of tables for quick lookup
+  const tableMap = renamedSchema.tables.reduce((map: any, table: any) => {
+    map[table.name] = {
+      ...table,
+      columns: [],
+      constraints: [],
+      indexes: [],
+      partitions: [],
+    };
+    return map;
+  }, {});
+
+  // Reorganize and nest partitions
+  reorganizeSchema(tableMap, renamedSchema);
+  nestPartitions(tableMap);
+
+  return Object.values(tableMap).map((table) => cleanItem(table));
 }

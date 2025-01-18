@@ -32,28 +32,55 @@ export class PackagesService {
   }
 
   async loadPackage(packageName: string, connection: string, database: string): Promise<void> {
-    const packageRootDir = path.join(__dirname, '../../packages');
+    const packageRootDir = path.join(__dirname, '../../../packages');
     const packageDir = path.join(packageRootDir, packageName);
     const packageFilePath = path.join(packageDir, 'main.sql');
 
     if (!fs.existsSync(packageFilePath)) {
-      this.logger.warn(`No main.sql found in packages directory: ${packageName}`);
-      return;
+      this.logger.error(`No main.sql found in packages directory: ${packageDir}`);
+      throw new Error(`No main.sql found in package: ${packageName}`);
     }
 
-    this.logger.log(`Loading package: ${packageName}`);
-    const sql = fs.readFileSync(packageFilePath, 'utf-8');
+    this.logger.log(`Loading package: ${packageName} for connection: ${connection} database: ${database}`);
+    
+    try {    
+      const sql = await this.preprocessSql(packageDir, 'main.sql');
 
-    try {
       const [client, aquisitionTime] = await this.connectionsService.createClient(
         connection,
         database,
       );
       await this._query(client, sql, []);
-      this.logger.log(`Package ${packageName} applied successfully`);
+      this.logger.log(`Package ${packageName} applied successfully on connection ${connection} database ${database}`);
     } catch (error) {
-      this.logger.error(`Error applying package ${packageName}`, error.message);
+      this.logger.error(`Error applying package ${packageName} on connection ${connection} database ${database}`, error.message);
       throw error;
     }
   }
+
+  async preprocessSql(dirPath: string, fileName: string): Promise<any> {
+    const absolutePath = path.join(dirPath, fileName);
+    const filedata = await fs.readFileSync(absolutePath, "utf-8");
+    //const sql = fs.readFileSync(packageFilePath, 'utf-8');
+    const sql = filedata as unknown as string;
+    // Match all \i commands
+    const matches = sql .match(/\\i\s+['"]?([^'"\s]+)['"]?/g) ;
+    if (!matches) {
+      return sql; // Return the SQL if there are no \i commands
+    }
+  
+    let processedSql:string = sql;
+  
+    for (const match of matches) {
+      const includePathMatch = match.match(/\\i\s+['"]?([^'"\s]+)['"]?/);
+      if (includePathMatch && includePathMatch[1]) {
+        const includePath = includePathMatch[1];
+        const includedSql = await this.preprocessSql(dirPath, includePath); // Recursive inclusion
+        processedSql = processedSql.replace(match, includedSql);
+      }
+    }
+  
+    return processedSql;
+  }
+
 }

@@ -13,11 +13,19 @@ export class PackagesController {
     return this.packagesService.listPackages();
   }
 
-  @Post(':packageName')
-  async applySeed(@Param('packageName') packageName: string): Promise<{ success: boolean; error?: string }> {
+  @Post('')
+  async applySeed(
+    @Body()
+    body: {
+      connection: string;
+      database: string;
+      packageName: string;
+    }    
+    ): Promise<{ success: boolean; error?: string }> {
+    const { connection, database, packageName } = body;
     this.logger.log(`Applying package: ${packageName}`);
     try {
-      await this.packagesService.loadPackage(packageName);
+      await this.packagesService.loadPackage(packageName, connection, database);
       return { success: true };
     } catch (error) {
       this.logger.error(`Error applying package: ${packageName}`, error.message);

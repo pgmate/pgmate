@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start -b swc",
-    "start:dev": "nest start --watch -b swc",
+    "start:dev": "nest start --watch", 
     "start:docker": "nodemon --watch src -e ts,js --exec 'nest start --watch -b swc'",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",

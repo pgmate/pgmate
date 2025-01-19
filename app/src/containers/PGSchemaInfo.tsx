@@ -4,18 +4,18 @@ import { useConnections } from "hooks/use-connections";
 import { usePubSub, useSubscribe } from "hooks/use-pubsub";
 import { CodeViewer } from "components/CodeViewer";
 
-const usePGSchema = () => {
-  const { getSchema } = useConnections();
-  const [schema, setSchema] = useState(getSchema());
-  useSubscribe("pgschema:updated", setSchema);
-  return schema;
+const useDBInfo = () => {
+  const { getDBInfo } = useConnections();
+  const [data, setData] = useState(getDBInfo());
+  useSubscribe("dbinfo:updated", setData);
+  return data;
 };
 
 export const PGSchemaInfo = () => {
-  const schema = usePGSchema();
+  const data = useDBInfo();
   const bus = usePubSub();
 
-  if (!schema) return;
+  if (!data) return;
 
   return (
     <Tooltip title="Database Info">
@@ -28,7 +28,7 @@ export const PGSchemaInfo = () => {
             body: (
               <Box width={500}>
                 <CodeViewer
-                  code={JSON.stringify(schema, null, 2)}
+                  code={JSON.stringify(data.schema, null, 2)}
                   language="json"
                   height={500}
                   onMount={(editor) =>

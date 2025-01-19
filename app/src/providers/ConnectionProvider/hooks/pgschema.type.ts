@@ -223,3 +223,11 @@ export interface PGSchema {
   ranges: Range[];
   functions: Function[];
 }
+
+export interface DBInfo {
+  schema: PGSchema;
+  ai: {
+    full: any;
+    compact: any;
+  };
+}

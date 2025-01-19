@@ -38,11 +38,11 @@ function renameKeys(obj: any, keyTuples: [string, string][]): any {
 function sortItems(originalSchema: any) {
   const sortedTables = originalSchema.tables.sort((a: any, b: any) => {
     const schemaOrder = (schemaName: string) => {
-      if (schemaName === "public") return 0;
-      if (schemaName === "pg_catalog") return 1;
-      if (schemaName === "pg_toast") return 2;
-      if (schemaName.startsWith("pg_")) return 3;
-      if (schemaName === "information_schema") return 4;
+      if (schemaName === 'public') return 0;
+      if (schemaName === 'pg_catalog') return 1;
+      if (schemaName === 'pg_toast') return 2;
+      if (schemaName.startsWith('pg_')) return 3;
+      if (schemaName === 'information_schema') return 4;
       return 5; // Default order for other schemas
     };
 
@@ -68,12 +68,12 @@ function filterFields(original: any) {
   // Filter tables with essential fields
   const tables = original.tables.map((table: any) =>
     cleanItem(table, [
-      "indexes_size",
-      "heap_size",
-      "total_relation_size",
-      "toast_size",
-      "has_partitions",
-    ])
+      'indexes_size',
+      'heap_size',
+      'total_relation_size',
+      'toast_size',
+      'has_partitions',
+    ]),
   );
 
   // Filter constraints with essential fields and remove "definition" key
@@ -81,7 +81,7 @@ function filterFields(original: any) {
     schema_name: constraint.schema_name,
     table_name: constraint.table_name,
     constraints: constraint.constraints.map((con: any) =>
-      renameKeys(cleanItem(con, ["definition"]), [["columns", "cols"]])
+      renameKeys(cleanItem(con, ['definition']), [['columns', 'cols']]),
     ),
   }));
 
@@ -91,9 +91,9 @@ function filterFields(original: any) {
     table_name: index.table_name,
     indexes: index.indexes.map((idx: any) =>
       renameKeys(
-        cleanItem(idx, ["definition", "size_bytes", "size_pretty", "validity"]),
-        [["columns", "cols"]]
-      )
+        cleanItem(idx, ['definition', 'size_bytes', 'size_pretty', 'validity']),
+        [['columns', 'cols']],
+      ),
     ),
   }));
 
@@ -103,12 +103,12 @@ function filterFields(original: any) {
         schema_name: column.schema_name,
         table_name: column.table_name,
         columns: column.columns.map((col: any) =>
-          renameKeys(cleanItem(col, ["position"]), [
-            ["data_type", "type"],
-            ["default_value", "def"],
-            ["is_pkey", "pk"],
-            ["is_null", "n"],
-          ])
+          renameKeys(cleanItem(col, ['position']), [
+            ['data_type', 'type'],
+            ['default_value', 'def'],
+            ['is_pkey', 'pk'],
+            ['is_null', 'n'],
+          ]),
         ),
       }))
     : [];
@@ -126,7 +126,7 @@ function renameFields(filtered: any) {
           table: `${constraint.fkey_info.schema}.${constraint.fkey_info.table}`,
           cols: constraint.fkey_info.columns,
         },
-        ["columns"]
+        ['columns'],
       );
       delete constraint.fkey_info; // Remove the original fkey_info
       delete constraint.fkey.schema; // Remove schema after merging
@@ -156,11 +156,11 @@ function renameFields(filtered: any) {
           name: `${table.schema_name}.${table.table_name}`, // Add "name" field
           rows: table.row_estimate, // Rename row_estimate to rows
         },
-        "name",
-        `${table.schema_name}.${table.table_name}`
+        'name',
+        `${table.schema_name}.${table.table_name}`,
       ),
-      ["row_estimate"]
-    )
+      ['row_estimate'],
+    ),
   );
 
   // Rename fields in constraints and process fkey
@@ -171,9 +171,9 @@ function renameFields(filtered: any) {
         table: `${constraint.schema_name}.${constraint.table_name}`, // Add "table" field
         constraints: constraint.constraints.map(processFkeyInfo), // Process each fkey
       },
-      "table",
-      `${constraint.schema_name}.${constraint.table_name}`
-    )
+      'table',
+      `${constraint.schema_name}.${constraint.table_name}`,
+    ),
   );
 
   // Rename fields in indexes and reorder keys
@@ -190,9 +190,9 @@ function renameFields(filtered: any) {
           });
         }),
       },
-      "table",
-      `${index.schema_name}.${index.table_name}`
-    )
+      'table',
+      `${index.schema_name}.${index.table_name}`,
+    ),
   );
 
   // Rename fields in columns
@@ -202,9 +202,9 @@ function renameFields(filtered: any) {
         ...column,
         table: `${column.schema_name}.${column.table_name}`, // Add "table" field
       },
-      "table",
-      `${column.schema_name}.${column.table_name}`
-    )
+      'table',
+      `${column.schema_name}.${column.table_name}`,
+    ),
   );
 
   return { tables, constraints, indexes, columns };
@@ -220,10 +220,10 @@ function splitConstraints(tableMap: any) {
 
       // Iterate over each constraint and categorize it
       table.constraints.forEach((constraint: any) => {
-        if (constraint.type === "p") {
-          table.pkeys.push(cleanItem(constraint, ["type"])); // Primary key
-        } else if (constraint.type === "f") {
-          table.fkeys.push(cleanItem(constraint, ["type"])); // Foreign key
+        if (constraint.type === 'p') {
+          table.pkeys.push(cleanItem(constraint, ['type'])); // Primary key
+        } else if (constraint.type === 'f') {
+          table.fkeys.push(cleanItem(constraint, ['type'])); // Foreign key
         } else {
           otherConstraints.push(constraint); // Other constraints
         }
@@ -237,7 +237,7 @@ function splitConstraints(tableMap: any) {
 
 function reorganizeSchema(
   tableMap: any,
-  { columns, constraints, indexes }: any
+  { columns, constraints, indexes }: any,
 ) {
   // Add columns to the respective table
   columns.forEach((columnGroup: any) => {
@@ -273,7 +273,7 @@ function nestPartitions(tableMap: any) {
       }
 
       targetTable.partitions.push(
-        cleanItem(table, ["columns", "type", "partition_of"])
+        cleanItem(table, ['columns', 'type', 'partition_of']),
       );
       delete tableMap[table.name]; // Remove the partition table from the top-level map
     }
@@ -287,7 +287,7 @@ function calcPartitionRows(tableMap: any) {
         (sum: number, partition: any) => {
           return sum + (partition.rows || 0); // Add rows from each partition
         },
-        0
+        0,
       );
 
       table.rows = (table.rows || 0) + partitionRows; // Update parent table's rows
@@ -298,14 +298,14 @@ function calcPartitionRows(tableMap: any) {
 const splitResults = (tableMap: any) =>
   Object.values(tableMap).reduce(
     (acc: any, table: any) => {
-      if (table.type === "r" || table.type === "p") {
-        acc.tables.push(cleanItem(table, ["type"]));
-      } else if (table.type === "v") {
-        acc.views.push(cleanItem(table, ["type"]));
-      } else if (table.type === "m") {
-        acc.materialized.push(cleanItem(table, ["type"]));
+      if (table.type === 'r' || table.type === 'p') {
+        acc.tables.push(cleanItem(table, ['type']));
+      } else if (table.type === 'v') {
+        acc.views.push(cleanItem(table, ['type']));
+      } else if (table.type === 'm') {
+        acc.materialized.push(cleanItem(table, ['type']));
       } else {
-        acc.others.push(cleanItem(table, ["type"]));
+        acc.others.push(cleanItem(table, ['type']));
       }
 
       return acc;
@@ -315,11 +315,11 @@ const splitResults = (tableMap: any) =>
       views: [],
       materialized: [],
       others: [],
-    }
+    },
   );
 
 // Export function with reorganization and partition nesting
-export function filterSchema(originalSchema: any) {
+export function AIFull(originalSchema: any) {
   const sortedSchema = sortItems(originalSchema); // S
   const filteredSchema = filterFields(sortedSchema);
   const renamedSchema = renameFields(filteredSchema);

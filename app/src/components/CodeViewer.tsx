@@ -1,18 +1,19 @@
 import Editor from "@monaco-editor/react";
 import { IconButton, Tooltip, Box, useTheme } from "@mui/material";
 import { Icon } from "components/Icon";
-import { on } from "events";
 
 export const CodeViewer = ({
   code,
   language,
   height = 75,
   onMount,
+  disableCopy,
 }: {
   code: string;
   language: string;
   height?: number | string;
   onMount?: (editor: any) => void;
+  disableCopy?: boolean;
 }) => {
   const theme = useTheme();
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
@@ -55,22 +56,24 @@ export const CodeViewer = ({
       />
 
       {/* Copy button */}
-      <Tooltip title="Copy Code">
-        <IconButton
-          onClick={handleCopy}
-          sx={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            zIndex: 1,
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-            color: "white",
-            "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.8)" },
-          }}
-        >
-          <Icon>content_copy</Icon>
-        </IconButton>
-      </Tooltip>
+      {!disableCopy && (
+        <Tooltip title="Copy Code">
+          <IconButton
+            onClick={handleCopy}
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              zIndex: 1,
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              color: "white",
+              "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.8)" },
+            }}
+          >
+            <Icon>content_copy</Icon>
+          </IconButton>
+        </Tooltip>
+      )}
     </Box>
   );
 };

@@ -4,23 +4,23 @@ import { useSubscribe } from "hooks/use-pubsub";
 import { useConnectionParams } from "./hooks/use-connection-params";
 import { useDbContext } from "./hooks/use-db-context";
 import { ConnectionError } from "./components/ConnectionError";
-import type { PGSchema } from "./hooks/pgschema.type";
+import type { PGData } from "./hooks/pgschema.type";
 
 export const ConnectionContext = createContext<{
   items: Connection[];
   getByName: (name: string, database?: string) => Connection | undefined;
-  getSchema: () => PGSchema | null;
+  getDBInfo: () => PGData | null;
 }>({
   items: [],
   getByName: () => undefined,
-  getSchema: () => null,
+  getDBInfo: () => null,
 });
 
 export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const conn = useConnectionParams();
-  const getSchema = useDbContext(conn.version !== null, conn.conn, conn.db);
+  const getDBInfo = useDbContext(conn.version !== null, conn.conn, conn.db);
 
   // Fetches connections and keeps them up-to-date
   const { data, refetch } = useGet("/connections");
@@ -40,7 +40,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <ConnectionContext.Provider
-      value={{ items: data?.connections || [], getByName, getSchema }}
+      value={{ items: data?.connections || [], getByName, getDBInfo }}
     >
       {conn.ready ? (
         conn.error ? (

@@ -52,7 +52,7 @@ export const Text2SQLWrapper = () => {
         </Breadcrumbs>
       }
     >
-      <Text2SQLView />
+      <Text2SQLView conn={conn} />
     </PageLayout>
   );
 };

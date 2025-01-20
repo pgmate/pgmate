@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   IconButton,
   Tooltip,
@@ -6,12 +6,14 @@ import {
   Stack,
   TextField,
   Icon,
+  Button,
 } from "@mui/material";
 import { useConnections } from "hooks/use-connections";
 import { useSubscribe } from "hooks/use-pubsub";
 import { CodeViewer } from "components/CodeViewer";
 import { ClipCopy } from "components/ClipCopy";
 import { ClipPaste } from "components/ClipPaste";
+import { useDynamicQueries } from "hooks/use-query";
 import { buildListTablesPropmt, buildText2SQLPrompt } from "./prompts";
 
 const useDBInfo = () => {
@@ -45,7 +47,7 @@ const calculateCost =
 
     // Retrieve the selected model's pricing
     const modelPricing = pricing[model];
-    console.log("modelPricing", modelPricing);
+    // console.log("modelPricing", modelPricing);
 
     // Calculate the number of input and output tokens
     const tokens =
@@ -65,22 +67,36 @@ const calculateCost =
     return totalCost < 0.01 ? "<0.01" : totalCost.toFixed(2);
   };
 
-export const Text2SQLView = () => {
+export const Text2SQLView = ({ conn }: { conn: Connection }) => {
   const dbInfo = useDBInfo();
-  const [prompt1Request, setPrompt1Request] = useState(
-    "List the categories with the last rented movie"
-  );
+  const [prompt1Request, setPrompt1Request] = useState("");
+  // const [prompt1Request, setPrompt1Request] = useState(
+  //   "List the categories with the last rented movie"
+  // );
   const [prompt1Expanded, setPrompt1Expanded] = useState(false);
-  const [prompt1Response, setPrompt1Response] = useState(``);
+  const [prompt1Response, setPrompt1Response] = useState("");
+  //   const [prompt1Response, setPrompt1Response] = useState(`{
+  //   "step": "sql",
+  //   "tables": ["public.film", "public.film_category", "public.rental", "public.category"],
+  //   "rate": 2
+  // }`);
   const [prompt1ResponseExpanded, setPrompt1ResponseExpanded] = useState(false);
 
   const [prompt2Request, setPrompt2Request] = useState("");
   const [prompt2Expanded, setPrompt2Expanded] = useState(false);
-  const [prompt2Response, setPrompt2Response] = useState(``);
+  const [prompt2Response, setPrompt2Response] = useState("");
+  //   const [prompt2Response, setPrompt2Response] = useState(`
+  // {
+  //   "_query": "SELECT c.name AS category_name, f.title AS last_rented_movie\\nFROM public.category c\\nJOIN public.film_category fc ON c.category_id = fc.category_id\\nJOIN public.film f ON fc.film_id = f.film_id\\nJOIN public.rental r ON f.film_id = r.inventory_id\\nWHERE r.rental_date = (\\n    SELECT MAX(rental_date)\\n    FROM public.rental r2\\n    JOIN public.inventory i ON r2.inventory_id = i.inventory_id\\n    WHERE i.film_id = f.film_id\\n)\\nGROUP BY c.name, f.title;\\n",
+  //   "query": "SELECT * FROM public.category",
+  //   "type": "immutable"
+  // }`);
   const [prompt2ResponseExpanded, setPrompt2ResponseExpanded] = useState(false);
-  const [query, setQuery] = useState("");
+  const [sql, setSql] = useState("");
   const [input, setInput] = useState("");
   const [answer, setAnswer] = useState("");
+
+  const query = useDynamicQueries(conn!, { disableAnalyze: false });
 
   // Parse the answer from the first prompt:
   useEffect(() => {
@@ -92,10 +108,8 @@ export const Text2SQLView = () => {
 
       if (data.step === "sql") {
         if (data.query && data.rate === 1) {
-          setQuery(data.query);
+          setSql(data.query);
         } else {
-          console.log("move to next prompt");
-
           const ctx = [
             ...dbInfo?.ai.full.tables
               .filter((t: any) => data.tables.includes(t.name))
@@ -131,11 +145,22 @@ export const Text2SQLView = () => {
 
     try {
       const data = JSON.parse(prompt2Response);
-      setQuery(data.query);
+      setSql(data.query);
     } catch (e: any) {
       alert(e.message);
     }
   }, [dbInfo, prompt2Request, prompt2Response]);
+
+  const executeQuery = useCallback(async () => {
+    const res = await query([
+      {
+        statement: sql,
+        variables: [],
+      },
+    ]);
+    const result = res[0][0];
+    console.log(result);
+  }, [sql]);
 
   return (
     <Stack p={2} spacing={4}>
@@ -312,10 +337,32 @@ export const Text2SQLView = () => {
         </Stack>
       )}
       {/* SQL Query */}
-      {query.length === 0 ? null : (
+      {sql.length === 0 ? null : (
         <Stack spacing={1}>
-          <Typography variant="h3">🧑‍💻 SQL Query</Typography>
-          <CodeViewer code={query} language="sql" height={200} />
+          <Stack
+            direction={"row"}
+            spacing={1}
+            justifyContent={"space-between"}
+            alignItems={"center"}
+          >
+            <Typography variant="h3" flexGrow={1}>
+              🧑‍💻 SQL Query
+            </Typography>
+            <Button
+              variant="contained"
+              endIcon={<Icon>play_circle</Icon>}
+              onClick={executeQuery}
+            >
+              Run
+            </Button>
+          </Stack>
+          <CodeViewer
+            code={sql}
+            language="sql"
+            height={200}
+            readOnly={false}
+            onChange={setSql}
+          />
         </Stack>
       )}
       {/* Input */}

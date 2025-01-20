@@ -8,12 +8,16 @@ export const CodeViewer = ({
   height = 75,
   onMount,
   disableCopy,
+  readOnly = true,
+  onChange = () => {},
 }: {
   code: string;
   language: string;
   height?: number | string;
   onMount?: (editor: any) => void;
   disableCopy?: boolean;
+  readOnly?: boolean;
+  onChange?: (value: string) => void;
 }) => {
   const theme = useTheme();
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
@@ -22,6 +26,12 @@ export const CodeViewer = ({
     navigator.clipboard.writeText(code).then(() => {
       // Replace with notistack
     });
+  };
+
+  const handleEditorChange = (value: string | undefined) => {
+    if (readOnly) return;
+    if (!value) return;
+    onChange(value);
   };
 
   return (
@@ -39,7 +49,7 @@ export const CodeViewer = ({
         theme={monacoTheme}
         height={height}
         options={{
-          readOnly: true,
+          readOnly,
           lineNumbers: "on",
           scrollBeyondLastLine: false,
           minimap: { enabled: false },
@@ -53,6 +63,7 @@ export const CodeViewer = ({
           editor.addCommand(0, () => null);
           onMount?.(editor);
         }}
+        onChange={handleEditorChange}
       />
 
       {/* Copy button */}

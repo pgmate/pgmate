@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { HttpModule } from '@nestjs/axios';
 import { DatabaseModule } from '../database/database.module';
 import { AdminGuard } from './admin.guard';
 import { AdminController } from './controllers/admin.controller';
@@ -14,7 +15,7 @@ import { PGSchemaService } from './services/pg_schema.service';
 import { AIService } from './services/ai.service';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule],
+  imports: [HttpModule, ConfigModule, DatabaseModule],
   controllers: [
     AdminController,
     ConnectionsController,

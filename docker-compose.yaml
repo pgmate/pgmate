@@ -24,6 +24,7 @@ services:
       PGSTRING: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/postgres
       PGMATE_ADMIN_SECRET: ${PGMATE_ADMIN_SECRET:-pgmate}
       PGMATE_ENCRYPTION_KEY: ${PGMATE_ENCRYPTION_KEY:-3ffab9a475c91bf39fd1673c428d7a839d3c958b4b908724cabd3b0584d9c7fb}
+      PGMATE_OPENAPI_KEY: ${PGMATE_OPENAPI_KEY:-openapi}
     depends_on:
       postgres:
         condition: service_healthy

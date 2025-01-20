@@ -22,7 +22,7 @@ const primaryMenu = [
   {
     label: "Query",
     icon: "query_stats",
-    href: "/",
+    href: "/query",
     useHidden: () => {
       const connection = useURLConnection();
       return connection === undefined;
@@ -31,6 +31,21 @@ const primaryMenu = [
       const connection = useURLConnection();
       return {
         href: `/${connection?.name}/${connection?.database}/query`,
+      };
+    },
+  },
+  {
+    label: "AI",
+    icon: "🤖",
+    href: "/text2sql",
+    useHidden: () => {
+      const connection = useURLConnection();
+      return connection === undefined;
+    },
+    useProps: () => {
+      const connection = useURLConnection();
+      return {
+        href: `/${connection?.name}/${connection?.database}/text2sql`,
       };
     },
   },

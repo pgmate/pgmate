@@ -8,6 +8,7 @@ import { SchemaView } from "views/SchemaView";
 import { TableView } from "views/TableView";
 import { QueryView } from "views/QueryView";
 import { FactsView } from "views/FactsView";
+import { Text2SQLView } from "views/Text2SQLView";
 
 const routesConfig: RouteObject[] = [
   {
@@ -33,6 +34,10 @@ const routesConfig: RouteObject[] = [
   {
     path: "/:conn/:db/query",
     element: <QueryView />,
+  },
+  {
+    path: "/:conn/:db/text2sql",
+    element: <Text2SQLView />,
   },
   {
     path: "/:conn/:db",

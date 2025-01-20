@@ -31,7 +31,7 @@ export const AICompact = (schema: any) => {
               ? item.fkeys.flatMap((fk: any) => fk.cols || [])
               : [],
           },
-          ['rows', 'indexes'],
+          ['rows', 'indexes', 'partitions'],
         ),
       };
     });

@@ -98,7 +98,7 @@ export const PGSchemaContext = () => {
   // Temporary hack to auto-trigger the context
   useEffect(() => {
     if (data) {
-      handleClick();
+      // handleClick();
     }
   }, [data]);
 

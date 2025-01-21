@@ -1,5 +1,5 @@
 CREATE TABLE invoicing.partners (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   is_customer BOOLEAN DEFAULT FALSE,
   is_supplier BOOLEAN DEFAULT FALSE,

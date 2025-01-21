@@ -1,7 +1,7 @@
 -- Create the "invoices" table
 CREATE TABLE invoicing.invoices (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  partner_id UUID NOT NULL,
+  id TEXT PRIMARY KEY,
+  partner_id TEXT NOT NULL,
   is_purchase BOOLEAN NOT NULL, -- TRUE for purchase invoice, FALSE for sales invoice
   total_amount NUMERIC(12, 2) DEFAULT 0 NOT NULL, -- Total amount of the invoice
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -14,9 +14,9 @@ IS 'The "invoices" table stores both sales and purchase invoices, linking them t
 
 -- Create the "invoice_lines" table
 CREATE TABLE invoicing.invoice_lines (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  invoice_id UUID NOT NULL,
-  product_id UUID NOT NULL,
+  id TEXT PRIMARY KEY,
+  invoice_id TEXT NOT NULL,
+  product_id TEXT NOT NULL,
   unit_price NUMERIC(12, 2) NOT NULL CHECK (unit_price >= 0),
   quantity NUMERIC(12, 2) NOT NULL CHECK (quantity >= 0),
   total_amount NUMERIC(12, 2) GENERATED ALWAYS AS (unit_price * quantity) STORED,

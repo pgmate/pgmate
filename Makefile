@@ -565,6 +565,9 @@ pagila:
 	@$(MAKE) -s -f Makefile seed from=pagila-schema
 	@$(MAKE) -s -f Makefile seed from=pagila-data
 
+invoices:
+	@$(MAKE) -s -f Makefile migrate.rebuild conn=invoices
+	@$(MAKE) -s -f Makefile seed from=invoices
 
 #
 # Numeric API

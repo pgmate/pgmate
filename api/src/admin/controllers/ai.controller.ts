@@ -12,7 +12,11 @@ import { PGSchemaService } from '../services/pg_schema.service';
 import { AIService } from '../services/ai.service';
 import { AIFull } from './pg_schema.ai-full';
 import { AICompact } from './pg_schema.ai-compact';
-import type { LLMMessage, LLMOptions } from '../services/ai.service';
+import type {
+  LLMMessage,
+  LLMOptions,
+  LLMResponse,
+} from '../services/ai.service';
 
 @UseGuards(AdminGuard)
 @Controller('ai')
@@ -26,7 +30,7 @@ export class AIController {
   @Post('complete')
   async complete(
     @Body() body: { messages: LLMMessage[]; options: LLMOptions },
-  ): Promise<any> {
+  ): Promise<LLMResponse> {
     try {
       const res = await this.AIService.complete(
         body.messages,
@@ -34,6 +38,75 @@ export class AIController {
       );
 
       return res;
+    } catch (e: any) {
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @Post('ask')
+  async ask(
+    @Body()
+    body: {
+      conn: string;
+      database?: string;
+      messages: LLMMessage[];
+      options: LLMOptions & {
+        context: 'full' | 'compact';
+      };
+    },
+  ): Promise<LLMResponse> {
+    // Get the client
+    const [client] = await this.connectionsService.createClient(
+      body.conn,
+      body.database,
+    );
+
+    // Retrive DB Info
+    let dbInfo: {
+      schema: any;
+      aiFull: any;
+      aiCompact: any;
+    };
+    try {
+      const schema = await this.PGSchemaService.getSchema(client);
+      const aiFull = AIFull(schema);
+      const aiCompact = AICompact(aiFull);
+
+      dbInfo = {
+        schema,
+        aiFull,
+        aiCompact,
+      };
+    } catch (e: any) {
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    } finally {
+      await client.end();
+    }
+
+    const { context = 'compact', ...options } = body.options;
+    const messages: LLMMessage[] = [
+      {
+        role: 'system',
+        content: `
+You are an expert Postgres SQL engineer.
+You have access to a database with the following schema:
+${JSON.stringify(context === 'full' ? dbInfo.aiFull : dbInfo.aiCompact)}
+
+Your taks is to answer the user request providing one of the following properties in a JSON document:
+
+- "query": The SQL query that answers the user request
+- "answer": The answer to the user request formatted as Markdown
+- "question": Ask the user for more information to clarify the request
+        `.trim(),
+      },
+      ...body.messages,
+    ];
+
+    try {
+      return this.AIService.complete(messages, {
+        ...options,
+        format: 'json_object',
+      });
     } catch (e: any) {
       throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }

@@ -46,7 +46,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"conn\": \"default\",\n    \"disableAnalyze\": true,\n    \"queries\": [\n        {\n            \"statement\": \"select table_schema, table_name, table_type from information_schema.tables;\"\n        }\n    ]\n}",
+							"raw": "{\n    \"conn\": \"default\",\n    \"database\": \"postgres\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -211,6 +211,117 @@
 						"url": "localhost:8080/admin/v1/connections"
 					},
 					"response": []
+				}
+			]
+		},
+		{
+			"name": "AI",
+			"item": [
+				{
+					"name": "complete",
+					"item": [
+						{
+							"name": "text",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-pgmate-admin-secret",
+										"value": "{{PGMATE_ADMIN_SECRET}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"conn\": \"default\",\n    \"database\": \"postgres\",\n    \"messages\": [{\n        \"role\": \"user\",\n        \"content\": \"hello\"\n    }]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "localhost:8080/admin/v1/ai/complete"
+							},
+							"response": []
+						},
+						{
+							"name": "json",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-pgmate-admin-secret",
+										"value": "{{PGMATE_ADMIN_SECRET}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"conn\": \"default\",\n    \"database\": \"postgres\",\n    \"messages\": [{\n        \"role\": \"system\",\n        \"content\": \"answer in json as: {\\\"values\\\": [values go here...]}\"\n    },{\n        \"role\": \"user\",\n        \"content\": \"give me 5 dog names\"\n    }],\n    \"options\": {\n        \"format\": \"json_object\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "localhost:8080/admin/v1/ai/complete"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "ask",
+					"item": [
+						{
+							"name": "list-movies",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-pgmate-admin-secret",
+										"value": "{{PGMATE_ADMIN_SECRET}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"conn\": \"default\",\n    \"database\": \"postgres\",\n    \"messages\": [{\n        \"role\": \"user\",\n        \"content\": \"list all the movies in order of rental revenue top down\"\n    }],\n    \"options\": {\n        \"limit\": 100\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "localhost:8080/admin/v1/ai/ask"
+							},
+							"response": []
+						},
+						{
+							"name": "summarize",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-pgmate-admin-secret",
+										"value": "{{PGMATE_ADMIN_SECRET}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"conn\": \"default\",\n    \"database\": \"postgres\",\n    \"messages\": [{\n        \"role\": \"user\",\n        \"content\": \"explain me the business purpose of application that uses this database\"\n    }],\n    \"options\": {\n        \"limit\": 150\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "localhost:8080/admin/v1/ai/ask"
+							},
+							"response": []
+						}
+					]
 				}
 			]
 		},

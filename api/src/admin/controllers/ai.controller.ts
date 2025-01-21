@@ -55,50 +55,57 @@ export class AIController {
       };
     },
   ): Promise<LLMResponse> {
-    // Get the client
-    const [client] = await this.connectionsService.createClient(
-      body.conn,
-      body.database,
-    );
-
     // Retrive DB Info
     let dbInfo: {
       schema: any;
       aiFull: any;
       aiCompact: any;
     };
-    try {
-      const schema = await this.PGSchemaService.getSchema(client);
-      const aiFull = AIFull(schema);
-      const aiCompact = AICompact(aiFull);
 
-      dbInfo = {
-        schema,
-        aiFull,
-        aiCompact,
-      };
-    } catch (e: any) {
-      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
-    } finally {
-      await client.end();
-    }
+    await (async () => {
+      const [client] = await this.connectionsService.createClient(
+        body.conn,
+        body.database,
+      );
 
+      try {
+        const schema = await this.PGSchemaService.getSchema(client);
+        const aiFull = AIFull(schema);
+        const aiCompact = AICompact(aiFull);
+
+        dbInfo = {
+          schema,
+          aiFull,
+          aiCompact,
+        };
+      } catch (e: any) {
+        throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+      } finally {
+        await client.end();
+      }
+    })();
+
+    // Prepare the conversation history
     const { context = 'compact', ...options } = body.options;
     const messages: LLMMessage[] = [
       {
         role: 'system',
         content: `
 You are an expert Postgres SQL engineer.
-You have access to a database with the following schema:
+You have access to a DATABASE with the following SCHEMA:
 ${JSON.stringify(context === 'full' ? dbInfo.aiFull : dbInfo.aiCompact)}
 
-Your taks is to answer the user request providing one of the following properties in a JSON document:
+You are given an optional CONVERSATION HISTORY that you can use to better understand the context of the request.
+The USER REQUEST is given as the last message in the CONVERSATION HISTORY.
 
-- "query": The SQL query that answers the user request
-- "answer": The answer to the user request formatted as Markdown
+Your taks is to answer the USER REQUEST providing one of the following properties in a JSON document:
+
+- "query": The SQL query that answers the USER REQUEST
+- "answer": The answer to the USER REQUEST formatted as Markdown
 - "question": Ask the user for more information to clarify the request
         `.trim(),
       },
+      // TODO: trim old messages that may kick the conversation out of the window context size
       ...body.messages,
     ];
 
@@ -111,51 +118,4 @@ Your taks is to answer the user request providing one of the following propertie
       throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
-  // @Post('complete')
-  // async complete(@Body() body: { messages: Message[] }): Promise<any> {
-  //   const [client, aquisitionTime] = await this.connectionsService.createClient(
-  //     body.conn,
-  //     body.database,
-  //   );
-
-  //   // Retrive DB Info
-  //   let dbInfo = {};
-  //   try {
-  //     const schema = await this.PGSchemaService.getSchema(client);
-  //     const aiFull = AIFull(schema);
-  //     const aiCompact = AICompact(aiFull);
-
-  //     dbInfo = {
-  //       schema,
-  //       aiFull,
-  //       aiCompact,
-  //     };
-  //   } catch (e: any) {
-  //     console.error(e.message);
-  //     throw new Error('Could not retreive schema');
-  //   } finally {
-  //     await client.end();
-  //   }
-
-  //   // Use o4-mini with compact schema to get the list of relevant tables
-  //   let relevantTables = {};
-  //   try {
-  //     relevantTables = await this.AIService.complete([
-  //       { role: 'user', message: body.query },
-  //     ]);
-  //     console.log(relevantTables);
-  //   } catch (e: any) {
-  //     console.error(e.message);
-  //     throw new Error('Could not run AI');
-  //   }
-
-  //   // Get full schema for the relevant tables
-
-  //   // Use o4 with full schema on relevant tables to generate the query
-
-  //   return {
-  //     query: body.query,
-  //     relevantTables,
-  //   };
-  // }
 }

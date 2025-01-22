@@ -89,6 +89,7 @@ export class AIService {
       [cacheKey],
     );
     if (cache.rowCount) {
+      // await new Promise((resolve) => setTimeout(resolve, 4000));
       return {
         _cacheId: cacheKey,
         ...cache.rows[0].response,
@@ -114,7 +115,7 @@ export class AIService {
     } catch (error) {
       this.logger.error(
         'Error calling OpenAI API',
-        error?.response.data || error,
+        error?.response?.data || error,
       );
 
       if (error?.response) {

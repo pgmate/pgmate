@@ -12,7 +12,11 @@ export const MessagesList: React.FC<MessagesListProps> = ({ messages }) => {
     <List>
       {messages.map((message, index) =>
         message.role === "user" ? (
-          <MessageUser key={index} message={message as LLMUserMessage} />
+          <MessageUser
+            key={index}
+            message={message as LLMUserMessage}
+            isLast={index === messages.length - 1}
+          />
         ) : (
           <MessageAssistant
             key={index}

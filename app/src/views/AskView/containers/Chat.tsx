@@ -8,10 +8,6 @@ export const Chat = () => {
   const promptRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   const handleSubmit = (evt: React.FormEvent) => {
     evt.preventDefault();
 
@@ -26,9 +22,12 @@ export const Chat = () => {
     }
   };
 
-  // Scroll to the bottom when the component mounts or messages change
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat.messages]);
 
   // Initial message
@@ -51,6 +50,21 @@ export const Chat = () => {
       timers.forEach(clearTimeout);
     };
   }, []);
+
+  // useEffect(() => {
+  //   const timers = [
+  //     setTimeout(() => {
+  //       chat.send("hello");
+  //     }, 250),
+
+  //     setTimeout(() => {
+  //       chat.send("again");
+  //     }, 6000),
+  //   ];
+  //   return () => {
+  //     timers.forEach(clearTimeout);
+  //   };
+  // }, []);
 
   return (
     <Box
@@ -84,8 +98,9 @@ export const Chat = () => {
         }}
       >
         <TextField
-          inputRef={promptRef}
           multiline
+          autoFocus
+          inputRef={promptRef}
           maxRows={5}
           onKeyDown={handleKeyDown}
         />

@@ -17,7 +17,7 @@ export const AskView = () => {
       stickyHeader
       forceStickyHeader
       meta={{ title: `${params.db}: SQL Studio` }}
-      title={"SQL Studio"}
+      title={"🤖 Copilot"}
       subtitle={
         <Breadcrumbs aria-label="breadcrumb">
           <MUILink
@@ -44,7 +44,7 @@ export const AskView = () => {
           >
             {params.db}
           </MUILink>
-          <Typography color="text.primary">🤖 Ask AL</Typography>
+          <Typography color="text.primary">Copilot</Typography>
         </Breadcrumbs>
       }
     >

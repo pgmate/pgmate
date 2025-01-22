@@ -48,6 +48,7 @@ export const useQueries = (
   loading: boolean;
   error: any | null;
   data: null | { rows: any[] }[];
+  refetch: () => void;
 } => {
   const dedupeRef = useRef<string | Connection | null>(null);
 
@@ -69,6 +70,13 @@ export const useQueries = (
   return {
     ...result,
     data: data?.queries,
+    refetch: () =>
+      refetch({
+        conn: typeof conn === "string" ? conn : conn.name,
+        database: typeof conn === "string" ? undefined : conn.database,
+        disableAnalyze: true,
+        queries,
+      }),
   };
 };
 

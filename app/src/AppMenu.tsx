@@ -35,7 +35,7 @@ const primaryMenu = [
     },
   },
   {
-    label: "Ask AL",
+    label: "Copilot",
     icon: "🤖",
     href: "/ask",
     useHidden: () => {

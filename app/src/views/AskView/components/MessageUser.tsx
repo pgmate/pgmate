@@ -1,4 +1,4 @@
-import { ListItem, ListItemText } from "@mui/material";
+import { ListItem, ListItemText, Paper } from "@mui/material";
 import type { LLMUserMessage } from "../ask.d";
 
 interface MessageUserProps {
@@ -8,7 +8,16 @@ interface MessageUserProps {
 export const MessageUser: React.FC<MessageUserProps> = ({ message }) => {
   return (
     <ListItem>
-      <ListItemText primary={message.content} secondary={"@user"} />
+      <Paper
+        elevation={3}
+        sx={{
+          flex: 1,
+          ml: "40%",
+          p: 2,
+        }}
+      >
+        <ListItemText primary={message.content} secondary={"@user"} />
+      </Paper>
     </ListItem>
   );
 };

@@ -47,6 +47,12 @@ export const AskView = () => {
           <Typography color="text.primary">Copilot</Typography>
         </Breadcrumbs>
       }
+      bodyProps={{
+        sx: {
+          display: "flex",
+          flexDirection: "column",
+        },
+      }}
     >
       <Chat />
     </PageLayout>

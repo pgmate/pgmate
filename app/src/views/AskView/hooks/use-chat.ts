@@ -2,7 +2,6 @@ import { useCallback, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAxios } from "hooks/use-axios";
 import type { LLMMessage } from "../ask.d";
-import { set } from "react-hook-form";
 
 export const useChat = () => {
   const axios = useAxios();

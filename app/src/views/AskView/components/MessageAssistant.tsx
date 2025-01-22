@@ -1,4 +1,4 @@
-import { ListItem, ListItemText } from "@mui/material";
+import { ListItem, ListItemText, Box, Stack } from "@mui/material";
 import { CodeViewer } from "components/CodeViewer";
 import ReactMarkdown from "react-markdown";
 import type { LLMAssistantMessage } from "../ask";
@@ -39,23 +39,28 @@ export const MessageAssistant: React.FC<MessageAssistantProps> = ({
   const { type, content } = parseMessage(message.content);
   return (
     <ListItem>
-      {type === "query" ? (
-        <ListItemText
-          primary={<CodeViewer language="sql" code={content} />}
-          secondary={`@assistant`}
-        />
-      ) : (
-        <ListItemText
-          primary={
-            ["answer", "question"].includes(type) ? (
-              <ReactMarkdown>{content}</ReactMarkdown>
-            ) : (
-              content
-            )
-          }
-          secondary={`@assistant - ${type}`}
-        />
-      )}
+      <Stack direction={"row"} flex={1}>
+        <Box sx={{ fontSize: 25, p: 2 }}>🤖</Box>
+        <Box flex={1}>
+          {type === "query" ? (
+            <ListItemText
+              primary={<CodeViewer language="sql" code={content} />}
+              secondary={`@assistant`}
+            />
+          ) : (
+            <ListItemText
+              primary={
+                ["answer", "question"].includes(type) ? (
+                  <ReactMarkdown>{content}</ReactMarkdown>
+                ) : (
+                  content
+                )
+              }
+              secondary={`@assistant - ${type}`}
+            />
+          )}
+        </Box>
+      </Stack>
     </ListItem>
   );
 };

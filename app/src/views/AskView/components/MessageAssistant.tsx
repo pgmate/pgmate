@@ -44,7 +44,9 @@ export const MessageAssistant: React.FC<MessageAssistantProps> = ({
         <Box flex={1}>
           {type === "query" ? (
             <ListItemText
-              primary={<CodeViewer language="sql" code={content} />}
+              primary={
+                <CodeViewer language="sql" code={content} height={300} />
+              }
               secondary={`@assistant`}
             />
           ) : (

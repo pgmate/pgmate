@@ -60,5 +60,10 @@ export const useChat = () => {
     [axios, pushMsg]
   );
 
-  return { send, messages };
+  const reset = useCallback(() => {
+    setMessages([]);
+    messagesRef.current = [];
+  }, [setMessages, messagesRef]);
+
+  return { send, reset, messages };
 };

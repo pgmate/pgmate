@@ -1,11 +1,13 @@
-import { Controller, Get, Logger, Inject } from '@nestjs/common';
-import { Pool } from 'pg';
+import { Controller, Get, Logger, UseInterceptors } from '@nestjs/common';
+import { ClientInterceptor } from '../../database/client.interceptor';
+import { ClientService } from '../../database/client.service';
 
+@UseInterceptors(ClientInterceptor)
 @Controller('healthz')
 export class HealthzController {
   private readonly logger = new Logger(HealthzController.name);
 
-  constructor(@Inject('PG_CONNECTION') private readonly pool: Pool) {}
+  constructor(private readonly clientService: ClientService) {}
 
   @Get('/')
   async healthz(): Promise<{
@@ -14,7 +16,9 @@ export class HealthzController {
   }> {
     this.logger.log('ping');
 
-    const result = await this.pool.query('SELECT now FROM NOW()');
+    const result = await this.clientService.default.query(
+      'SELECT now FROM NOW()',
+    );
 
     return {
       success: true,

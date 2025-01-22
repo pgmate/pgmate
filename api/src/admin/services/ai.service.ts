@@ -1,9 +1,9 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Pool } from 'pg';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import * as crypto from 'crypto';
+import { ClientService } from '../../database/client.service';
 
 type LLMRole = 'system' | 'user' | 'assistant';
 type LLMModel = 'gpt-4o' | 'gpt-4o-mini';
@@ -48,9 +48,9 @@ export class AIService {
   private readonly logger = new Logger(AIService.name);
 
   constructor(
-    @Inject('PG_CONNECTION') private readonly pool: Pool,
-    private readonly configService: ConfigService,
     private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+    private readonly clientService: ClientService,
   ) {}
 
   /**
@@ -84,7 +84,7 @@ export class AIService {
       .digest('hex');
 
     // Cache lookup:
-    const cache = await this.pool.query(
+    const cache = await this.clientService.default.query(
       `SELECT response FROM pgmate.llm_cache WHERE hash = $1 LIMIT 1`,
       [cacheKey],
     );
@@ -105,7 +105,7 @@ export class AIService {
         }),
       );
 
-      await this.pool.query(
+      await this.clientService.default.query(
         `INSERT INTO pgmate.llm_cache (hash, options, request, response) VALUES ($1, $2, $3, $4)`,
         [cacheKey, options, request, response.data],
       );

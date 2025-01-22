@@ -3,11 +3,13 @@ import {
   Body,
   Controller,
   UseGuards,
+  UseInterceptors,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { AdminGuard } from '../admin.guard';
-import { ConnectionsService } from '../services/connections.service';
+import { ClientInterceptor } from '../../database/client.interceptor';
+import { ClientService } from '../../database/client.service';
 import { PGSchemaService } from '../services/pg_schema.service';
 import { AIService } from '../services/ai.service';
 import { AIFull } from './pg_schema.ai-full';
@@ -19,10 +21,11 @@ import type {
 } from '../services/ai.service';
 
 @UseGuards(AdminGuard)
+@UseInterceptors(ClientInterceptor)
 @Controller('ai')
 export class AIController {
   constructor(
-    private readonly connectionsService: ConnectionsService,
+    private readonly clientService: ClientService,
     private readonly PGSchemaService: PGSchemaService,
     private readonly AIService: AIService,
   ) {}
@@ -63,12 +66,8 @@ export class AIController {
     };
 
     await (async () => {
-      const [client] = await this.connectionsService.createClient(
-        body.conn,
-        body.database,
-      );
-
       try {
+        const client = this.clientService.target;
         const schema = await this.PGSchemaService.getSchema(client);
         const aiFull = AIFull(schema);
         const aiCompact = AICompact(aiFull);
@@ -80,8 +79,6 @@ export class AIController {
         };
       } catch (e: any) {
         throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
-      } finally {
-        await client.end();
       }
     })();
 

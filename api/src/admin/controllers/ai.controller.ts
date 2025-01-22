@@ -103,6 +103,8 @@ Your taks is to answer the USER REQUEST providing one of the following propertie
 - "query": The SQL query that answers the USER REQUEST
 - "answer": The answer to the USER REQUEST formatted as Markdown
 - "question": Ask the user for more information to clarify the request
+
+IMPORTANT: The full output should be a parsable JSON document and you have a hard limit at ${options.limit} tokens.
         `.trim(),
       },
       // TODO: trim old messages that may kick the conversation out of the window context size

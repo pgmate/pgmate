@@ -35,9 +35,9 @@ const primaryMenu = [
     },
   },
   {
-    label: "AI",
+    label: "Ask AL",
     icon: "🤖",
-    href: "/text2sql",
+    href: "/ask",
     useHidden: () => {
       const connection = useURLConnection();
       return connection === undefined;
@@ -45,7 +45,7 @@ const primaryMenu = [
     useProps: () => {
       const connection = useURLConnection();
       return {
-        href: `/${connection?.name}/${connection?.database}/text2sql`,
+        href: `/${connection?.name}/${connection?.database}/ask`,
       };
     },
   },

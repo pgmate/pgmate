@@ -1,7 +1,9 @@
 import { useRef, useEffect } from "react";
 import { Box, Stack, TextField, Button } from "@mui/material";
+import { useSubscribe } from "hooks/use-pubsub";
 import { useChat } from "../hooks/use-chat";
 import { MessagesList } from "../components/MessagesList";
+import type { LLMAssistantMessage } from "../ask";
 
 export const Chat = () => {
   const chat = useChat();
@@ -16,8 +18,26 @@ export const Chat = () => {
     promptRef.current.value = "";
   };
 
+  const handleRequestFix = (error: Error) =>
+    chat.send(
+      `The query in your previous message yields this error: ${error.message}.\nPlease provide a fix.`
+    );
+
+  const handleOnChange = (message: LLMAssistantMessage, source: string) => {
+    chat.updateSQLMsg(message.id, source);
+  };
+
+  // Enter to submit
+  // Shift+Enter new line
   const handleKeyDown = (evt: React.KeyboardEvent<HTMLDivElement>) => {
-    if ((evt.metaKey || evt.ctrlKey) && evt.key === "Enter") {
+    if (evt.key === "Enter") {
+      if (evt.shiftKey) {
+        // Allow new line creation
+        return;
+      }
+
+      // Prevent default behavior and submit for plain Enter
+      evt.preventDefault();
       handleSubmit(evt);
     }
   };
@@ -30,41 +50,9 @@ export const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat.messages]);
 
-  // Initial message
-  useEffect(() => {
-    const timers = [
-      setTimeout(() => {
-        chat.send("describe the purpose of this db");
-      }, 250),
-      setTimeout(() => {
-        chat.send("Give me the query to calculate current month's sales");
-      }, 500),
-      setTimeout(() => {
-        chat.send("**?");
-      }, 750),
-      setTimeout(() => {
-        chat.send("i want the sales breakdown by product");
-      }, 1000),
-    ];
-    return () => {
-      timers.forEach(clearTimeout);
-    };
-  }, []);
-
-  // useEffect(() => {
-  //   const timers = [
-  //     setTimeout(() => {
-  //       chat.send("hello");
-  //     }, 250),
-
-  //     setTimeout(() => {
-  //       chat.send("again");
-  //     }, 6000),
-  //   ];
-  //   return () => {
-  //     timers.forEach(clearTimeout);
-  //   };
-  // }, []);
+  useSubscribe("ask:requestScrollDown", () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  });
 
   return (
     <Box
@@ -81,7 +69,11 @@ export const Chat = () => {
           overflowY: "auto",
         }}
       >
-        <MessagesList messages={chat.messages} />
+        <MessagesList
+          messages={chat.messages}
+          onRequestFix={handleRequestFix}
+          onChange={handleOnChange}
+        />
         <div ref={messagesEndRef} /> {/* Scroll target */}
       </Box>
 

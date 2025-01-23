@@ -1,3 +1,10 @@
+/**
+ * AI Services List
+ * https://github.com/cheahjs/free-llm-api-resources
+ *
+ * TODO: Support multiple AI services
+ */
+
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';

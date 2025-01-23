@@ -5,9 +5,15 @@ import { MessageAssistant } from "./MessageAssistant";
 
 interface MessagesListProps {
   messages: LLMMessage[];
+  onChange: (message: LLMAssistantMessage, source: string) => void;
+  onRequestFix?: (error: Error) => void;
 }
 
-export const MessagesList: React.FC<MessagesListProps> = ({ messages }) => {
+export const MessagesList: React.FC<MessagesListProps> = ({
+  messages,
+  onRequestFix,
+  onChange,
+}) => {
   return (
     <List>
       {messages.map((message, index) =>
@@ -21,6 +27,8 @@ export const MessagesList: React.FC<MessagesListProps> = ({ messages }) => {
           <MessageAssistant
             key={index}
             message={message as LLMAssistantMessage}
+            onRequestFix={onRequestFix}
+            onChange={onChange}
           />
         )
       )}

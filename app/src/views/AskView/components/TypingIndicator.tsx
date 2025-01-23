@@ -1,13 +1,19 @@
 import { Box, Stack, ListItemText } from "@mui/material";
 import React, { useState, useEffect } from "react";
+import { usePubSub } from "hooks/use-pubsub";
 
 interface TypingIndicatorProps {}
 
 export const TypingIndicator: React.FC<TypingIndicatorProps> = ({}) => {
-  const [typingText, setTypingText] = useState("typing");
+  const bus = usePubSub();
+  const [typingText, setTypingText] = useState("thinking");
 
   useEffect(() => {
-    const typingStages = ["typing", "typing.", "typing..", "typing..."];
+    bus.emit("ask:requestScrollDown");
+  }, []);
+
+  useEffect(() => {
+    const typingStages = ["thinking", "thinking.", "thinking..", "thinking..."];
     let index = 0;
 
     const interval = setInterval(() => {

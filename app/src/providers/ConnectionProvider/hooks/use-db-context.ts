@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef } from "react";
 import { useAxios } from "hooks/use-axios";
-import { usePubSub } from "hooks/use-pubsub";
+import { usePubSub, useSubscribe } from "hooks/use-pubsub";
 import type { DBInfo } from "./pgschema.type";
 
 /**
@@ -52,6 +52,11 @@ export const useDbContext = (
       }
     };
   }, [isReady, conn, database, loop]);
+
+  useSubscribe("dbinfo:refresh", () => {
+    loopRef.current && window.clearTimeout(loopRef.current);
+    loop();
+  });
 
   // Returns the ref with the data
   return () => dataRef.current;

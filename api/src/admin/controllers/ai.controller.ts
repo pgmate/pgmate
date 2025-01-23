@@ -89,23 +89,49 @@ export class AIController {
         role: 'system',
         content: `
 You are an expert Postgres SQL engineer.
-You have access to a DATABASE with the following SCHEMA:
-${JSON.stringify(context === 'full' ? dbInfo.aiFull : dbInfo.aiCompact)}
 
 You are given an optional CONVERSATION HISTORY that you can use to better understand the context of the request.
 The USER REQUEST is given as the last message in the CONVERSATION HISTORY.
 
 Your taks is to answer the USER REQUEST providing one of the following properties in a JSON document:
-
-- "query": The SQL query that answers the USER REQUEST
 - "answer": The answer to the USER REQUEST formatted as Markdown
 - "question": Ask the user for more information to clarify the request
+- "query": The SQL query that answers the USER REQUEST
+
+EXAMPLE1 REQUEST:
+build a query that returns the number of users per country
+
+EXAMPLE1 RESPONSE:
+{"query": "SELECT country, COUNT(*) FROM users GROUP BY country;"}
+
+EXAMPLE2 REQUEST:
+reset the public schema
+
+EXAMPLE2 RESPONSE:
+{"query": "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"}
+
+EXAMPLE3 REQUEST:
+explain the difference between INNER JOIN and LEFT JOIN
+
+EXAMPLE3 RESPONSE:
+{"answer": "INNER JOIN returns ..."}
+
 
 IMPORTANT: The full output should be a parsable JSON document and you have a hard limit at ${options.limit} tokens.
         `.trim(),
       },
       // TODO: trim old messages that may kick the conversation out of the window context size
       ...body.messages,
+      {
+        role: 'system',
+        content: `
+This is the DATABASE SCHEMA INFORMATION that you have access to:
+
+===JSON===
+${JSON.stringify(context === 'full' ? dbInfo.aiFull : dbInfo.aiCompact)}
+===JSON===
+        `.trim(),
+      },
     ];
 
     try {

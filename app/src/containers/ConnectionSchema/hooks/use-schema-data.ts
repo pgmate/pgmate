@@ -1,4 +1,5 @@
 import { useQueries } from "hooks/use-query";
+import { useSubscribe } from "hooks/use-pubsub";
 
 type TableType = "VIEW" | "BASE TABLE" | "MATERIALIZED VIEW";
 
@@ -108,6 +109,8 @@ export const useSchemaData = (conn: Connection) => {
         data[1].rows as TableInfo[]
       )
     : [];
+
+  useSubscribe("dbinfo:updated", refetch);
 
   return {
     schema,

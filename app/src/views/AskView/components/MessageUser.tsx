@@ -1,4 +1,6 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 import { ListItem, ListItemText, Box, Paper } from "@mui/material";
 import { SendingIndicator } from "./SendingIndicator";
 import { TypingIndicator } from "./TypingIndicator";
@@ -25,7 +27,13 @@ export const MessageUser: React.FC<MessageUserProps> = ({
         }}
       >
         <Paper elevation={3} sx={{ p: 2, position: "relative" }}>
-          <ListItemText primary={message.content} secondary={"@user"} />
+          <ListItemText
+            primary={
+              <ReactMarkdown remarkPlugins={[remarkBreaks]}>
+                {message.content}
+              </ReactMarkdown>
+            }
+          />
           <Box sx={{ position: "absolute", right: 0, bottom: 0 }}>
             <SendingIndicator
               animate={isLast}

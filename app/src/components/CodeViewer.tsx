@@ -10,6 +10,7 @@ export const CodeViewer = ({
   disableCopy,
   readOnly = true,
   onChange = () => {},
+  onRequestRun,
 }: {
   code: string;
   language: string;
@@ -18,6 +19,7 @@ export const CodeViewer = ({
   disableCopy?: boolean;
   readOnly?: boolean;
   onChange?: (value: string) => void;
+  onRequestRun?: (content: string) => void;
 }) => {
   const theme = useTheme();
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
@@ -42,7 +44,7 @@ export const CodeViewer = ({
         height,
       }}
     >
-      {/* Monaco Editor in read-only mode */}
+      {/* Monaco Editor */}
       <Editor
         language={language}
         value={code}
@@ -59,8 +61,23 @@ export const CodeViewer = ({
           fontSize: 10,
           contextmenu: false,
         }}
-        onMount={(editor) => {
-          editor.addCommand(0, () => null);
+        onMount={(editor, monaco) => {
+          if (!readOnly && onRequestRun) {
+            editor.addCommand(
+              monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+              () => {
+                const selection = editor.getSelection();
+                const model = editor.getModel();
+
+                if (selection && model) {
+                  const selectedText = model.getValueInRange(selection);
+                  const content = selectedText || model.getValue(); // Use selected text or entire content
+                  onRequestRun(content);
+                }
+              }
+            );
+          }
+
           onMount?.(editor);
         }}
         onChange={handleEditorChange}

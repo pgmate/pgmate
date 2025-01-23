@@ -56,6 +56,7 @@ export const QueryRunner: React.FC<QueryRunnerProps> = ({
       setTimeout(() => {
         onQueryCompleted?.(results);
 
+        // Request a schema update for DDL queries
         if (
           [
             "UPDATE",

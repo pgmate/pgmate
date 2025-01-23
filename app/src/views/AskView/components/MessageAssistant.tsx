@@ -1,7 +1,7 @@
 import { ListItem, ListItemText, Box, Stack } from "@mui/material";
 import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
-import { usePubSub } from "hooks/use-pubsub";
+// import { usePubSub } from "hooks/use-pubsub";
 import { QueryRunner } from "containers/QueryRunner";
 import type { LLMAssistantMessage } from "../ask";
 
@@ -47,7 +47,7 @@ export const MessageAssistant: React.FC<MessageAssistantProps> = ({
   onRequestFix,
   onChange,
 }) => {
-  const bus = usePubSub();
+  // const bus = usePubSub();
   const { type, content } = parseMessage(message.content);
   return (
     <ListItem>
@@ -59,7 +59,7 @@ export const MessageAssistant: React.FC<MessageAssistantProps> = ({
               source={content}
               onRequestFix={onRequestFix}
               onChange={(source) => onChange(message, source)}
-              onQueryCompleted={() => bus.emit("ask:requestScrollDown")}
+              // onQueryCompleted={() => bus.emit("ask:requestScrollDown")}
             />
           ) : (
             <ListItemText

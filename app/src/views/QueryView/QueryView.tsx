@@ -1,6 +1,7 @@
 import Editor, { Monaco } from "@monaco-editor/react";
 import { useState, useRef } from "react";
 import { Box, Alert, useTheme } from "@mui/material";
+import { usePubSub } from "hooks/use-pubsub";
 import { useDynamicQueries } from "hooks/use-query";
 import { useSubscribe } from "hooks/use-pubsub";
 import { useStorage } from "hooks/use-storage";
@@ -10,17 +11,19 @@ import { ResultsTable } from "./containers/ResultsTable";
 import { ResultsEmpty } from "./containers/ResultsEmpty";
 // import { splitIntoStatements1 as splitIntoStatements } from "./utils";
 
-const SQL = `
-SELECT * FROM now();
-SELECT 'marco' AS name;
-SELECT 1 + 1 AS sum;
+const SQL = "";
 
-SELECT "city_id", "city", "country_id", "last_update"
-FROM "public"."city" limit 5;
+// const SQL = `
+// SELECT * FROM now();
+// SELECT 'marco' AS name;
+// SELECT 1 + 1 AS sum;
 
-SELECT "city_id", "city", "country_id", "last_update"
-FROM "public"."city" limit 15;
-`;
+// SELECT "city_id", "city", "country_id", "last_update"
+// FROM "public"."city" limit 5;
+
+// SELECT "city_id", "city", "country_id", "last_update"
+// FROM "public"."city" limit 15;
+// `;
 
 // This dummy SQL is used to test the query splitter and identify the correct statements
 // based on the cursor position.
@@ -84,6 +87,7 @@ interface QueryResult {
 }
 
 export const QueryView = ({ conn }: { conn: Connection }) => {
+  const bus = usePubSub();
   const theme = useTheme();
   const storage = useStorage();
   const storageKey = `sql.${conn.name}.${conn.database}`;
@@ -262,6 +266,30 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
         console.log("Queries:", queries);
         setResults(queries);
         setShowResults(true);
+
+        if (
+          [
+            "UPDATE",
+            "DELETE",
+            "INSERT",
+            "MERGE",
+            "CREATE",
+            "ALTER",
+            "DROP",
+            "TRUNCATE",
+            "RENAME",
+            "COMMIT",
+            "ROLLBACK",
+            "GRANT",
+            "REVOKE",
+            "SET",
+            "EXECUTE",
+          ].some((keyword) =>
+            statements.join(" ").toUpperCase().includes(keyword)
+          )
+        ) {
+          bus.emit("dbinfo:refresh");
+        }
         // queries.forEach((item: any) => {
         //   console.log(item.query.statement);
         //   if (item.rows) {

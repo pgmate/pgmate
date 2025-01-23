@@ -3,6 +3,7 @@ import { Box, Stack, TextField, Button } from "@mui/material";
 import { useSubscribe } from "hooks/use-pubsub";
 import { useChat } from "../hooks/use-chat";
 import { MessagesList } from "../components/MessagesList";
+import { SuggestionsList } from "../components/SuggestionsList";
 import type { LLMAssistantMessage } from "../ask";
 
 export const Chat = () => {
@@ -69,6 +70,9 @@ export const Chat = () => {
           overflowY: "auto",
         }}
       >
+        {chat.messages.length === 0 && (
+          <SuggestionsList onSelectMessage={chat.send} />
+        )}
         <MessagesList
           messages={chat.messages}
           onRequestFix={handleRequestFix}

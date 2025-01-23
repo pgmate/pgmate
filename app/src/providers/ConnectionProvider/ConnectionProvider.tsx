@@ -4,12 +4,12 @@ import { useSubscribe } from "hooks/use-pubsub";
 import { useConnectionParams } from "./hooks/use-connection-params";
 import { useDbContext } from "./hooks/use-db-context";
 import { ConnectionError } from "./components/ConnectionError";
-import type { PGData } from "./hooks/pgschema.type";
+import type { DBInfo } from "./hooks/pgschema.type";
 
 export const ConnectionContext = createContext<{
   items: Connection[];
   getByName: (name: string, database?: string) => Connection | undefined;
-  getDBInfo: () => PGData | null;
+  getDBInfo: () => DBInfo | null;
 }>({
   items: [],
   getByName: () => undefined,

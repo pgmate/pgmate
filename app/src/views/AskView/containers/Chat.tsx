@@ -1,9 +1,12 @@
 import { useRef, useEffect } from "react";
-import { Box, Stack, TextField, Button } from "@mui/material";
+import { Box, Stack, TextField, Button, Icon } from "@mui/material";
 import { useSubscribe } from "hooks/use-pubsub";
 import { useChat } from "../hooks/use-chat";
 import { MessagesList } from "../components/MessagesList";
 import { SuggestionsList } from "../components/SuggestionsList";
+import { ModelSelector } from "../components/ModelSelector";
+import { ContextSelector } from "../components/ContextSelector";
+import { LimitSelector } from "../components/LimitSelector";
 import type { LLMAssistantMessage } from "../ask";
 
 export const Chat = () => {
@@ -99,14 +102,48 @@ export const Chat = () => {
           inputRef={promptRef}
           maxRows={5}
           onKeyDown={handleKeyDown}
+          placeholder="How can I help you?"
         />
-        <Stack direction={"row"} justifyContent={"flex-end"} mt={1} spacing={1}>
-          <Button variant="text" onClick={() => chat.reset()}>
-            cancel
-          </Button>
-          <Button type="submit" variant="contained">
-            Send
-          </Button>
+        <Stack
+          direction={"row"}
+          justifyContent={"space-between"}
+          mt={1}
+          spacing={1}
+        >
+          <Stack
+            direction={"row"}
+            justifyContent={"flex-start"}
+            mt={1}
+            spacing={3}
+          >
+            <ModelSelector
+              model={chat.model}
+              setModel={chat.setModel}
+              options={["gpt-4o", "gpt-4o-mini"]}
+            />
+            <ContextSelector
+              context={chat.context}
+              setContext={chat.setContext}
+            />
+            <LimitSelector limit={chat.limit} setLimit={chat.setLimit} />
+          </Stack>
+          <Stack
+            direction={"row"}
+            justifyContent={"flex-end"}
+            mt={1}
+            spacing={1}
+          >
+            <Button variant="text" onClick={() => chat.reset()}>
+              New Chat
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              endIcon={<Icon>send</Icon>}
+            >
+              Send
+            </Button>
+          </Stack>
         </Stack>
       </Stack>
     </Box>

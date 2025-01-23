@@ -2,7 +2,7 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useAxios } from "hooks/use-axios";
 import { useStorage } from "hooks/use-storage";
-import type { LLMMessage } from "../ask.d";
+import type { LLMMessage, LLMModel } from "../ask.d";
 
 export const useChat = () => {
   const storage = useStorage();
@@ -16,6 +16,10 @@ export const useChat = () => {
   const initialMessages: LLMMessage[] = storage.getItem("ask.messages") || [];
   const [messages, setMessages] = useState<LLMMessage[]>(initialMessages);
   const messagesRef = useRef<LLMMessage[]>(initialMessages);
+
+  const [limit, setLimit] = useState(500);
+  const [model, setModel] = useState<LLMModel>("gpt-4o-mini");
+  const [context, setContext] = useState<"compact" | "full">("compact");
 
   const pushMsg = useCallback(
     (msg: LLMMessage) => {
@@ -48,7 +52,9 @@ export const useChat = () => {
           database: params.db,
           messages: getCleanMessages(),
           options: {
-            limit: 500,
+            limit,
+            model,
+            context,
           },
         });
 
@@ -62,7 +68,7 @@ export const useChat = () => {
         console.error("Failed to send message", e);
       }
     },
-    [axios, pushMsg]
+    [axios, pushMsg, limit, model, context]
   );
 
   const reset = useCallback(() => {
@@ -99,5 +105,16 @@ export const useChat = () => {
   //   };
   // }, []);
 
-  return { messages, send, reset, updateSQLMsg };
+  return {
+    messages,
+    send,
+    reset,
+    updateSQLMsg,
+    limit,
+    setLimit,
+    model,
+    setModel,
+    context,
+    setContext,
+  };
 };

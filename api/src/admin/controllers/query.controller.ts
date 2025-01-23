@@ -1,8 +1,16 @@
-import { Body, Controller, Post, UseGuards, Inject } from '@nestjs/common';
-import { Pool } from 'pg';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  UseInterceptors,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { performance } from 'perf_hooks';
+import { ClientInterceptor } from '../../database/client.interceptor';
+import { ClientService } from '../../database/client.service';
 import { AdminGuard } from '../admin.guard';
-import { ConnectionsService } from '../services/connections.service';
 
 const shouldAnalyze = (statement) => {
   if (statement.trim().toUpperCase().startsWith('CREATE')) return false;
@@ -11,15 +19,12 @@ const shouldAnalyze = (statement) => {
 };
 
 @UseGuards(AdminGuard)
+@UseInterceptors(ClientInterceptor)
 @Controller('query')
 export class QueryController {
-  constructor(
-    @Inject('PG_CONNECTION') private readonly pool: Pool,
-    private readonly connectionsService: ConnectionsService,
-  ) {}
+  constructor(private readonly clientService: ClientService) {}
 
   private async _query(client, query, variables) {
-    // console.log(client.connectionParameters, query.substr(0, 40), variables);
     const timerStart = performance.now();
     const result = await client.query(query, variables);
     const timerEnd = performance.now();
@@ -58,11 +63,8 @@ export class QueryController {
       connection: string;
     };
   }> {
-    // console.log('@createClient:', body.conn, body.database);
-    const [client, aquisitionTime] = await this.connectionsService.createClient(
-      body.conn,
-      body.database,
-    );
+    const client = this.clientService.target;
+    const aquisitionTime = '0 ms';
 
     try {
       const queries = [];
@@ -136,13 +138,18 @@ export class QueryController {
       }
 
       return {
-        queries,
         stats: {
           connection: aquisitionTime,
         },
+        queries,
       };
-    } finally {
-      await client.end(); // Ensure the client is properly closed
+    } catch (error) {
+      throw new HttpException(
+        {
+          message: error.message,
+        },
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
     }
   }
 }

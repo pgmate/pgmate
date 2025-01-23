@@ -10,3 +10,9 @@ CREATE TABLE IF NOT EXISTS "pgmate"."connections" (
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+COMMENT ON TABLE "pgmate"."connections" IS 
+'Stores connection details for Postgres databases. 
+The "conn" column contains an encrypted postgres connection string.';
+
+COMMENT ON COLUMN "pgmate"."connections"."conn" IS 'Encrypted by the backend';

@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import {
+  Stack,
   List,
   ListSubheader,
   ListItem,
   ListItemText,
   ListItemButton,
   Collapse,
+  Tooltip,
 } from "@mui/material";
 import { Icon } from "components/Icon";
 import { useSubscribe } from "hooks/use-pubsub";
 import { useTableMode } from "hooks/use-table-mode";
-import { useConnectionSchema } from "./hooks/use-connection-schema";
+import { useSchemaData } from "./hooks/use-schema-data";
 import { useSchemaTree } from "./hooks/use-schema-tree";
 import { TableItem } from "./components/TableItem";
 
@@ -20,8 +22,8 @@ interface FocusedData {
 }
 
 export const ConnectionSchema: React.FC<{ conn: Connection }> = ({ conn }) => {
-  const { schema } = useConnectionSchema(conn);
   const { mode } = useTableMode();
+  const { schema, refetch } = useSchemaData(conn);
   const { expandedSchemas, handleToggle } = useSchemaTree(conn);
 
   const [focused, setFocused] = useState<FocusedData | null>(null);
@@ -29,7 +31,19 @@ export const ConnectionSchema: React.FC<{ conn: Connection }> = ({ conn }) => {
 
   return (
     <List>
-      <ListSubheader>Tables</ListSubheader>
+      <ListSubheader onClick={() => refetch()} sx={{ cursor: "pointer" }}>
+        <Stack
+          direction={"row"}
+          spacing={1}
+          justifyContent={"space-between"}
+          alignItems={"center"}
+        >
+          Tables
+          <Tooltip title="Refresh tables list">
+            <Icon>refresh</Icon>
+          </Tooltip>
+        </Stack>
+      </ListSubheader>
       {schema.map((schema) => {
         const isExpanded = expandedSchemas.has(schema.name);
 

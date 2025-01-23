@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Stack } from "@mui/material";
+import { Stack, IconButton, Icon, Button } from "@mui/material";
 import {
   DataGrid,
   GridRowsProp,
@@ -39,42 +39,57 @@ export const TableData: React.FC<TableDataProps> = ({ conn }) => {
     data.setSorting(props.sorting);
   }, [props]);
 
-  const columns: GridColDef[] = data.columns.map((c) => ({
-    field: c.column_name,
-    headerName: c.column_name,
-    editable: true,
-    width: props.columnSize[c.column_name],
-    renderCell: (params) =>
-      typeof params.value === "object" && params.value !== null
-        ? JSON.stringify(params.value, null, 2) // Pretty print JSON
-        : params.value, // Render as-is for non-JSON
-    renderEditCell:
-      c.data_type === "json" || c.data_type === "jsonb"
-        ? (params) => (
-            <textarea
-              defaultValue={
-                typeof params.value === "object" && params.value !== null
-                  ? JSON.stringify(params.value, null, 2)
-                  : params.value
-              }
-              style={{ width: "100%", height: "100%" }}
-              onChange={(event) => {
-                try {
-                  // Parse the input and update the cell value
-                  const updatedValue = JSON.parse(event.target.value);
-                  params.api.setEditCellValue({
-                    id: params.id,
-                    field: c.column_name,
-                    value: updatedValue,
-                  });
-                } catch (error) {
-                  console.error("Invalid JSON:", error);
+  const columns: GridColDef[] = [
+    ...data.columns.map((c) => ({
+      field: c.column_name,
+      headerName: c.column_name,
+      editable: true,
+      width: props.columnSize[c.column_name],
+      renderCell: (params: any) =>
+        typeof params.value === "object" && params.value !== null
+          ? JSON.stringify(params.value, null, 2) // Pretty print JSON
+          : params.value, // Render as-is for non-JSON
+      renderEditCell:
+        c.data_type === "json" || c.data_type === "jsonb"
+          ? (params: any) => (
+              <textarea
+                defaultValue={
+                  typeof params.value === "object" && params.value !== null
+                    ? JSON.stringify(params.value, null, 2)
+                    : params.value
                 }
-              }}
-            />
-          )
-        : undefined,
-  }));
+                style={{ width: "100%", height: "100%" }}
+                onChange={(event) => {
+                  try {
+                    // Parse the input and update the cell value
+                    const updatedValue = JSON.parse(event.target.value);
+                    params.api.setEditCellValue({
+                      id: params.id,
+                      field: c.column_name,
+                      value: updatedValue,
+                    });
+                  } catch (error) {
+                    console.error("Invalid JSON:", error);
+                  }
+                }}
+              />
+            )
+          : undefined,
+    })),
+    {
+      field: "actions",
+      headerName: "Actions",
+      sortable: false,
+      filterable: false,
+      width: 80,
+      align: "right",
+      renderCell: (params) => (
+        <IconButton onClick={() => data.deleteRow(params.row)}>
+          <Icon>delete_outline</Icon>
+        </IconButton>
+      ),
+    },
+  ];
 
   const rows: GridRowsProp = data?.rows?.map((r, i) => ({ id: i, ...r }));
 
@@ -141,6 +156,9 @@ export const TableData: React.FC<TableDataProps> = ({ conn }) => {
         onProcessRowUpdateError={onProcessRowUpdateError}
         onColumnWidthChange={onColumnWidthChange}
       />
+      <Button variant="outlined" onClick={() => data.addRow()}>
+        Add new row
+      </Button>
     </Stack>
   );
 };

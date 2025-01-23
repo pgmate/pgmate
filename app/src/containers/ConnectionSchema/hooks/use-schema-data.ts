@@ -1,4 +1,5 @@
 import { useQueries } from "hooks/use-query";
+import { useSubscribe } from "hooks/use-pubsub";
 
 type TableType = "VIEW" | "BASE TABLE" | "MATERIALIZED VIEW";
 
@@ -16,6 +17,28 @@ export type Schema = {
   name: string;
   tables: { name: string; type: TableType }[];
 };
+
+const GET_SCHEMAS = `
+SELECT schema_name FROM information_schema.schemata ORDER BY schema_name
+`.trim();
+
+const GET_TABLES = `
+SELECT 
+  table_schema, 
+  table_name, 
+  table_type 
+FROM 
+  information_schema.tables
+
+UNION ALL
+
+SELECT 
+  schemaname AS table_schema, 
+  matviewname AS table_name, 
+  'MATERIALIZED VIEW' AS table_type 
+FROM 
+  pg_matviews
+`.trim();
 
 const transformToNestedList = (
   schemas: SchemaInfo[],
@@ -60,33 +83,22 @@ const transformToNestedList = (
     return a.name.localeCompare(b.name); // Alphabetical for others
   });
 
+  // Sort tables within each schema alphabetically
+  sortedSchemas.forEach((schema) => {
+    schema.tables.sort((a, b) => a.name.localeCompare(b.name));
+  });
+
   return sortedSchemas;
 };
 
-export const useConnectionSchema = (conn: Connection) => {
-  const { data, ...results } = useQueries(conn, [
+export const useSchemaData = (conn: Connection) => {
+  const { data, refetch } = useQueries(conn, [
     {
-      statement:
-        "SELECT schema_name FROM information_schema.schemata ORDER BY schema_name;",
+      statement: GET_SCHEMAS,
       variables: [],
     },
     {
-      statement: `
-        SELECT 
-            table_schema, 
-            table_name, 
-            table_type 
-        FROM 
-            information_schema.tables
-
-        UNION ALL
-
-        SELECT 
-            schemaname AS table_schema, 
-            matviewname AS table_name, 
-            'MATERIALIZED VIEW' AS table_type 
-        FROM 
-            pg_matviews;`,
+      statement: GET_TABLES,
       variables: [],
     },
   ]);
@@ -98,8 +110,10 @@ export const useConnectionSchema = (conn: Connection) => {
       )
     : [];
 
+  useSubscribe("dbinfo:updated", refetch);
+
   return {
-    ...results,
     schema,
+    refetch,
   };
 };

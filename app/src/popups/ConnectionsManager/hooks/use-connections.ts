@@ -14,14 +14,16 @@ export interface ConnectionItem {
   desc: string;
 }
 
+export interface ConnectionTarget {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+}
+
 export interface ConnectionData extends ConnectionItem {
-  conn: {
-    host: string;
-    port: number;
-    user: string;
-    password: string;
-    database: string;
-  };
+  conn: ConnectionTarget;
   ssl: boolean;
   created_at: string;
   updated_at: string;

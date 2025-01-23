@@ -1,8 +1,16 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AdminGuard } from '../admin.guard';
+import { ClientInterceptor } from '../../database/client.interceptor';
 import { PGDumpService } from '../services/pg_dump.service';
 
 @UseGuards(AdminGuard)
+@UseInterceptors(ClientInterceptor)
 @Controller('pg_dump')
 export class PGDumpController {
   constructor(private readonly PGDumpService: PGDumpService) {}

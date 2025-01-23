@@ -132,67 +132,64 @@ export const useTableData = (
 
   const updateRow = useCallback(
     async (updatedRow: any, originalRow: any) => {
-      console.log("Updating row:", updatedRow, originalRow);
+      console.log("Updating row:", updatedRow.id, updatedRow, originalRow);
       const pkeys = columns.filter((c) => c.is_primary_key);
       const identifyingKeys = pkeys.length > 0 ? pkeys : columns;
 
-      // Prepare SET clause
-      const fields: string[] = [];
-      const values: any[] = [];
-      columns.forEach((c) => {
-        if (updatedRow[c.column_name] !== originalRow[c.column_name]) {
-          fields.push(c.column_name);
-          values.push(updatedRow[c.column_name]);
-        }
-      });
+      let query: string = "";
+      let values: any[] = [];
+      if (Object.keys(originalRow).length === 1) {
+        // Handle INSERT
+        const fields = Object.keys(updatedRow).filter((key) => key !== "id");
+        values = fields.map((field) => updatedRow[field]);
 
-      // Prepare WHERE clause
-      const whereValues: any[] = [];
-      const whereClause = identifyingKeys
-        .map((c, i) => {
-          const columnName = `"${c.column_name}"`;
-          if (c.data_type === "json" || c.data_type === "jsonb") {
-            whereValues.push(originalRow[c.column_name]);
-            return `${columnName}::text = $${i + fields.length + 1}`;
+        // Build the query
+        const fieldClause = fields.map((f) => `"${f}"`).join(", ");
+        const valuePlaceholders = fields.map((_, i) => `$${i + 1}`).join(", ");
+        query = `INSERT INTO "${schema}"."${table}" (${fieldClause}) VALUES (${valuePlaceholders}) RETURNING *`;
+        console.log("@insert", query, values);
+      } else {
+        // Prepare SET clause
+        const fields: string[] = [];
+        columns.forEach((c) => {
+          if (updatedRow[c.column_name] !== originalRow[c.column_name]) {
+            fields.push(c.column_name);
+            values.push(updatedRow[c.column_name]);
           }
-          whereValues.push(originalRow[c.column_name]);
-          return `${columnName} = $${i + fields.length + 1}`;
-        })
-        .join(" AND ");
+        });
 
-      // Combine all values
-      const allValues = [...values, ...whereValues];
+        // Prepare WHERE clause
+        const whereValues: any[] = [];
+        const whereClause = identifyingKeys
+          .map((c, i) => {
+            const columnName = `"${c.column_name}"`;
+            if (c.data_type === "json" || c.data_type === "jsonb") {
+              whereValues.push(originalRow[c.column_name]);
+              return `${columnName}::text = $${i + fields.length + 1}`;
+            }
+            whereValues.push(originalRow[c.column_name]);
+            return `${columnName} = $${i + fields.length + 1}`;
+          })
+          .join(" AND ");
 
-      // Build the query
-      const setClause = fields.map((f, i) => `"${f}" = $${i + 1}`).join(", ");
-      const query = `UPDATE "${schema}"."${table}" SET ${setClause} WHERE ${whereClause}`;
-      console.log(query, allValues);
+        // Combine all values
+        values = [...values, ...whereValues];
 
-      // Optimistic update
-      setRows((prevRows) =>
-        prevRows.map((row) => {
-          const matches = identifyingKeys.every((key) => {
-            const value =
-              key.data_type === "json" || key.data_type === "jsonb"
-                ? JSON.stringify(row[key.column_name])
-                : row[key.column_name];
-            const originalValue =
-              key.data_type === "json" || key.data_type === "jsonb"
-                ? JSON.stringify(originalRow[key.column_name])
-                : originalRow[key.column_name];
-            return value === originalValue;
-          });
-          return matches ? updatedRow : row;
-        })
-      );
+        // Build the query
+        const setClause = fields.map((f, i) => `"${f}" = $${i + 1}`).join(", ");
+        query = `UPDATE "${schema}"."${table}" SET ${setClause} WHERE ${whereClause}`;
+        console.log("@update", query, values);
+      }
 
       // Persist the update
       try {
-        await fetch(query, allValues);
-      } catch (error) {
-        console.error("Error updating row:", error);
+        // Detecting an error:
+        const [_, res] = await fetch(query, values);
+        if (res.data.queries[0].error) {
+          throw new Error(res.data.queries[0].error.message);
+        }
 
-        // Rollback on failure
+        // Update the dataset
         setRows((prevRows) =>
           prevRows.map((row) => {
             const matches = identifyingKeys.every((key) => {
@@ -206,15 +203,91 @@ export const useTableData = (
                   : originalRow[key.column_name];
               return value === originalValue;
             });
-            return matches ? originalRow : row;
+            return matches ? updatedRow : row;
           })
         );
+      } catch (error: any) {
+        alert("Failed to update row:\n" + error.message);
       }
 
       return updatedRow;
     },
     [schema, table, columns]
   );
+
+  const deleteRow = useCallback(
+    async (deletedRow: any) => {
+      // Identifying primary keys:
+      const metaPkeys = columns.filter((c) => c.is_primary_key);
+      const tablePKeys = metaPkeys.length > 0 ? metaPkeys : columns;
+
+      // Build WHERE conditions for primary keys
+      const whereClauses = tablePKeys
+        .map((key) => {
+          const value = deletedRow[key.column_name];
+          if (value === null || value === undefined) {
+            throw new Error(
+              `Missing value for primary key: ${key.column_name}`
+            );
+          }
+
+          // Handle value formatting for SQL (strings need quotes)
+          const formattedValue =
+            typeof value === "string"
+              ? `'${value.replace(/'/g, "''")}'`
+              : value;
+
+          return `${key.column_name} = ${formattedValue}`;
+        })
+        .join(" AND ");
+
+      // Construct the DELETE query
+      const query = `DELETE FROM "${schema}"."${table}" WHERE ${whereClauses};`;
+      console.log("@deleteRow:", query);
+
+      if (
+        !window.confirm(`Are you sure you want to delete this row?\n${query}`)
+      ) {
+        return;
+      }
+
+      // Persist the update
+      try {
+        // Detecting an error:
+        const [_, res] = await fetch(query);
+        if (res.data.queries[0].error) {
+          throw new Error(res.data.queries[0].error.message);
+        }
+
+        // Update the dataset
+        setRows((prevRows) =>
+          prevRows.filter(
+            (row) =>
+              !tablePKeys.every((key) => {
+                const rowValue =
+                  key.data_type === "json" || key.data_type === "jsonb"
+                    ? JSON.stringify(row[key.column_name])
+                    : row[key.column_name];
+                const deletedValue =
+                  key.data_type === "json" || key.data_type === "jsonb"
+                    ? JSON.stringify(deletedRow[key.column_name])
+                    : deletedRow[key.column_name];
+                return rowValue === deletedValue;
+              })
+          )
+        );
+      } catch (error: any) {
+        alert("Failed to delete row:\n" + error.message);
+      }
+    },
+    [schema, table, columns]
+  );
+
+  const addRow = useCallback(() => {
+    const id = Date.now();
+    setRows((prevRows) => [...prevRows, { id }]);
+    return id;
+  }, [schema, table, columns]);
 
   return {
     query,
@@ -227,5 +300,7 @@ export const useTableData = (
     sorting,
     setSorting,
     updateRow,
+    deleteRow,
+    addRow,
   };
 };

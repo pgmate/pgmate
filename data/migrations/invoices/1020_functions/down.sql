@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS invoicing.trg_updated_at;

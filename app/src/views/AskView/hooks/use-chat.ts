@@ -31,12 +31,11 @@ export const useChat = () => {
   );
 
   const getCleanMessages = useCallback(
-    (limit = 10) => {
+    (limit = 10) =>
       messagesRef.current.slice(-limit).map((msg) => ({
         role: msg.role,
         content: msg.content,
-      }));
-    },
+      })),
     [messagesRef]
   );
 

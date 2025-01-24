@@ -83,11 +83,7 @@ export const QueryRunner: React.FC<QueryRunnerProps> = ({
       }, 100);
 
       setTimeout(() => {
-        console.log("scrolling to", runnerId);
         const el = document.getElementById(runnerId);
-
-        console.log("el", el);
-
         el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }, 250);
     }

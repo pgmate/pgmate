@@ -12,7 +12,8 @@ export const CodeViewer = ({
   readOnly = true,
   onChange = () => {},
   onRequestRun,
-  autoFocus = false, // Default to false
+  autoFocus = false,
+  autoScrollIntoView = false,
 }: {
   code: string;
   language: string;
@@ -22,7 +23,8 @@ export const CodeViewer = ({
   readOnly?: boolean;
   onChange?: (value: string) => void;
   onRequestRun?: (content: string) => void;
-  autoFocus?: boolean; // New autoFocus prop
+  autoFocus?: boolean; // Gain focus on mount
+  autoScrollIntoView?: boolean; // Scroll into view when focused
 }) => {
   const theme = useTheme();
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
@@ -126,6 +128,20 @@ export const CodeViewer = ({
               editor.setPosition({ lineNumber: lastLine, column: lastColumn });
               editor.revealLineInCenter(lastLine); // Scroll to the last line
             }
+          }
+
+          // Scroll into view when focused
+          if (autoScrollIntoView) {
+            editor.onDidFocusEditorWidget(() => {
+              setTimeout(() => {
+                if (!editorRef.current) return;
+
+                editorRef.current.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }, 250);
+            });
           }
 
           onMount?.(editor);

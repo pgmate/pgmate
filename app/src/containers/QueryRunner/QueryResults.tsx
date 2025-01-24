@@ -40,7 +40,6 @@ export const QueryResults = <T extends Record<string, any>>({
       const element = document.getElementById(scrollId);
       if (element) {
         timeout = setTimeout(() => {
-          console.log("scrolling to element", scrollId);
           element.scrollIntoView({ behavior: "smooth" });
         }, 250);
       }

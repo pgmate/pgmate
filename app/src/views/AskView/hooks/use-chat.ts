@@ -2,7 +2,7 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useAxios } from "hooks/use-axios";
 import { useStorage } from "hooks/use-storage";
-import type { LLMMessage, LLMModel } from "../ask.d";
+import type { LLMModel, LLMMessage } from "../ask.d";
 
 export const useChat = () => {
   const storage = useStorage();
@@ -68,6 +68,7 @@ export const useChat = () => {
         pushMsg({
           id: res.data.id,
           role: "assistant",
+          model,
           content: res.data.choices[0].message.content,
           usage: res.data.usage,
         });
@@ -100,7 +101,7 @@ export const useChat = () => {
   // Persist messages
   useEffect(() => {
     storage.setItem("ask.messages", messagesRef.current);
-    // console.log("Messages", messages);
+    // console.log("Messages", messagesRef.current);
   }, [messages, storage]);
 
   // useEffect(() => {

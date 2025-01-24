@@ -1,15 +1,21 @@
 import React, { useState } from "react";
 import { Button, Menu, MenuItem, Stack, Icon, Tooltip } from "@mui/material";
 
-interface ContextSelectorProps {
-  context: "compact" | "full"; // The current selected context
-  setContext: (context: "compact" | "full") => void; // Function to update the context
+interface InputLimitSelectorProps {
+  limit: number; // The current selected limit
+  setLimit: (value: number) => void; // Function to update the limit
 }
 
-export const ContextSelector: React.FC<ContextSelectorProps> = ({
-  context = "compact",
-  setContext,
+export const InputLimitSelector: React.FC<InputLimitSelectorProps> = ({
+  limit,
+  setLimit,
 }) => {
+  // Linear values for input limit
+  const options = [
+    ...Array.from({ length: 6 }, (_, i) => (i + 1) * 10), // [10, 20, 30, 40, 50, 60]
+    ...Array.from({ length: 7 }, (_, i) => 80 + i * 20), // [80, 100, 120]
+  ];
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -20,22 +26,22 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
     setAnchorEl(null);
   };
 
-  const handleSelect = (selectedContext: "compact" | "full") => {
-    setContext(selectedContext);
-    handleClose();
+  const handleSelect = (selectedLimit: number) => {
+    setLimit(selectedLimit);
+    setAnchorEl(null);
   };
 
   return (
     <Stack direction="row" spacing={1} alignItems="center">
-      {/* Display the selected context with an arrow icon */}
-      <Tooltip title="Level of schema information to pass to the model">
+      {/* Display the selected limit */}
+      <Tooltip title="Maximum number of history messages to pass to the model">
         <Button
           size="small"
           variant="outlined"
           onClick={handleClick}
           endIcon={<Icon>keyboard_arrow_down</Icon>}
         >
-          {context}
+          {limit} msg
         </Button>
       </Tooltip>
 
@@ -53,11 +59,11 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
           horizontal: "left",
         }}
       >
-        {["compact", "full"].map((option) => (
+        {options.map((option) => (
           <MenuItem
             key={option}
-            selected={option === context}
-            onClick={() => handleSelect(option as "compact" | "full")}
+            selected={option === limit}
+            onClick={() => handleSelect(option)}
           >
             {option}
           </MenuItem>

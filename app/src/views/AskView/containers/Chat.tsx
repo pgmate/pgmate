@@ -8,7 +8,8 @@ import { MessagesList } from "../components/MessagesList";
 import { SuggestionsList } from "../components/SuggestionsList";
 import { ModelSelector } from "../components/ModelSelector";
 import { ContextSelector } from "../components/ContextSelector";
-import { LimitSelector } from "../components/LimitSelector";
+import { InputLimitSelector } from "../components/InputLimitSelector";
+import { OutputLimitSelector } from "../components/OutputLimitSelector";
 import type { LLMAssistantMessage } from "../ask";
 
 export const Chat = () => {
@@ -126,7 +127,7 @@ export const Chat = () => {
             direction={"row"}
             justifyContent={"flex-start"}
             mt={1}
-            spacing={3}
+            spacing={1}
           >
             <ModelSelector
               model={chat.model}
@@ -137,7 +138,14 @@ export const Chat = () => {
               context={chat.context}
               setContext={chat.setContext}
             />
-            <LimitSelector limit={chat.limit} setLimit={chat.setLimit} />
+            <InputLimitSelector
+              limit={chat.inputLimit}
+              setLimit={chat.setInputLimit}
+            />
+            <OutputLimitSelector
+              limit={chat.outputLimit}
+              setLimit={chat.setOutputLimit}
+            />
           </Stack>
           <Stack
             direction={"row"}

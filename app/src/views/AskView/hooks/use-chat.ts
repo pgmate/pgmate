@@ -17,7 +17,8 @@ export const useChat = () => {
   const [messages, setMessages] = useState<LLMMessage[]>(initialMessages);
   const messagesRef = useRef<LLMMessage[]>(initialMessages);
 
-  const [limit, setLimit] = useState(500);
+  const [inputLimit, setInputLimit] = useState(10);
+  const [outputLimit, setOutputLimit] = useState(500);
   const [model, setModel] = useState<LLMModel>("gpt-4o-mini");
   const [context, setContext] = useState<"compact" | "full">("compact");
 
@@ -30,11 +31,12 @@ export const useChat = () => {
   );
 
   const getCleanMessages = useCallback(
-    () =>
-      messagesRef.current.map((msg) => ({
+    (limit = 10) => {
+      messagesRef.current.slice(-limit).map((msg) => ({
         role: msg.role,
         content: msg.content,
-      })),
+      }));
+    },
     [messagesRef]
   );
 
@@ -50,9 +52,9 @@ export const useChat = () => {
         const res = await axios.post(
           `/ai/ask`,
           {
-            messages: getCleanMessages(),
+            messages: getCleanMessages(inputLimit),
             options: {
-              limit,
+              limit: outputLimit,
               model,
               context,
             },
@@ -76,7 +78,7 @@ export const useChat = () => {
         console.error("Failed to send message", e);
       }
     },
-    [axios, pushMsg, limit, model, context]
+    [axios, pushMsg, inputLimit, outputLimit, model, context]
   );
 
   const reset = useCallback(() => {
@@ -119,8 +121,10 @@ export const useChat = () => {
     send,
     reset,
     updateSQLMsg,
-    limit,
-    setLimit,
+    inputLimit,
+    setInputLimit,
+    outputLimit,
+    setOutputLimit,
     model,
     setModel,
     context,

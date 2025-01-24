@@ -69,17 +69,16 @@ export const CodeViewer = ({
           contextmenu: false,
         }}
         onMount={(editor, monaco) => {
-          // Enable scroll when editor gains focus
+          // Enables/Disables scroll when editor gains focus
+          editor.updateOptions({ scrollbar: { handleMouseWheel: false } });
           editor.onDidFocusEditorWidget(() => {
             editor.updateOptions({ scrollbar: { handleMouseWheel: true } });
           });
-
-          // Disable scroll when editor loses focus
           editor.onDidBlurEditorWidget(() => {
             editor.updateOptions({ scrollbar: { handleMouseWheel: false } });
           });
 
-          // Bind custom commands
+          // Cmd/Ctrl + Enter to run query
           if (!readOnly && onRequestRun) {
             let commandId: string | null = null;
 
@@ -118,6 +117,18 @@ export const CodeViewer = ({
             }
           }
 
+          // Escape key to blur editor
+          if (!readOnly) {
+            editor.onKeyDown((e) => {
+              if (e.keyCode === monaco.KeyCode.Escape) {
+                e.preventDefault();
+                if (document.activeElement instanceof HTMLElement) {
+                  document.activeElement.blur();
+                }
+              }
+            });
+          }
+
           // Handle autoFocus logic
           if (autoFocus) {
             editor.focus();
@@ -138,7 +149,7 @@ export const CodeViewer = ({
 
                 editorRef.current.scrollIntoView({
                   behavior: "smooth",
-                  block: "start",
+                  block: "nearest",
                 });
               }, 250);
             });

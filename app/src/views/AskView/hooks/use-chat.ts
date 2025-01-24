@@ -91,14 +91,15 @@ export const useChat = () => {
           : $
       );
 
-      setMessages(messagesRef.current);
+      // setMessages(messagesRef.current);
+      storage.setItem("ask.messages", messagesRef.current);
     },
     [setMessages, messagesRef]
   );
 
   // Persist messages
   useEffect(() => {
-    storage.setItem("ask.messages", messages);
+    storage.setItem("ask.messages", messagesRef.current);
     // console.log("Messages", messages);
   }, [messages, storage]);
 

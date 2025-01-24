@@ -54,9 +54,9 @@ export const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat.messages]);
 
-  useSubscribe("ask:requestScrollDown", () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  });
+  useSubscribe("ask:requestScrollDown", () =>
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  );
 
   return (
     <Box

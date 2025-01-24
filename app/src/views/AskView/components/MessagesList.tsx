@@ -14,6 +14,7 @@ export const MessagesList: React.FC<MessagesListProps> = ({
   onRequestFix,
   onChange,
 }) => {
+  console.log("@render::MessagesList");
   return (
     <List>
       {messages.map((message, index) =>

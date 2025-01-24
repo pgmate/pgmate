@@ -21,7 +21,6 @@ export const Editor: React.FC<EditorProps> = ({
   return (
     <CodeViewer
       disableCopy
-      autoFocus
       autoScrollIntoView
       readOnly={false}
       height={200}

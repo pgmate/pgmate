@@ -57,9 +57,9 @@ export const MessageAssistant: React.FC<MessageAssistantProps> = ({
           {type === "query" ? (
             <QueryRunner
               source={content}
+              runnerId={message.id}
               onRequestFix={onRequestFix}
               onChange={(source) => onChange(message, source)}
-              // onQueryCompleted={() => bus.emit("ask:requestScrollDown")}
             />
           ) : (
             <ListItemText

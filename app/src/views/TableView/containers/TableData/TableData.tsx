@@ -46,9 +46,13 @@ export const TableData: React.FC<TableDataProps> = ({ conn }) => {
       editable: true,
       width: props.columnSize[c.column_name],
       renderCell: (params: any) =>
-        typeof params.value === "object" && params.value !== null
-          ? JSON.stringify(params.value, null, 2) // Pretty print JSON
-          : params.value, // Render as-is for non-JSON
+        typeof params.value === "boolean" // Handle booleans
+          ? params.value
+            ? "true"
+            : "false"
+          : typeof params.value === "object" && params.value !== null // Pretty print JSON for objects
+          ? JSON.stringify(params.value, null, 2)
+          : params.value, // Render other types as-is
       renderEditCell:
         c.data_type === "json" || c.data_type === "jsonb"
           ? (params: any) => (

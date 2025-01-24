@@ -52,31 +52,39 @@ export const useQueries = (
 } => {
   const dedupeRef = useRef<string | Connection | null>(null);
 
-  const [refetch, { data, ...result }] = usePost("/query");
+  const [refetch, { data, ...result }] = usePost("/query?useQueries");
 
   // Triggers refetch on conditions change
   useEffect(() => {
     if (dedupeRef.current === conn) return;
     dedupeRef.current = conn;
 
-    refetch({
-      conn: typeof conn === "string" ? conn : conn.name,
-      database: typeof conn === "string" ? undefined : conn.database,
-      disableAnalyze: true,
-      queries,
-    });
+    refetch(
+      {
+        disableAnalyze: true,
+        queries,
+      },
+      {
+        "x-pgmate-conn": typeof conn === "string" ? conn : conn.name,
+        "x-pgmate-db": typeof conn === "string" ? undefined : conn.database,
+      }
+    );
   }, [conn, stableStringify(queries)]);
 
   return {
     ...result,
     data: data?.queries,
     refetch: () =>
-      refetch({
-        conn: typeof conn === "string" ? conn : conn.name,
-        database: typeof conn === "string" ? undefined : conn.database,
-        disableAnalyze: true,
-        queries,
-      }),
+      refetch(
+        {
+          disableAnalyze: true,
+          queries,
+        },
+        {
+          "x-pgmate-conn": typeof conn === "string" ? conn : conn.name,
+          "x-pgmate-db": typeof conn === "string" ? undefined : conn.database,
+        }
+      ),
   };
 };
 
@@ -101,7 +109,7 @@ export const useQuery = <TRow = any>(
   const dedupeRef = useRef<string | Connection | null>(null);
 
   const [refetch, { data, ...result }] = usePost<QueryBody, QueryResult<TRow>>(
-    "/query"
+    "/query?useQuery"
   );
 
   // Triggers refetch on conditions change
@@ -109,17 +117,21 @@ export const useQuery = <TRow = any>(
     if (dedupeRef.current === conn) return;
     dedupeRef.current = conn;
 
-    refetch({
-      conn: typeof conn === "string" ? conn : conn.name,
-      database: typeof conn === "string" ? undefined : conn.database,
-      disableAnalyze: true,
-      queries: [
-        {
-          statement,
-          variables,
-        },
-      ],
-    });
+    refetch(
+      {
+        disableAnalyze: true,
+        queries: [
+          {
+            statement,
+            variables,
+          },
+        ],
+      },
+      {
+        "x-pgmate-conn": typeof conn === "string" ? conn : conn.name,
+        "x-pgmate-db": typeof conn === "string" ? undefined : conn.database,
+      }
+    );
   }, [conn, statement, stableStringify(variables)]);
 
   const reload = useCallback(
@@ -150,24 +162,30 @@ export const useDynamicQuery = (
   conn: string | Connection,
   { disableAnalyze = true }: DynamicQueryOptions = DEFAULT_DYNAMIC_QUERY_OPTIONS
 ) => {
-  const [refetch] = usePost<QueryBody, QueryResult<any>>("/query");
+  const [refetch] = usePost<QueryBody, QueryResult<any>>(
+    "/query?useDynamicQuery"
+  );
 
   return useCallback(
     <RType = any>(
       statement: string,
       variables: any[] = []
     ): Promise<[RType[], any]> =>
-      refetch({
-        conn: typeof conn === "string" ? conn : conn.name,
-        database: typeof conn === "string" ? undefined : conn.database,
-        disableAnalyze,
-        queries: [
-          {
-            statement,
-            variables,
-          },
-        ],
-      }).then((res: any) => [res.data?.queries?.[0]?.rows, res]),
+      refetch(
+        {
+          disableAnalyze,
+          queries: [
+            {
+              statement,
+              variables,
+            },
+          ],
+        },
+        {
+          "x-pgmate-conn": typeof conn === "string" ? conn : conn.name,
+          "x-pgmate-db": typeof conn === "string" ? undefined : conn.database,
+        }
+      ).then((res: any) => [res.data?.queries?.[0]?.rows, res]),
     [conn]
   );
 };
@@ -176,17 +194,24 @@ export const useDynamicQueries = (
   conn: string | Connection,
   { disableAnalyze = true }: DynamicQueryOptions = DEFAULT_DYNAMIC_QUERY_OPTIONS
 ) => {
-  const [refetch] = usePost<QueryBody, QueryResult<any>>("/query");
+  const [refetch] = usePost<QueryBody, QueryResult<any>>(
+    "/query?useDynamicQueries"
+  );
 
   return useCallback(
     (queries: any[]): Promise<any> =>
-      refetch({
-        conn: typeof conn === "string" ? conn : conn?.name || "no-conn",
-        database:
-          typeof conn === "string" ? undefined : conn?.database || "no-db",
-        disableAnalyze,
-        queries,
-      }).then((res: any) => [res.data?.queries, res]),
+      refetch(
+        {
+          disableAnalyze,
+          queries,
+        },
+        {
+          "x-pgmate-conn":
+            typeof conn === "string" ? conn : conn?.name || "no-conn",
+          "x-pgmate-db":
+            typeof conn === "string" ? undefined : conn?.database || "no-db",
+        }
+      ).then((res: any) => [res.data?.queries, res]),
     [conn]
   );
 };

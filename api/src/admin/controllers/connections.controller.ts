@@ -36,7 +36,13 @@ export class ConnectionsController {
 
   @Post('')
   async createConnection(
-    @Body() body: { name: string; desc?: string; conn: string; ssl: boolean },
+    @Body()
+    body: {
+      name: string;
+      desc?: string;
+      connectionString: string;
+      ssl: boolean;
+    },
   ): Promise<{
     success: boolean;
     name?: string;
@@ -45,7 +51,7 @@ export class ConnectionsController {
     try {
       await this.connectionsService.upsertConnection(
         body.name,
-        body.conn,
+        body.connectionString,
         body.ssl,
         body.desc,
       );

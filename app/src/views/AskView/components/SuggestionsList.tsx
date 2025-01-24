@@ -18,10 +18,10 @@ export const SuggestionsList: React.FC<SuggestionsListProps> = ({
 }) => {
   const suggestions = [
     "Explain me the purpose of this database in a single short sentence.",
-    'Create a schema "school" and build the tables structure to manage students, classrooms, teachers and test.',
+    'List all the tables in the db structured as "{schema}.{table}", add the total table size to it.',
     'Analyze the "public" schema and suggest missing foreign keys.',
     'Analyze the "public" schema and create a seed script for a load test.',
-    'List all the tables in the "public" schema.',
+    'Create a schema "school" and build the tables structure to manage students, classrooms, teachers and tests with 1-10 grades.',
   ];
 
   return (

@@ -47,16 +47,23 @@ export const useChat = () => {
       });
 
       try {
-        const res = await axios.post(`/ai/ask`, {
-          conn: params.conn,
-          database: params.db,
-          messages: getCleanMessages(),
-          options: {
-            limit,
-            model,
-            context,
+        const res = await axios.post(
+          `/ai/ask`,
+          {
+            messages: getCleanMessages(),
+            options: {
+              limit,
+              model,
+              context,
+            },
           },
-        });
+          {
+            headers: {
+              "x-pgmate-conn": params.conn,
+              "x-pgmate-db": params.db,
+            },
+          }
+        );
 
         pushMsg({
           id: res.data.id,

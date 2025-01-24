@@ -50,7 +50,7 @@ export const useConnections = () => {
     await axios.post("/connections", {
       name: data.name,
       desc: data.desc,
-      conn: `postgres://${data.conn.user}:${data.conn.password}@${data.conn.host}:${data.conn.port}/${data.conn.database}`,
+      connectionString: `postgres://${data.conn.user}:${data.conn.password}@${data.conn.host}:${data.conn.port}/${data.conn.database}`,
       ssl: data.ssl,
     });
     bus.emit("connections::changed");

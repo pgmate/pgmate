@@ -5,6 +5,7 @@ import {
   CallHandler,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
@@ -13,17 +14,33 @@ import { ClientService } from './client.service';
 
 @Injectable()
 export class ClientInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(ClientInterceptor.name);
   constructor(private readonly clientService: ClientService) {}
 
   private getTarget(
     request: Request,
   ): [string | undefined, string | undefined] {
-    const conn = request.headers['x-pgmate-conn'] || request.body?.conn;
+    // const conn = request.headers['x-pgmate-conn'] || request.body?.conn;
+    // const db = conn
+    //   ? request.headers['x-pgmate-db'] ||
+    //     request.body?.db ||
+    //     request.body?.database // deprecated
+    //   : undefined;
+
+    const conn = (request.headers['x-pgmate-conn'] as string) || undefined;
     const db = conn
-      ? request.headers['x-pgmate-db'] ||
-        request.body?.db ||
-        request.body?.database // deprecated
+      ? (request.headers['x-pgmate-db'] as string) || undefined
       : undefined;
+
+    // if (request.body?.conn) {
+    //   this.logger.warn(`${request.url} - @deprecated "conn" property`);
+    // }
+    // if (request.body?.db) {
+    //   this.logger.warn(`${request.url} - @deprecated "db" property`);
+    // }
+    // if (request.body?.database) {
+    //   this.logger.warn(`${request.url} - @deprecated "database" property`);
+    // }
 
     return [conn, db];
   }

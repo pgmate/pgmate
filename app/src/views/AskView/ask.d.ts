@@ -10,6 +10,7 @@ interface LLMUsage {
 export interface LLMMessage {
   id: string;
   role: LLMRole;
+  model?: LLMModel;
   content: string;
   usage?: LLMUsage;
 }

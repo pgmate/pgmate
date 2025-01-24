@@ -21,6 +21,7 @@ export const Editor: React.FC<EditorProps> = ({
   return (
     <CodeViewer
       disableCopy
+      autoScrollIntoView
       readOnly={false}
       height={200}
       language="sql"

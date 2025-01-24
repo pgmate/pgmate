@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Menu, MenuItem, Stack, Icon } from "@mui/material";
+import { Button, Menu, MenuItem, Stack, Icon, Tooltip } from "@mui/material";
 import type { LLMModel } from "../ask.d";
 
 interface ModelSelectorProps {
@@ -31,13 +31,16 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   return (
     <Stack direction="row" spacing={1} alignItems="center">
       {/* Display the selected model with an arrow icon */}
-      <Button
-        variant="outlined"
-        onClick={handleClick}
-        endIcon={<Icon>keyboard_arrow_down</Icon>}
-      >
-        {model}
-      </Button>
+      <Tooltip title="LLM model to use">
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={handleClick}
+          endIcon={<Icon>keyboard_arrow_down</Icon>}
+        >
+          {model}
+        </Button>
+      </Tooltip>
 
       {/* Dropdown Menu */}
       <Menu

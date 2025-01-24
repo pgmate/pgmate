@@ -2,7 +2,7 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useAxios } from "hooks/use-axios";
 import { useStorage } from "hooks/use-storage";
-import type { LLMMessage, LLMModel } from "../ask.d";
+import type { LLMModel, LLMMessage } from "../ask.d";
 
 export const useChat = () => {
   const storage = useStorage();
@@ -17,7 +17,8 @@ export const useChat = () => {
   const [messages, setMessages] = useState<LLMMessage[]>(initialMessages);
   const messagesRef = useRef<LLMMessage[]>(initialMessages);
 
-  const [limit, setLimit] = useState(500);
+  const [inputLimit, setInputLimit] = useState(10);
+  const [outputLimit, setOutputLimit] = useState(500);
   const [model, setModel] = useState<LLMModel>("gpt-4o-mini");
   const [context, setContext] = useState<"compact" | "full">("compact");
 
@@ -30,11 +31,12 @@ export const useChat = () => {
   );
 
   const getCleanMessages = useCallback(
-    () =>
-      messagesRef.current.map((msg) => ({
+    (limit = 10) => {
+      messagesRef.current.slice(-limit).map((msg) => ({
         role: msg.role,
         content: msg.content,
-      })),
+      }));
+    },
     [messagesRef]
   );
 
@@ -47,20 +49,28 @@ export const useChat = () => {
       });
 
       try {
-        const res = await axios.post(`/ai/ask`, {
-          conn: params.conn,
-          database: params.db,
-          messages: getCleanMessages(),
-          options: {
-            limit,
-            model,
-            context,
+        const res = await axios.post(
+          `/ai/ask`,
+          {
+            messages: getCleanMessages(inputLimit),
+            options: {
+              limit: outputLimit,
+              model,
+              context,
+            },
           },
-        });
+          {
+            headers: {
+              "x-pgmate-conn": params.conn,
+              "x-pgmate-db": params.db,
+            },
+          }
+        );
 
         pushMsg({
           id: res.data.id,
           role: "assistant",
+          model,
           content: res.data.choices[0].message.content,
           usage: res.data.usage,
         });
@@ -68,7 +78,7 @@ export const useChat = () => {
         console.error("Failed to send message", e);
       }
     },
-    [axios, pushMsg, limit, model, context]
+    [axios, pushMsg, inputLimit, outputLimit, model, context]
   );
 
   const reset = useCallback(() => {
@@ -84,15 +94,16 @@ export const useChat = () => {
           : $
       );
 
-      setMessages(messagesRef.current);
+      // setMessages(messagesRef.current);
+      storage.setItem("ask.messages", messagesRef.current);
     },
     [setMessages, messagesRef]
   );
 
   // Persist messages
   useEffect(() => {
-    storage.setItem("ask.messages", messages);
-    console.log("Messages", messages);
+    storage.setItem("ask.messages", messagesRef.current);
+    // console.log("Messages", messagesRef.current);
   }, [messages, storage]);
 
   // useEffect(() => {
@@ -110,8 +121,10 @@ export const useChat = () => {
     send,
     reset,
     updateSQLMsg,
-    limit,
-    setLimit,
+    inputLimit,
+    setInputLimit,
+    outputLimit,
+    setOutputLimit,
     model,
     setModel,
     context,

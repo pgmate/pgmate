@@ -1,16 +1,22 @@
 import { useRef, useEffect } from "react";
 import { Box, Stack, TextField, Button, Icon } from "@mui/material";
-import { useSubscribe } from "hooks/use-pubsub";
+import { useSubscribe, usePubSub } from "hooks/use-pubsub";
 import { useChat } from "../hooks/use-chat";
+import { useUsage } from "../hooks/use-usage";
+import { useEstimate } from "../hooks/use-estimate";
 import { MessagesList } from "../components/MessagesList";
 import { SuggestionsList } from "../components/SuggestionsList";
 import { ModelSelector } from "../components/ModelSelector";
 import { ContextSelector } from "../components/ContextSelector";
-import { LimitSelector } from "../components/LimitSelector";
+import { InputLimitSelector } from "../components/InputLimitSelector";
+import { OutputLimitSelector } from "../components/OutputLimitSelector";
 import type { LLMAssistantMessage } from "../ask";
 
 export const Chat = () => {
+  const bus = usePubSub();
   const chat = useChat();
+  const usage = useUsage(chat.messages);
+  const estimate = useEstimate(usage);
   const promptRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -54,9 +60,16 @@ export const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat.messages]);
 
-  useSubscribe("ask:requestScrollDown", () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  });
+  useSubscribe("ask:requestScrollDown", () =>
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  );
+
+  useEffect(() => {
+    setTimeout(() => {
+      bus.emit("ask:usage", usage);
+      bus.emit("ask:estimate", estimate);
+    });
+  }, [usage, estimate]);
 
   return (
     <Box
@@ -114,7 +127,7 @@ export const Chat = () => {
             direction={"row"}
             justifyContent={"flex-start"}
             mt={1}
-            spacing={3}
+            spacing={1}
           >
             <ModelSelector
               model={chat.model}
@@ -125,7 +138,14 @@ export const Chat = () => {
               context={chat.context}
               setContext={chat.setContext}
             />
-            <LimitSelector limit={chat.limit} setLimit={chat.setLimit} />
+            <InputLimitSelector
+              limit={chat.inputLimit}
+              setLimit={chat.setInputLimit}
+            />
+            <OutputLimitSelector
+              limit={chat.outputLimit}
+              setLimit={chat.setOutputLimit}
+            />
           </Stack>
           <Stack
             direction={"row"}

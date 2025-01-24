@@ -15,11 +15,15 @@ export const TableDLL = () => {
   const [data, setData] = useState<any | null>(null);
 
   useEffect(() => {
-    fetch({
-      conn,
-      schema,
-      tables: [table],
-    }).then((res: any) => {
+    fetch(
+      {
+        schema,
+        tables: [table],
+      },
+      {
+        "x-pgmate-conn": conn,
+      }
+    ).then((res: any) => {
       setData(res.data);
     });
   }, [conn, schema, table]);

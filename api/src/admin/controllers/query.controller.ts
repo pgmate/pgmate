@@ -12,9 +12,14 @@ import { ClientInterceptor } from '../../database/client.interceptor';
 import { ClientService } from '../../database/client.service';
 import { AdminGuard } from '../admin.guard';
 
+// TODO: this requires MUCH more attention!
 const shouldAnalyze = (statement) => {
   if (statement.trim().toUpperCase().startsWith('CREATE')) return false;
   if (statement.trim().toUpperCase().startsWith('ALTER')) return false;
+  if (statement.trim().toUpperCase().startsWith('INSERT')) return false;
+  if (statement.trim().toUpperCase().startsWith('UPDATE')) return false;
+  if (statement.trim().toUpperCase().startsWith('DELETE')) return false;
+  if (statement.trim().toUpperCase().startsWith('DROP')) return false;
   return true;
 };
 
@@ -35,8 +40,6 @@ export class QueryController {
   async query(
     @Body()
     body: {
-      conn: string;
-      database?: string;
       queries: {
         statement: string;
         variables?: any[];
@@ -71,7 +74,7 @@ export class QueryController {
       for (const query of body.queries) {
         try {
           // Run query:
-          // console.log('@query:', query.statement)
+          // console.log('@query:', query.statement);
           const [{ rows, ...meta }, queryTime] = await this._query(
             client,
             query.statement,
@@ -87,6 +90,7 @@ export class QueryController {
 
           // TODO: skip analyze queries that will surely fail (create table, ...)
           if (!body.disableAnalyze && shouldAnalyze(query.statement)) {
+            await client.query('BEGIN READ ONLY');
             try {
               // console.log('@explain:', 'EXPLAIN ANALYZE ' + query.statement)
               explained = await this._query(
@@ -94,12 +98,14 @@ export class QueryController {
                 'EXPLAIN ANALYZE ' + query.statement,
                 query.variables,
               );
+              await client.query('COMMIT');
               // console.log('@analyzeDone')
               executionTimeRow = explained[0].rows.pop();
               executionTime = executionTimeRow['QUERY PLAN'].split(':').pop();
               planningTimeRow = explained[0].rows.pop();
               planningTime = planningTimeRow['QUERY PLAN'].split(':').pop();
             } catch (err) {
+              await client.query('ROLLBACK');
               console.log('Analyze failed for:', query.statement, err.message);
               explained = null;
             }

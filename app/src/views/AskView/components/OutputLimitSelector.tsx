@@ -1,15 +1,18 @@
 import React, { useState } from "react";
 import { Button, Menu, MenuItem, Stack, Icon, Tooltip } from "@mui/material";
 
-interface ContextSelectorProps {
-  context: "compact" | "full"; // The current selected context
-  setContext: (context: "compact" | "full") => void; // Function to update the context
+interface OutputLimitSelectorProps {
+  limit: number; // The current selected limit
+  setLimit: (value: number) => void; // Function to update the limit
 }
 
-export const ContextSelector: React.FC<ContextSelectorProps> = ({
-  context = "compact",
-  setContext,
+export const OutputLimitSelector: React.FC<OutputLimitSelectorProps> = ({
+  limit,
+  setLimit,
 }) => {
+  // Non-linear token values
+  const options = [100, 500, 1000, 2000, 3000, 10000, 50000];
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -20,22 +23,22 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
     setAnchorEl(null);
   };
 
-  const handleSelect = (selectedContext: "compact" | "full") => {
-    setContext(selectedContext);
-    handleClose();
+  const handleSelect = (selectedLimit: number) => {
+    setLimit(selectedLimit);
+    setAnchorEl(null);
   };
 
   return (
     <Stack direction="row" spacing={1} alignItems="center">
-      {/* Display the selected context with an arrow icon */}
-      <Tooltip title="Level of schema information to pass to the model">
+      {/* Display the selected limit */}
+      <Tooltip title="Maximum number of tokens to generate">
         <Button
           size="small"
           variant="outlined"
           onClick={handleClick}
           endIcon={<Icon>keyboard_arrow_down</Icon>}
         >
-          {context}
+          {limit >= 1000 ? `${limit / 1000}k` : limit} tokens
         </Button>
       </Tooltip>
 
@@ -53,13 +56,13 @@ export const ContextSelector: React.FC<ContextSelectorProps> = ({
           horizontal: "left",
         }}
       >
-        {["compact", "full"].map((option) => (
+        {options.map((option) => (
           <MenuItem
             key={option}
-            selected={option === context}
-            onClick={() => handleSelect(option as "compact" | "full")}
+            selected={option === limit}
+            onClick={() => handleSelect(option)}
           >
-            {option}
+            {option >= 1000 ? `${option / 1000}k` : option}
           </MenuItem>
         ))}
       </Menu>

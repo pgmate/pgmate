@@ -11,6 +11,7 @@ import { QueryError } from "./QueryError";
 
 interface QueryRunnerProps {
   source?: string;
+  runnerId?: string;
   onChange?: (source: string) => void;
   onRequestFix?: (error: Error) => void;
   onQueryCompleted?: (results: any) => void;
@@ -18,6 +19,7 @@ interface QueryRunnerProps {
 
 export const QueryRunner: React.FC<QueryRunnerProps> = ({
   source,
+  runnerId = crypto.randomUUID(),
   onChange,
   onRequestFix,
   onQueryCompleted,
@@ -46,7 +48,7 @@ export const QueryRunner: React.FC<QueryRunnerProps> = ({
         console.error(results[0].error);
         setError(results[0].error);
       } else {
-        console.table(results[0].rows);
+        // console.table(results[0].rows);
         setResults(results[0]);
       }
     } catch (e) {
@@ -79,6 +81,11 @@ export const QueryRunner: React.FC<QueryRunnerProps> = ({
           bus.emit("dbinfo:refresh");
         }
       }, 100);
+
+      setTimeout(() => {
+        const el = document.getElementById(runnerId);
+        el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 250);
     }
   };
 
@@ -92,7 +99,13 @@ export const QueryRunner: React.FC<QueryRunnerProps> = ({
         }}
         onRequestRun={run}
       />
-      {error && <QueryError error={error} onRequestFix={onRequestFix} />}
+      {error && (
+        <QueryError
+          error={error}
+          onRequestFix={onRequestFix}
+          scrollId={runnerId}
+        />
+      )}
       <Stack direction={"row"} spacing={2} justifyContent={"flex-end"} mt={1}>
         <ClipCopy content={sourceRef.current || ""} size="small" />
         <Button
@@ -106,9 +119,9 @@ export const QueryRunner: React.FC<QueryRunnerProps> = ({
       </Stack>
       {results &&
         (results.rows?.length ? (
-          <QueryResults data={results} />
+          <QueryResults data={results} scrollId={runnerId} />
         ) : (
-          <QueryEmpty />
+          <QueryEmpty scrollId={runnerId} />
         ))}
     </Stack>
   );

@@ -21,6 +21,7 @@ services:
       - ./data/migrations:/usr/src/app/migrations
     environment:
       NODE_ENV: ${API_NODE_ENV:-development}
+      # postgres://postgres:postgres@postgres:5432/postgres
       PGSTRING: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/postgres
       PGMATE_ADMIN_SECRET: ${PGMATE_ADMIN_SECRET:-pgmate}
       PGMATE_ENCRYPTION_KEY: ${PGMATE_ENCRYPTION_KEY:-3ffab9a475c91bf39fd1673c428d7a839d3c958b4b908724cabd3b0584d9c7fb}

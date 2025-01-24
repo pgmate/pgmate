@@ -1,4 +1,3 @@
-import { useRef, useEffect } from "react";
 import { Box } from "@mui/material";
 import { DataGrid, GridRowsProp, GridColDef } from "@mui/x-data-grid";
 import { SizedBox } from "components/SizedBox";
@@ -7,31 +6,31 @@ interface QueryResultsProps<T extends Record<string, any>> {
   data: {
     rows: T[];
   };
+  scrollId?: string; // Unique identifier for scrolling
 }
 
 export const QueryResults = <T extends Record<string, any>>({
   data,
+  scrollId = crypto.randomUUID(), // Default to a unique random ID
 }: QueryResultsProps<T>) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const gridColumns: GridColDef[] = Object.keys(data.rows[0]).map((c) => ({
     field: c,
     headerName: c,
     editable: true,
     renderCell: (params: any) =>
-      typeof params.value === "object" && params.value !== null
-        ? JSON.stringify(params.value, null, 2) // Pretty print JSON
-        : params.value, // Render as-is for non-JSON
+      typeof params.value === "boolean" // Handle booleans
+        ? params.value
+          ? "true"
+          : "false"
+        : typeof params.value === "object" && params.value !== null // Pretty print JSON for objects
+        ? JSON.stringify(params.value, null, 2)
+        : params.value, // Render other types as-is
   }));
 
   const gridRows: GridRowsProp = data.rows.map((r, i) => ({ id: i, ...r }));
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
-
   return (
-    <div>
+    <div id={scrollId} style={{ marginTop: 25 }}>
       <SizedBox>
         {(size) => (
           <Box
@@ -64,7 +63,6 @@ export const QueryResults = <T extends Record<string, any>>({
           </Box>
         )}
       </SizedBox>
-      <div ref={messagesEndRef} style={{ marginTop: 25 }} />
     </div>
   );
 };

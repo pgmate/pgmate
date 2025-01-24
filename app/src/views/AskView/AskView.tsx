@@ -2,13 +2,18 @@ import { useParams } from "react-router-dom";
 import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { PageLayout } from "components/PageLayout";
+import { useEventData } from "hooks/use-pubsub";
 import { Chat } from "./containers/Chat";
+import { DisplayUsage } from "./components/DisplayUsage";
 
 export const AskView = () => {
   const params = useParams<{
     conn: string;
     db: string;
   }>();
+
+  const usage = useEventData("ask:usage");
+  const estimate = useEventData("ask:estimate");
 
   return (
     <PageLayout
@@ -46,6 +51,9 @@ export const AskView = () => {
           </MUILink>
           <Typography color="text.primary">Copilot</Typography>
         </Breadcrumbs>
+      }
+      tray={
+        estimate ? <DisplayUsage usage={usage} estimate={estimate} /> : null
       }
       bodyProps={{
         sx: {

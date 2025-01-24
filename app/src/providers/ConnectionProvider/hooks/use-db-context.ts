@@ -21,10 +21,16 @@ export const useDbContext = (
 
   // Fetches the schema and stores it in the ref
   const loop = useCallback(async () => {
-    const res = await axios.post("/pg_schema", {
-      conn,
-      database,
-    });
+    const res = await axios.post(
+      "/pg_schema",
+      {},
+      {
+        headers: {
+          "x-pgmate-conn": conn,
+          "x-pgmate-db": database,
+        },
+      }
+    );
 
     dataRef.current = res.data as DBInfo;
     loopRef.current = window.setTimeout(loop, POLL_INTERVAL);

@@ -1,5 +1,8 @@
 /**
  * This service is instanciated via the ClientInterceptor
+ * It creates a request-scoped client connection to the database for both the default and the target client
+ *
+ * NOTE: the default client is obsolete and should be replaced by the QueryService
  */
 
 import { Injectable, Scope } from '@nestjs/common';

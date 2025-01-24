@@ -372,9 +372,13 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
                     const lastKey = keys.length > 0 ? keys.pop() : undefined;
 
                     return lastKey !== undefined ? (
-                      <ResultsTable
-                        rows={results[0].meta[Number(lastKey)].rows}
-                      />
+                      results[0].meta[Number(lastKey)].rows.length > 0 ? (
+                        <ResultsTable
+                          rows={results[0].meta[Number(lastKey)].rows}
+                        />
+                      ) : (
+                        <ResultsEmpty data={results[0].meta[Number(lastKey)]} />
+                      )
                     ) : null;
                   })()}
                 {results && results[0].rows && results[0].rows.length === 0 && (

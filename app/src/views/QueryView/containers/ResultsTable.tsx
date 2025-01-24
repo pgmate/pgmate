@@ -5,29 +5,34 @@ interface ResultsTableProps {
 }
 
 export const ResultsTable: React.FC<ResultsTableProps> = ({ rows }) => {
-  const gridColumns: GridColDef[] = Object.keys(rows[0]).map((c) => ({
-    field: c,
-    headerName: c,
-    editable: true,
-    renderCell: (params: any) => {
-      const value = params.value;
+  try {
+    const gridColumns: GridColDef[] = Object.keys(rows[0]).map((c) => ({
+      field: c,
+      headerName: c,
+      editable: true,
+      renderCell: (params: any) => {
+        const value = params.value;
 
-      // Handle boolean values
-      if (typeof value === "boolean") {
-        return value ? "true" : "false";
-      }
+        // Handle boolean values
+        if (typeof value === "boolean") {
+          return value ? "true" : "false";
+        }
 
-      // Handle objects (pretty-print JSON)
-      if (typeof value === "object" && value !== null) {
-        return JSON.stringify(value, null, 2);
-      }
+        // Handle objects (pretty-print JSON)
+        if (typeof value === "object" && value !== null) {
+          return JSON.stringify(value, null, 2);
+        }
 
-      // Render other types as-is
-      return value;
-    },
-  }));
+        // Render other types as-is
+        return value;
+      },
+    }));
 
-  const gridRows: GridRowsProp = rows.map((r, i) => ({ id: i, ...r }));
+    const gridRows: GridRowsProp = rows.map((r, i) => ({ id: i, ...r }));
 
-  return <DataGrid rows={gridRows} columns={gridColumns} disableColumnMenu />;
+    return <DataGrid rows={gridRows} columns={gridColumns} disableColumnMenu />;
+  } catch (e) {
+    console.log("rows", rows);
+    return "failed rendering dataset";
+  }
 };

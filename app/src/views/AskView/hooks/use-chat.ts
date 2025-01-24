@@ -99,7 +99,7 @@ export const useChat = () => {
   // Persist messages
   useEffect(() => {
     storage.setItem("ask.messages", messages);
-    console.log("Messages", messages);
+    // console.log("Messages", messages);
   }, [messages, storage]);
 
   // useEffect(() => {

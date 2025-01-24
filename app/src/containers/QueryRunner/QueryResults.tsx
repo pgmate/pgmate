@@ -7,12 +7,16 @@ interface QueryResultsProps<T extends Record<string, any>> {
   data: {
     rows: T[];
   };
+  autoScroll?: boolean; // Optional: Enable or disable auto scroll
+  scrollId?: string; // Unique identifier for scrolling
 }
 
 export const QueryResults = <T extends Record<string, any>>({
   data,
+  autoScroll = true,
+  scrollId = crypto.randomUUID(), // Default to a unique random ID
 }: QueryResultsProps<T>) => {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const gridColumns: GridColDef[] = Object.keys(data.rows[0]).map((c) => ({
     field: c,
@@ -31,11 +35,24 @@ export const QueryResults = <T extends Record<string, any>>({
   const gridRows: GridRowsProp = data.rows.map((r, i) => ({ id: i, ...r }));
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+    let timeout: NodeJS.Timeout;
+    if (autoScroll && scrollId) {
+      const element = document.getElementById(scrollId);
+      if (element) {
+        timeout = setTimeout(() => {
+          console.log("scrolling to element", scrollId);
+          element.scrollIntoView({ behavior: "smooth" });
+        }, 250);
+      }
+    }
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [autoScroll, scrollId]);
 
   return (
-    <div>
+    <div ref={resultsRef} id={scrollId} style={{ marginTop: 25 }}>
       <SizedBox>
         {(size) => (
           <Box
@@ -68,7 +85,6 @@ export const QueryResults = <T extends Record<string, any>>({
           </Box>
         )}
       </SizedBox>
-      <div ref={messagesEndRef} style={{ marginTop: 25 }} />
     </div>
   );
 };

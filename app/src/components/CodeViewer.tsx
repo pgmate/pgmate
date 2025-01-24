@@ -11,6 +11,7 @@ export const CodeViewer = ({
   readOnly = true,
   onChange = () => {},
   onRequestRun,
+  autoFocus = false, // Default to false
 }: {
   code: string;
   language: string;
@@ -20,6 +21,7 @@ export const CodeViewer = ({
   readOnly?: boolean;
   onChange?: (value: string) => void;
   onRequestRun?: (content: string) => void;
+  autoFocus?: boolean; // New autoFocus prop
 }) => {
   const theme = useTheme();
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
@@ -62,20 +64,57 @@ export const CodeViewer = ({
           contextmenu: false,
         }}
         onMount={(editor, monaco) => {
+          // Bind custom commands
           if (!readOnly && onRequestRun) {
-            editor.addCommand(
-              monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-              () => {
-                const selection = editor.getSelection();
-                const model = editor.getModel();
+            let commandId: string | null = null;
 
-                if (selection && model) {
-                  const selectedText = model.getValueInRange(selection);
-                  const content = selectedText || model.getValue(); // Use selected text or entire content
-                  onRequestRun(content);
-                }
+            // Function to add the command
+            const addCmdEnterCommand = () => {
+              if (!commandId) {
+                commandId = editor.addCommand(
+                  monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+                  () => {
+                    const selection = editor.getSelection();
+                    const model = editor.getModel();
+
+                    if (selection && model) {
+                      const selectedText = model.getValueInRange(selection);
+                      const content = selectedText || model.getValue();
+                      onRequestRun(content);
+                    }
+                  }
+                );
               }
-            );
+            };
+
+            // Attach command when editor gains focus
+            editor.onDidFocusEditorWidget(() => {
+              console.log("Editor gained focus");
+              addCmdEnterCommand();
+            });
+
+            // Handle blur event
+            editor.onDidBlurEditorWidget(() => {
+              console.log("Editor lost focus");
+              commandId = null; // Mark command as inactive
+            });
+
+            // Add the command immediately if the editor is auto-focused
+            if (autoFocus) {
+              addCmdEnterCommand();
+            }
+          }
+
+          // Handle autoFocus logic
+          if (autoFocus) {
+            editor.focus();
+            const model = editor.getModel();
+            if (model) {
+              const lastLine = model.getLineCount();
+              const lastColumn = model.getLineContent(lastLine).length + 1;
+              editor.setPosition({ lineNumber: lastLine, column: lastColumn });
+              editor.revealLineInCenter(lastLine); // Scroll to the last line
+            }
           }
 
           onMount?.(editor);

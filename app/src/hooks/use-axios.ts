@@ -27,7 +27,6 @@ export const useAxios = () => {
 
   // Decorate headers with the admin secret:
   instance.interceptors.request.use((config: any) => {
-    console.log("useAxios -> config", config.headers);
     if (secret) {
       config.headers["x-pgmate-admin-secret"] = secret;
     }
@@ -105,20 +104,6 @@ export const usePost = <TBody = any, TResponse = any>(
     data: null,
     error: null,
   });
-
-  // const fetch = useCallback(
-  //   async (body: TBody, options?: any) => {
-  //     try {
-  //       const res = await axios.post(url, body, options);
-  //       setState({ loading: false, data: res.data, error: null });
-  //       return res;
-  //     } catch (err) {
-  //       setState({ loading: false, data: null, error: err });
-  //       return err;
-  //     }
-  //   },
-  //   [url]
-  // );
 
   const fetch = useCallback(
     async (

@@ -46,7 +46,7 @@ export const QueryRunner: React.FC<QueryRunnerProps> = ({
         console.error(results[0].error);
         setError(results[0].error);
       } else {
-        console.table(results[0].rows);
+        // console.table(results[0].rows);
         setResults(results[0]);
       }
     } catch (e) {

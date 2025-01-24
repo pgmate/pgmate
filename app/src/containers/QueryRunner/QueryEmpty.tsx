@@ -19,7 +19,7 @@ export const QueryEmpty: React.FC<QueryEmptyProps> = ({
       const element = document.getElementById(scrollId);
       if (element) {
         timeout = setTimeout(() => {
-          element.scrollIntoView({ behavior: "smooth" });
+          element.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }, 250);
       }
     }

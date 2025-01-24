@@ -23,7 +23,7 @@ export const QueryError: React.FC<QueryErrorProps> = ({
       const element = document.getElementById(scrollId);
       if (element) {
         timeout = setTimeout(() => {
-          element.scrollIntoView({ behavior: "smooth" });
+          element.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }, 250);
       }
     }

@@ -40,7 +40,7 @@ export const QueryResults = <T extends Record<string, any>>({
       const element = document.getElementById(scrollId);
       if (element) {
         timeout = setTimeout(() => {
-          element.scrollIntoView({ behavior: "smooth" });
+          element.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }, 250);
       }
     }

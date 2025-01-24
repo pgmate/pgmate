@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import Editor from "@monaco-editor/react";
 import { IconButton, Tooltip, Box, useTheme } from "@mui/material";
 import { Icon } from "components/Icon";
@@ -25,6 +26,7 @@ export const CodeViewer = ({
 }) => {
   const theme = useTheme();
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
+  const editorRef = useRef<HTMLDivElement | null>(null);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code).then(() => {
@@ -40,6 +42,7 @@ export const CodeViewer = ({
 
   return (
     <Box
+      ref={editorRef}
       sx={{
         position: "relative",
         width: "100%",
@@ -64,6 +67,16 @@ export const CodeViewer = ({
           contextmenu: false,
         }}
         onMount={(editor, monaco) => {
+          // Enable scroll when editor gains focus
+          editor.onDidFocusEditorWidget(() => {
+            editor.updateOptions({ scrollbar: { handleMouseWheel: true } });
+          });
+
+          // Disable scroll when editor loses focus
+          editor.onDidBlurEditorWidget(() => {
+            editor.updateOptions({ scrollbar: { handleMouseWheel: false } });
+          });
+
           // Bind custom commands
           if (!readOnly && onRequestRun) {
             let commandId: string | null = null;
@@ -89,14 +102,12 @@ export const CodeViewer = ({
 
             // Attach command when editor gains focus
             editor.onDidFocusEditorWidget(() => {
-              console.log("Editor gained focus");
               addCmdEnterCommand();
             });
 
             // Handle blur event
             editor.onDidBlurEditorWidget(() => {
-              console.log("Editor lost focus");
-              commandId = null; // Mark command as inactive
+              commandId = null;
             });
 
             // Add the command immediately if the editor is auto-focused

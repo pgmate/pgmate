@@ -5,7 +5,7 @@ import { Stack, Typography } from "@mui/material";
 import { usePost } from "hooks/use-axios";
 import { CodeViewer } from "components/CodeViewer";
 
-export const TableDLL = () => {
+export const TableDDL = () => {
   const conn = useURLConnection();
   const { schema, table } = useParams<{
     schema: string;

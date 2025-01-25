@@ -1,1 +1,0 @@
-export { TableDLL } from "./TableDLL";

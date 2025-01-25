@@ -7,7 +7,7 @@ import { PageLayout } from "components/PageLayout";
 import { ToggleTableMode } from "./containers/ToggleTableMode";
 import { TableData } from "./containers/TableData";
 import { TableStructure } from "./containers/TableStructure";
-import { TableDLL } from "./containers/TableDLL";
+import { TableDDL } from "./containers/TableDDL";
 import { TableInfo } from "./containers/TableInfo";
 
 export const TableView = () => {
@@ -75,7 +75,7 @@ export const TableView = () => {
     >
       {params.mode === "data" && <TableData conn={conn} />}
       {params.mode === "structure" && <TableStructure />}
-      {params.mode === "dll" && <TableDLL />}
+      {params.mode === "ddl" && <TableDDL />}
       {params.mode === "info" && <TableInfo />}
     </PageLayout>
   );

@@ -1,6 +1,9 @@
 import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { usePubSub } from "hooks/use-pubsub";
+import { useURLConnection } from "hooks/use-connections";
 import Editor from "@monaco-editor/react";
-import { IconButton, Tooltip, Box, useTheme } from "@mui/material";
+import { IconButton, Tooltip, Box, Stack, useTheme } from "@mui/material";
 import { Icon } from "components/Icon";
 
 export const CodeViewer = ({
@@ -9,6 +12,7 @@ export const CodeViewer = ({
   height = 75,
   onMount,
   disableCopy,
+  disableSendToSQLStudio,
   readOnly = true,
   onChange = () => {},
   onRequestRun,
@@ -20,12 +24,16 @@ export const CodeViewer = ({
   height?: number | string;
   onMount?: (editor: any) => void;
   disableCopy?: boolean;
+  disableSendToSQLStudio?: boolean;
   readOnly?: boolean;
   onChange?: (value: string) => void;
   onRequestRun?: (content: string) => void;
   autoFocus?: boolean; // Gain focus on mount
   autoScrollIntoView?: boolean; // Scroll into view when focused
 }) => {
+  const navigate = useNavigate();
+  const bus = usePubSub();
+  const conn = useURLConnection();
   const theme = useTheme();
   const monacoTheme = theme.palette.mode === "dark" ? "vs-dark" : "vs-light";
   const editorRef = useRef<HTMLDivElement | null>(null);
@@ -34,6 +42,13 @@ export const CodeViewer = ({
     navigator.clipboard.writeText(code).then(() => {
       // Replace with notistack
     });
+  };
+
+  const handleSendToSQLStudio = () => {
+    navigate(`/${conn?.name}/${conn?.database}/query`);
+    setTimeout(() => {
+      bus.emit("QueryView.addCode", code);
+    }, 250);
   };
 
   const handleEditorChange = (value: string | undefined) => {
@@ -46,9 +61,16 @@ export const CodeViewer = ({
     <Box
       ref={editorRef}
       sx={{
+        display: "flex",
         position: "relative",
         width: "100%",
         height,
+        overflow: "hidden",
+        borderRadius: "5px",
+        border:
+          theme.palette.mode === "light"
+            ? `1px solid ${theme.palette.divider}`
+            : "none",
       }}
     >
       {/* Monaco Editor */}
@@ -160,25 +182,56 @@ export const CodeViewer = ({
         onChange={handleEditorChange}
       />
 
-      {/* Copy button */}
-      {!disableCopy && (
-        <Tooltip title="Copy Code">
-          <IconButton
-            onClick={handleCopy}
-            sx={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              zIndex: 1,
-              backgroundColor: "rgba(0, 0, 0, 0.6)",
-              color: "white",
-              "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.8)" },
-            }}
-          >
-            <Icon>content_copy</Icon>
-          </IconButton>
-        </Tooltip>
-      )}
+      <Stack
+        direction={"row"}
+        spacing={1}
+        sx={{
+          position: "absolute",
+          top: 8,
+          right: 8,
+          zIndex: 1,
+        }}
+      >
+        {/* Copy button */}
+        {!disableCopy && (
+          <Tooltip title="Copy Code">
+            <IconButton
+              onClick={handleCopy}
+              size={"small"}
+              sx={{
+                backgroundColor: "rgba(0, 0, 0, 0.6)",
+                color: "white",
+                "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.8)" },
+                width: 24,
+                height: 24,
+                fontSize: 16,
+              }}
+            >
+              <Icon>content_copy</Icon>
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* Send to SQL Studio button */}
+        {!disableSendToSQLStudio && (
+          <Tooltip title="Send to SQL Studio">
+            <IconButton
+              onClick={handleSendToSQLStudio}
+              size={"small"}
+              sx={{
+                backgroundColor: "rgba(0, 0, 0, 0.6)",
+                color: "white",
+                "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.8)" },
+                width: 24,
+                height: 24,
+                fontSize: 16,
+              }}
+            >
+              <Icon>code</Icon>
+            </IconButton>
+          </Tooltip>
+        )}
+      </Stack>
     </Box>
   );
 };

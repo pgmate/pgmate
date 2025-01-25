@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useURLConnection } from "hooks/use-connections";
 import { useDynamicQuery } from "hooks/use-query";
 
 const GET_COLUMNS = `
@@ -120,13 +121,17 @@ export interface Index {
 }
 
 export const useTableSchema = () => {
-  const { conn, schema, table } = useParams<{
+  const conn = useURLConnection();
+  const { schema, table } = useParams<{
     conn: string;
     schema: string;
     table: string;
   }>();
 
-  const query = useDynamicQuery(conn!);
+  const query = useDynamicQuery(conn!, {
+    disableAnalyze: true,
+    name: "useTableSchema",
+  });
 
   const [columns, setColumns] = useState<Column[]>([]);
   const [constraints, setConstraints] = useState<Constraint[]>([]);

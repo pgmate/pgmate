@@ -4,6 +4,7 @@ import { usePost } from "hooks/use-axios";
 const DEFAULT_DYNAMIC_QUERY_OPTIONS = { disableAnalyze: true };
 
 interface DynamicQueryOptions {
+  name?: string;
   disableAnalyze: boolean;
 }
 
@@ -160,11 +161,12 @@ export const useQuery = <TRow = any>(
 
 export const useDynamicQuery = (
   conn: string | Connection,
-  { disableAnalyze = true }: DynamicQueryOptions = DEFAULT_DYNAMIC_QUERY_OPTIONS
+  {
+    name = "useDynamicQuery",
+    disableAnalyze = true,
+  }: DynamicQueryOptions = DEFAULT_DYNAMIC_QUERY_OPTIONS
 ) => {
-  const [refetch] = usePost<QueryBody, QueryResult<any>>(
-    "/query?useDynamicQuery"
-  );
+  const [refetch] = usePost<QueryBody, QueryResult<any>>(`/query?${name}`);
 
   return useCallback(
     <RType = any>(

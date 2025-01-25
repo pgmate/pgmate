@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useURLConnection } from "hooks/use-connections";
 import { useDynamicQuery } from "hooks/use-query";
 
 const GET_STATS = `
@@ -77,8 +78,8 @@ interface Stats {
 }
 
 export const useTableInfo = () => {
-  const { conn, schema, table } = useParams<{
-    conn: string;
+  const conn = useURLConnection();
+  const { schema, table } = useParams<{
     schema: string;
     table: string;
   }>();

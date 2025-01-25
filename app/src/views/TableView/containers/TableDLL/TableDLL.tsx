@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useURLConnection } from "hooks/use-connections";
 import { Stack, Typography } from "@mui/material";
 import { usePost } from "hooks/use-axios";
 import { CodeViewer } from "components/CodeViewer";
 
 export const TableDLL = () => {
-  const { conn, schema, table } = useParams<{
-    conn: string;
+  const conn = useURLConnection();
+  const { schema, table } = useParams<{
     schema: string;
     table: string;
   }>();
   const [fetch] = usePost("/pg_dump/tables");
-
   const [data, setData] = useState<any | null>(null);
 
   useEffect(() => {
@@ -21,7 +21,8 @@ export const TableDLL = () => {
         tables: [table],
       },
       {
-        "x-pgmate-conn": conn,
+        "x-pgmate-conn": conn?.name,
+        "x-pgmate-db": conn?.database,
       }
     ).then((res: any) => {
       setData(res.data);

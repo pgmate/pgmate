@@ -42,6 +42,9 @@ export class ClientService {
       url.pathname = `/${url.username}`;
     }
 
+    // TODO: support SSL mode
+    // url.searchParams.set('sslmode', rows[0].ssl ? 'require' : 'prefer');
+
     return url.toString();
   }
 

@@ -20,11 +20,12 @@ export interface ConnectionTarget {
   user: string;
   password: string;
   database: string;
+  ssl: string;
 }
 
 export interface ConnectionData extends ConnectionItem {
   conn: ConnectionTarget;
-  ssl: boolean;
+  ssl: string;
   created_at: string;
   updated_at: string;
 }

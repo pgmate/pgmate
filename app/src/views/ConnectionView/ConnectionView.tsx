@@ -1,13 +1,25 @@
-import { useParams } from "react-router-dom";
-import { Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import {
+  Breadcrumbs,
+  Link as MUILink,
+  Typography,
+  Icon,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { PageLayout } from "components/PageLayout";
-import { useConnection } from "hooks/use-connections";
-import { DBList } from "./containers/DbList";
+import { CreateDB } from "popups/CreateDb";
+import { useURLConnection } from "hooks/use-connections";
+import { usePubSub } from "hooks/use-pubsub";
+import { useDatabases } from "./hooks/use-databases";
+import { DBList } from "./components/DbList";
 
 export const ConnectionView: React.FC = () => {
-  const params = useParams<{ conn: string }>();
-  const conn = useConnection(params.conn!);
+  const navigate = useNavigate();
+  const bus = usePubSub();
+  const conn = useURLConnection();
+  const { items } = useDatabases(conn!);
 
   if (!conn) return null;
 
@@ -29,8 +41,16 @@ export const ConnectionView: React.FC = () => {
           <Typography color="text.primary">{conn?.name}</Typography>
         </Breadcrumbs>
       }
+      tray={
+        <Tooltip title="Create new Database">
+          <IconButton onClick={() => bus.emit("create:db")}>
+            <Icon>add</Icon>
+          </IconButton>
+        </Tooltip>
+      }
     >
-      <DBList conn={params.conn!} />
+      <DBList conn={conn} items={items} />
+      <CreateDB onComplete={(path) => navigate(`/${path}`)} />
     </PageLayout>
   );
 };

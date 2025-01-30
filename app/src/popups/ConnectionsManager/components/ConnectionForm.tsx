@@ -94,10 +94,17 @@ export const ConnectionForm = React.forwardRef<
         },
         {
           name: "ssl",
-          type: "boolean",
+          type: "text",
           rules: {
             validate: (value: any) =>
-              ["true", "false"].includes(String(value).toLowerCase())
+              [
+                "true",
+                "false",
+                "require",
+                "prefer",
+                "verify-ca",
+                "verify-full",
+              ].includes(String(value).toLowerCase())
                 ? undefined
                 : "Value must be a boolean**",
           },

@@ -9,15 +9,14 @@ import {
   Divider,
   Icon,
 } from "@mui/material";
-import { useSchemas } from "../hooks/use-schemas";
+import { SchemaItem } from "../hooks/use-schemas";
 
 interface SchemasListProps {
   conn: Connection;
+  items: SchemaItem[];
 }
 
-export const SchemasList: React.FC<SchemasListProps> = ({ conn }) => {
-  const { items } = useSchemas(conn);
-
+export const SchemasList: React.FC<SchemasListProps> = ({ conn, items }) => {
   return (
     <List>
       {items.map((schema) => (
@@ -32,7 +31,18 @@ export const SchemasList: React.FC<SchemasListProps> = ({ conn }) => {
               </ListItemIcon>
               <ListItemText
                 primary={schema.schema_name}
-                secondary={`Size: ${schema.total_size_readable}, ${schema.tables_count} tables`}
+                secondary={
+                  <>
+                    {schema.description && (
+                      <>
+                        {schema.description}
+                        <br />
+                      </>
+                    )}
+                    Size: {schema.total_size_readable} | {schema.tables_count}{" "}
+                    tables
+                  </>
+                }
               />
               <Icon>chevron_right</Icon>
             </ListItemButton>

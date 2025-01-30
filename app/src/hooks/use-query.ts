@@ -137,17 +137,21 @@ export const useQuery = <TRow = any>(
 
   const reload = useCallback(
     (_variables: any[] = variables) => {
-      refetch({
-        conn: typeof conn === "string" ? conn : conn.name,
-        database: typeof conn === "string" ? undefined : conn.database,
-        disableAnalyze: true,
-        queries: [
-          {
-            statement,
-            variables: _variables,
-          },
-        ],
-      });
+      refetch(
+        {
+          disableAnalyze: true,
+          queries: [
+            {
+              statement,
+              variables,
+            },
+          ],
+        },
+        {
+          "x-pgmate-conn": typeof conn === "string" ? conn : conn.name,
+          "x-pgmate-db": typeof conn === "string" ? undefined : conn.database,
+        }
+      );
     },
     [conn, statement, stableStringify(variables)]
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   AppBar,
   Box,
@@ -11,6 +11,7 @@ import {
 import { styled } from "@mui/system";
 import { Icon } from "components/Icon";
 import { useDevice } from "hooks/use-device";
+import { useResizeableDrawer } from "./use-resizeable-drawer";
 
 interface LayoutProps {
   icon?: string | React.ReactNode;
@@ -20,9 +21,6 @@ interface LayoutProps {
   tray: React.ReactNode;
   children: React.ReactNode;
 }
-
-const drawerWidth = 0.15;
-const drawerMinWidth = 200;
 
 // Styled components for layout
 const MainContent = styled("main")<{ marginLeft: number }>(
@@ -38,6 +36,21 @@ const MainContent = styled("main")<{ marginLeft: number }>(
   })
 );
 
+// Styled resizable edge
+const ResizeHandle = styled("div")(() => ({
+  position: "absolute",
+  top: 0,
+  right: 0,
+  width: `8px`,
+  height: "100%",
+  cursor: "ew-resize",
+  backgroundColor: "transparent",
+  zIndex: 1200, // Ensure it overlays content
+  "&:hover": {
+    backgroundColor: "rgba(0, 0, 0, 0.1)", // Light indication on hover
+  },
+}));
+
 export const ResponsiveLayout: React.FC<LayoutProps> = ({
   children,
   menu,
@@ -48,23 +61,13 @@ export const ResponsiveLayout: React.FC<LayoutProps> = ({
 }) => {
   const { isDesktop } = useDevice();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [marginLeft, setMarginLeft] = useState(
-    Math.max(window.innerWidth * drawerWidth, drawerMinWidth)
-  );
+  const drawer = useResizeableDrawer({
+    initialWidth: 0.2,
+    minWidth: 200,
+    maxWidth: 350,
+  });
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
-  useEffect(() => {
-    // Handler to update marginLeft when the viewport is resized
-    const handleResize = () => {
-      setMarginLeft(Math.max(window.innerWidth * drawerWidth, drawerMinWidth));
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
 
   return (
     <Box>
@@ -114,8 +117,8 @@ export const ResponsiveLayout: React.FC<LayoutProps> = ({
           display: { xs: "block", sm: "none" },
           "& .MuiDrawer-paper": {
             boxSizing: "border-box",
-            width: drawerWidth,
-            minWidth: drawerMinWidth,
+            width: "80vw",
+            minWidth: drawer.minWidth,
           },
         }}
       >
@@ -130,17 +133,20 @@ export const ResponsiveLayout: React.FC<LayoutProps> = ({
           display: { xs: "none", sm: "block" },
           "& .MuiDrawer-paper": {
             boxSizing: "border-box",
-            width: drawerWidth,
-            minWidth: drawerMinWidth,
+            width: drawer.width,
+            minWidth: drawer.minWidth,
+            maxWidth: drawer.maxWidth,
           },
         }}
         open
       >
         <Toolbar />
         {!mobileOpen && menu}
+
+        <ResizeHandle onMouseDown={drawer.startResizing} />
       </Drawer>
 
-      <MainContent marginLeft={marginLeft}>{children}</MainContent>
+      <MainContent marginLeft={drawer.width}>{children}</MainContent>
     </Box>
   );
 };

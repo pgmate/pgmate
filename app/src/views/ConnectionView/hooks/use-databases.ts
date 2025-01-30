@@ -1,6 +1,6 @@
 import { useQuery } from "hooks/use-query";
 
-interface DatabaseItem {
+export interface DatabaseItem {
   name: string; // Name of the database
   description: string | null; // Description of the database (can be null if no description is set)
   is_selected: boolean; // Indicates if this is the currently selected database
@@ -65,8 +65,10 @@ LEFT JOIN
   pg_stat_database s ON d.datname = s.datname;
 `;
 
-export const useDatabases = (conn: string): { items: DatabaseItem[] } => {
-  const { data } = useQuery(conn, GET_DATABASES, []);
+export const useDatabases = (
+  conn: Connection
+): { items: DatabaseItem[]; reload: () => void } => {
+  const { data, reload } = useQuery(conn, GET_DATABASES, []);
 
   // Map and transform the raw rows into the correct types
   const items: DatabaseItem[] = (data?.rows || []).map((db) => ({
@@ -88,5 +90,5 @@ export const useDatabases = (conn: string): { items: DatabaseItem[] } => {
 
   // console.log(items);
 
-  return { items };
+  return { items, reload };
 };

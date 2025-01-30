@@ -85,18 +85,26 @@ export const useTableInfo = () => {
   }>();
 
   const query = useDynamicQuery(conn!);
-
+  const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
     const run = async () => {
-      const [stats] = await query(GET_STATS, [schema, table]);
-      setStats(stats[0] as Stats);
+      try {
+        setLoading(true);
+        const [stats] = await query(GET_STATS, [schema, table]);
+        setStats(stats[0] as Stats);
+      } finally {
+        setLoading(false);
+      }
     };
     run();
   }, [conn, schema, table]);
 
   return {
+    loading,
+    schema,
+    table,
     stats,
   };
 };

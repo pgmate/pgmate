@@ -16,6 +16,14 @@ interface TableDataProps {
   conn: Connection;
 }
 
+const measureTextLength = (text: string) => {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return text.length * 15;
+  ctx.font = "15px Roboto";
+  return ctx.measureText(text).width + 40;
+};
+
 export const TableData: React.FC<TableDataProps> = ({ conn }) => {
   const params = useParams<{
     conn: string;
@@ -44,7 +52,8 @@ export const TableData: React.FC<TableDataProps> = ({ conn }) => {
       field: c.column_name,
       headerName: c.column_name,
       editable: true,
-      width: props.columnSize[c.column_name],
+      width:
+        props.columnSize[c.column_name] || measureTextLength(c.column_name),
       renderCell: (params: any) =>
         typeof params.value === "boolean" // Handle booleans
           ? params.value
@@ -145,6 +154,7 @@ export const TableData: React.FC<TableDataProps> = ({ conn }) => {
       <DataGrid
         rows={rows}
         columns={columns}
+        density="compact"
         disableColumnMenu
         pageSizeOptions={[5, 25, 50, 100]}
         rowCount={-1}

@@ -108,7 +108,7 @@ export class MigrationService implements OnApplicationBootstrap {
     // Upsert the default connection
     this.queryService.query(
       `
-  INSERT INTO pgmate.connections VALUES ('default', 'PGMate default database', $1, false)
+  INSERT INTO pgmate.connections VALUES ('default', 'PGMate default database', $1, 'false')
   ON CONFLICT ON CONSTRAINT "connections_pkey" DO UPDATE SET
       "desc" = EXCLUDED."desc", 
       "conn" = EXCLUDED."conn", 

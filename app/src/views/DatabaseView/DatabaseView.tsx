@@ -1,18 +1,30 @@
-import { useParams } from "react-router-dom";
-import { Box, Breadcrumbs, Link as MUILink, Typography } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import {
+  Box,
+  Breadcrumbs,
+  Link as MUILink,
+  Typography,
+  Tooltip,
+  Icon,
+  IconButton,
+} from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { Link as RouterLink } from "react-router-dom";
-import { useConnection } from "hooks/use-connections";
-
+import { useURLConnection } from "hooks/use-connections";
+import { usePubSub } from "hooks/use-pubsub";
 import { PageLayout } from "components/PageLayout";
-import { SchemasList } from "./containers/SchemasList";
+import { CreateSchema } from "popups/CreateSchema";
+import { SchemasList } from "./components/SchemasList";
 import { DiskCharts } from "./containers/DiskCharts";
 import { SunburstChart } from "./containers/SunburstChart";
+import { useSchemas } from "./hooks/use-schemas";
 // import { TreeMap } from "./containers/TreeMap";
 
 export const DatabaseView = () => {
-  const params = useParams<{ conn: string; db: string }>();
-  const conn = useConnection(params.conn!, params.db!);
+  const bus = usePubSub();
+  const navigate = useNavigate();
+  const conn = useURLConnection();
+  const schema = useSchemas(conn!);
 
   if (!conn) return null;
 
@@ -41,8 +53,15 @@ export const DatabaseView = () => {
           >
             {conn?.name}
           </MUILink>
-          <Typography color="text.primary">{params.db}</Typography>
+          <Typography color="text.primary">{conn.database}</Typography>
         </Breadcrumbs>
+      }
+      tray={
+        <Tooltip title="Create new Schema">
+          <IconButton onClick={() => bus.emit("create:schema")}>
+            <Icon>add</Icon>
+          </IconButton>
+        </Tooltip>
       }
     >
       <Box sx={{ flexGrow: 1, mb: 4 }}>
@@ -55,7 +74,8 @@ export const DatabaseView = () => {
           </Grid>
         </Grid>
       </Box>
-      <SchemasList conn={conn} />
+      <SchemasList conn={conn} items={schema.items} />
+      <CreateSchema onComplete={(path) => navigate(`/${path}`)} />
     </PageLayout>
   );
 };

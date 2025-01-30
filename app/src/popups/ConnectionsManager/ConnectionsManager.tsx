@@ -42,11 +42,12 @@ export const ConnectionsManager: React.FC = () => {
 
   usePasteConnection((conn) => {
     if (!open) return;
+
     setEditConnection({
-      name: "New Connection",
+      name: conn.database || "New Connection",
       desc: "imported from clipboard",
       conn,
-      ssl: false,
+      ssl: conn.ssl || "false",
       created_at: "",
       updated_at: "",
     });
@@ -81,8 +82,9 @@ export const ConnectionsManager: React.FC = () => {
         user: "",
         password: "",
         database: "",
+        ssl: "false",
       },
-      ssl: false,
+      ssl: "false",
       created_at: "",
       updated_at: "",
     });

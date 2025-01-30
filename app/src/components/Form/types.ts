@@ -17,6 +17,7 @@ export interface FormProps {
   defaultValues?: FormDefaultValues;
   onSubmit?: (data: Record<string, any>) => void;
   onCancel?: () => void;
+  disableButtons?: boolean;
 }
 
 export interface FormFieldProps extends FormFieldConfig {
@@ -27,5 +28,6 @@ export interface FormFieldProps extends FormFieldConfig {
 export type FormApi = {
   getValues: () => Record<string, any>;
   getValue: (fieldName: string) => any;
+  reset: () => void;
   validate: () => Promise<boolean>;
 };

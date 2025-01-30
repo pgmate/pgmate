@@ -9,6 +9,14 @@ interface QueryResultsProps<T extends Record<string, any>> {
   scrollId?: string; // Unique identifier for scrolling
 }
 
+const measureTextLength = (text: string) => {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return text.length * 15;
+  ctx.font = "15px Roboto";
+  return ctx.measureText(text).width + 40;
+};
+
 export const QueryResults = <T extends Record<string, any>>({
   data,
   scrollId = crypto.randomUUID(), // Default to a unique random ID
@@ -16,6 +24,7 @@ export const QueryResults = <T extends Record<string, any>>({
   const gridColumns: GridColDef[] = Object.keys(data.rows[0]).map((c) => ({
     field: c,
     headerName: c,
+    width: measureTextLength(c),
     editable: true,
     renderCell: (params: any) =>
       typeof params.value === "boolean" // Handle booleans
@@ -45,6 +54,7 @@ export const QueryResults = <T extends Record<string, any>>({
               rows={gridRows}
               columns={gridColumns}
               disableColumnMenu
+              density="compact"
               autoPageSize={false} // Disable auto page size to respect initial page size
               pageSizeOptions={[5, 10, 25, 50]} // Optional: Allow users to select other page sizes
               initialState={{

@@ -6,7 +6,10 @@ import {
   ListItemButton,
   ListItemText,
   ListItemIcon,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import { Link } from "react-router-dom";
 import { useURLConnection } from "hooks/use-connections";
 import { Icon } from "components/Icon";
@@ -20,8 +23,8 @@ const primaryMenu = [
     href: "/home",
   },
   {
-    label: "Query",
-    icon: "query_stats",
+    label: "SQL Studio",
+    icon: "code",
     href: "/query",
     useHidden: () => {
       const connection = useURLConnection();
@@ -98,6 +101,47 @@ const MenuItem: React.FC<MenuItemProps> = ({
   );
 };
 
+const MenuItemGrid: React.FC<MenuItemProps> = ({
+  useHidden = () => false,
+  useProps = () => null,
+  ...props
+}) => {
+  const isHidden = useHidden();
+  const computedProps = useProps();
+
+  if (isHidden === true) {
+    return null;
+  }
+
+  const { label, icon, href } = {
+    ...props,
+    ...(computedProps || {}),
+  };
+
+  return (
+    <Grid size={4}>
+      <Tooltip title={label}>
+        <IconButton
+          component={Link}
+          to={href}
+          sx={{
+            border: "1px solid white",
+            borderColor: "divider",
+            borderRadius: 1,
+            height: 45,
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Icon fontSize="large">{icon}</Icon>
+        </IconButton>
+      </Tooltip>
+    </Grid>
+  );
+};
+
 const MenuList: React.FC<MenuListProps> = ({ items }) => (
   <List disablePadding>
     {items.map((item) => (
@@ -110,7 +154,20 @@ export const AppMenu = () => {
   return (
     <Stack flex={1} flexDirection="column">
       <Box flexGrow={1}>
-        <MenuList items={primaryMenu} />
+        <Grid container spacing={2} margin={2}>
+          {primaryMenu.map((item) => {
+            return (
+              <MenuItemGrid
+                key={item.href}
+                label={item.label}
+                icon={item.icon}
+                href={item.href}
+                useHidden={item.useHidden}
+                useProps={item.useProps}
+              />
+            );
+          })}
+        </Grid>
         <ConnectionSchema />
         <FactsTags />
       </Box>

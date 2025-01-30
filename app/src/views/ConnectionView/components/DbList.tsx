@@ -9,22 +9,21 @@ import {
   Divider,
   Icon,
 } from "@mui/material";
-import { useDatabases } from "../hooks/use-databases";
-import { HealthRate } from "../components/HealthRate";
+import { HealthRate } from "./HealthRate";
+import type { DatabaseItem } from "../hooks/use-databases";
 
 interface DBListProps {
-  conn: string;
+  conn: Connection;
+  items: DatabaseItem[];
 }
 
-export const DBList: React.FC<DBListProps> = ({ conn }) => {
-  const { items } = useDatabases(conn!);
-
+export const DBList: React.FC<DBListProps> = ({ conn, items }) => {
   return (
     <List>
       {items.map((db) => (
         <React.Fragment key={db.name}>
           <ListItem disablePadding disableGutters>
-            <ListItemButton component={Link} to={`/${conn}/${db.name}`}>
+            <ListItemButton component={Link} to={`/${conn.name}/${db.name}`}>
               <ListItemIcon>
                 <HealthRate
                   health_factor={db.health_factor}
@@ -35,7 +34,17 @@ export const DBList: React.FC<DBListProps> = ({ conn }) => {
               </ListItemIcon>
               <ListItemText
                 primary={db.name}
-                secondary={`Size: ${db.size_readable} | Owner: ${db.owner}`}
+                secondary={
+                  <>
+                    {db.description && (
+                      <>
+                        {db.description}
+                        <br />
+                      </>
+                    )}
+                    Size: {db.size_readable} | Owner: {db.owner}
+                  </>
+                }
               />
               <Icon>chevron_right</Icon>
             </ListItemButton>

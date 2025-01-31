@@ -1,0 +1,22 @@
+{
+  "name": "pagila-db",
+  "version": "1.0.0",
+  "description": "Pagila database package",
+  "author": "Angelo C.",
+  "install_order": [
+    "main.sql",
+    "data.sql"
+  ],
+  "uninstall_order": [
+    "drop_indexes.sql",
+    "delete_initial_data.sql",
+    "drop_tables.sql"
+  ],
+  "metadata": {
+    "database": "my_database",
+    "required_version": ">=13.0",
+    "dependencies": [
+      "other_package@1.2.0"
+    ]
+  }
+}

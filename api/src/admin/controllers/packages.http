@@ -1,8 +1,15 @@
 ### List all packages
 GET http://localhost:8080/admin/v1/packages
-Accept: application/json
 
 ###
+
+GET https://legendary-winner-7wvpg4wjqqgcx69j-8080.app.github.dev/admin/v1/packages
+Content-Type: application/json
+x-pgmate-admin-secret: pgmate
+
+
+###
+GET https://legendary-winner-7wvpg4wjqqgcx69j-8080.app.github.dev/admin/v1/admin/status
 
 ### Add a new package
 POST http://localhost:8080/packages/new-package

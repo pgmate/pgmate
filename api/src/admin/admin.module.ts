@@ -33,6 +33,7 @@ import { PackagesService } from './services/packages.service';
     PGDumpService,
     PGSchemaService,
     AIService,
-  , PackagesService],
+    PackagesService
+  ],
 })
 export class AdminModule {}

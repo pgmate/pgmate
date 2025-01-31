@@ -1,8 +1,8 @@
 import Editor, { Monaco } from "@monaco-editor/react";
 import { useState, useRef } from "react";
 import { Box, Alert, useTheme } from "@mui/material";
+import { usePubSub, useSubscribe } from "hooks/use-pubsub";
 import { useDynamicQueries } from "hooks/use-query";
-import { useSubscribe } from "hooks/use-pubsub";
 import { useStorage } from "hooks/use-storage";
 import { SplitPane } from "components/SplitPane";
 import { SizedBox } from "components/SizedBox";
@@ -10,17 +10,19 @@ import { ResultsTable } from "./containers/ResultsTable";
 import { ResultsEmpty } from "./containers/ResultsEmpty";
 // import { splitIntoStatements1 as splitIntoStatements } from "./utils";
 
-const SQL = `
-SELECT * FROM now();
-SELECT 'marco' AS name;
-SELECT 1 + 1 AS sum;
+const SQL = "";
 
-SELECT "city_id", "city", "country_id", "last_update"
-FROM "public"."city" limit 5;
+// const SQL = `
+// SELECT * FROM now();
+// SELECT 'marco' AS name;
+// SELECT 1 + 1 AS sum;
 
-SELECT "city_id", "city", "country_id", "last_update"
-FROM "public"."city" limit 15;
-`;
+// SELECT "city_id", "city", "country_id", "last_update"
+// FROM "public"."city" limit 5;
+
+// SELECT "city_id", "city", "country_id", "last_update"
+// FROM "public"."city" limit 15;
+// `;
 
 // This dummy SQL is used to test the query splitter and identify the correct statements
 // based on the cursor position.
@@ -84,6 +86,7 @@ interface QueryResult {
 }
 
 export const QueryView = ({ conn }: { conn: Connection }) => {
+  const bus = usePubSub();
   const theme = useTheme();
   const storage = useStorage();
   const storageKey = `sql.${conn.name}.${conn.database}`;
@@ -262,6 +265,30 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
         console.log("Queries:", queries);
         setResults(queries);
         setShowResults(true);
+
+        if (
+          [
+            "UPDATE",
+            "DELETE",
+            "INSERT",
+            "MERGE",
+            "CREATE",
+            "ALTER",
+            "DROP",
+            "TRUNCATE",
+            "RENAME",
+            "COMMIT",
+            "ROLLBACK",
+            "GRANT",
+            "REVOKE",
+            "SET",
+            "EXECUTE",
+          ].some((keyword) =>
+            statements.join(" ").toUpperCase().includes(keyword)
+          )
+        ) {
+          bus.emit("dbinfo:refresh");
+        }
         // queries.forEach((item: any) => {
         //   console.log(item.query.statement);
         //   if (item.rows) {
@@ -286,6 +313,38 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
 
   useSubscribe("QueryView.run", () => {
     runSelection();
+  });
+
+  useSubscribe("QueryView.addCode", (code) => {
+    console.log("Received Code:", code);
+
+    if (!editorRef.current || !monacoRef.current) return;
+
+    const editor = editorRef.current;
+    const model = editor.getModel();
+
+    if (model) {
+      const totalLines = model.getLineCount();
+      const currentContent = model.getValue();
+
+      // Append two empty lines and the new code
+      const updatedContent = `${currentContent}\n\n${code}`;
+      model.setValue(updatedContent);
+
+      // Highlight the added code
+      const startLine = totalLines + 2; // Adjust for two empty lines
+      const endLine = startLine + code.split("\n").length - 1;
+
+      editor.setSelection({
+        startLineNumber: startLine,
+        startColumn: 1,
+        endLineNumber: endLine,
+        endColumn: code.split("\n").slice(-1)[0].length + 1,
+      });
+
+      // Scroll to the added code
+      editor.revealLineInCenter(endLine);
+    }
   });
 
   return (
@@ -344,9 +403,13 @@ export const QueryView = ({ conn }: { conn: Connection }) => {
                     const lastKey = keys.length > 0 ? keys.pop() : undefined;
 
                     return lastKey !== undefined ? (
-                      <ResultsTable
-                        rows={results[0].meta[Number(lastKey)].rows}
-                      />
+                      results[0].meta[Number(lastKey)].rows.length > 0 ? (
+                        <ResultsTable
+                          rows={results[0].meta[Number(lastKey)].rows}
+                        />
+                      ) : (
+                        <ResultsEmpty data={results[0].meta[Number(lastKey)]} />
+                      )
                     ) : null;
                   })()}
                 {results && results[0].rows && results[0].rows.length === 0 && (

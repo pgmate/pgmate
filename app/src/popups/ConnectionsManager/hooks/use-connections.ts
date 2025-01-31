@@ -14,15 +14,18 @@ export interface ConnectionItem {
   desc: string;
 }
 
+export interface ConnectionTarget {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+  ssl: string;
+}
+
 export interface ConnectionData extends ConnectionItem {
-  conn: {
-    host: string;
-    port: number;
-    user: string;
-    password: string;
-    database: string;
-  };
-  ssl: boolean;
+  conn: ConnectionTarget;
+  ssl: string;
   created_at: string;
   updated_at: string;
 }
@@ -48,7 +51,7 @@ export const useConnections = () => {
     await axios.post("/connections", {
       name: data.name,
       desc: data.desc,
-      conn: `postgres://${data.conn.user}:${data.conn.password}@${data.conn.host}:${data.conn.port}/${data.conn.database}`,
+      connectionString: `postgres://${data.conn.user}:${data.conn.password}@${data.conn.host}:${data.conn.port}/${data.conn.database}`,
       ssl: data.ssl,
     });
     bus.emit("connections::changed");

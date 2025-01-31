@@ -9,13 +9,16 @@ import {
   IconButton,
   Icon,
   Stack,
+  Tooltip,
 } from "@mui/material";
 import { useSubscribe } from "hooks/use-pubsub";
+import { useClipboard } from "hooks/use-clipboard";
 import {
   useConnections,
   ConnectionItem,
   ConnectionData,
 } from "./hooks/use-connections";
+import { usePasteConnection } from "./hooks/use-paste-connection";
 import { ConnectionsList } from "./components/ConnectionsList";
 import {
   ConnectionForm,
@@ -24,6 +27,7 @@ import {
 
 export const ConnectionsManager: React.FC = () => {
   const navigate = useNavigate();
+  const clipboard = useClipboard();
   const [open, setOpen] = useState(false);
   const formRef = useRef<ConnectionFormApis>(null);
   const { connections, getConnectionData, deleteConnection, upsertConnection } =
@@ -34,6 +38,19 @@ export const ConnectionsManager: React.FC = () => {
 
   useSubscribe("connections::manager", () => {
     setOpen(true);
+  });
+
+  usePasteConnection((conn) => {
+    if (!open) return;
+
+    setEditConnection({
+      name: conn.database || "New Connection",
+      desc: "imported from clipboard",
+      conn,
+      ssl: conn.ssl || "false",
+      created_at: "",
+      updated_at: "",
+    });
   });
 
   const handleDisclose = (connection: ConnectionItem) => {
@@ -65,8 +82,9 @@ export const ConnectionsManager: React.FC = () => {
         user: "",
         password: "",
         database: "",
+        ssl: "false",
       },
-      ssl: false,
+      ssl: "false",
       created_at: "",
       updated_at: "",
     });
@@ -74,6 +92,7 @@ export const ConnectionsManager: React.FC = () => {
 
   const handleClose = () => {
     setOpen(false);
+    setEditConnection(null);
   };
 
   return (
@@ -86,9 +105,18 @@ export const ConnectionsManager: React.FC = () => {
             justifyContent={"space-between"}
           >
             <span>Connections Manager</span>
-            <IconButton onClick={handleRequestNew}>
-              <Icon>add</Icon>
-            </IconButton>
+            <Stack direction={"row"} spacing={1}>
+              <Tooltip title="Import from clipboard (Ctrl+v)">
+                <IconButton onClick={() => clipboard.paste()}>
+                  <Icon>content_paste</Icon>
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Create new connection">
+                <IconButton onClick={handleRequestNew}>
+                  <Icon>add</Icon>
+                </IconButton>
+              </Tooltip>
+            </Stack>
           </Stack>
         </DialogTitle>
       )}

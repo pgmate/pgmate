@@ -22,6 +22,7 @@ export const FactsView = () => {
       title={tag}
       subtitle="Interesting facts about Postgres"
       disableMargins
+      stickyHeader
     >
       <List disablePadding>
         {items.map((fact) => (

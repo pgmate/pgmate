@@ -17,6 +17,10 @@ const config = ConfigModule.forRoot({
     PGSTRING: Joi.string().uri().required(),
     PGMATE_ADMIN_SECRET: Joi.string().required(),
     PGMATE_ENCRYPTION_KEY: Joi.string().optional().default(''),
+    PGMATE_OPENAPI_KEY: Joi.string().optional().default(''),
+    PGMATE_OPENAPI_URL: Joi.string()
+      .optional()
+      .default('https://api.openai.com/v1/chat/completions'),
   }),
 });
 

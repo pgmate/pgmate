@@ -36,7 +36,7 @@ export const MuiProvider: React.FC<MuiProviderProps> = ({ children }) => {
   );
 
   const setTheme = (theme: ThemeName) => {
-    console.log("Setting theme:", theme);
+    // console.log("Setting theme:", theme);
     setItem<string>("theme", theme);
     setValue(theme);
   };

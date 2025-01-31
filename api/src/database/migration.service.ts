@@ -1,14 +1,9 @@
-import {
-  Injectable,
-  Inject,
-  Logger,
-  OnApplicationBootstrap,
-} from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Pool } from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
 import { EncryptionService } from '../shared/services/encryption.service';
+import { QueryService } from './query.service';
 
 interface Fact {
   uuid: string;
@@ -26,13 +21,14 @@ export class MigrationService implements OnApplicationBootstrap {
   private appliedMigrations: string[] = [];
 
   constructor(
-    @Inject('PG_CONNECTION') private readonly pool: Pool,
     private readonly configService: ConfigService,
     private readonly encryptionService: EncryptionService,
+    private readonly queryService: QueryService,
   ) {}
 
   async onApplicationBootstrap() {
     try {
+      // await this.clientService.createClients();
       await this.prepMigrations();
       await this.runMigrations();
       await this.upsertConnection();
@@ -45,7 +41,9 @@ export class MigrationService implements OnApplicationBootstrap {
 
   private async prepMigrations() {
     try {
-      const result = await this.pool.query('SELECT id FROM pgmate.migrations');
+      const result = await this.queryService.query(
+        'SELECT id FROM pgmate.migrations',
+      );
       this.appliedMigrations = result.rows.map((row) => row.id.toString());
     } catch (error) {
       if (error.code !== '42P01') {
@@ -85,8 +83,8 @@ export class MigrationService implements OnApplicationBootstrap {
         this.logger.log(`Running migration: ${directory}`);
         const sql = fs.readFileSync(upFilePath, 'utf-8');
         try {
-          await this.pool.query(sql);
-          await this.pool.query(
+          await this.queryService.query(sql);
+          await this.queryService.query(
             `INSERT INTO pgmate.migrations (target, id, name) VALUES ('default', $1, $2)`,
             [migrationId, migrationName.join('_')],
           );
@@ -108,9 +106,9 @@ export class MigrationService implements OnApplicationBootstrap {
 
   private async upsertConnection() {
     // Upsert the default connection
-    this.pool.query(
+    this.queryService.query(
       `
-  INSERT INTO pgmate.connections VALUES ('default', 'PGMate default database', $1, false)
+  INSERT INTO pgmate.connections VALUES ('default', 'PGMate default database', $1, 'false')
   ON CONFLICT ON CONSTRAINT "connections_pkey" DO UPDATE SET
       "desc" = EXCLUDED."desc", 
       "conn" = EXCLUDED."conn", 
@@ -139,7 +137,7 @@ export class MigrationService implements OnApplicationBootstrap {
     const upsertFromJson = async (data: Fact[]) => {
       try {
         for (const fact of data) {
-          await this.pool.query(INSERT_QUERY, [
+          await this.queryService.query(INSERT_QUERY, [
             fact.uuid,
             fact.title,
             fact.description,

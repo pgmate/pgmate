@@ -1,13 +1,14 @@
 import { useQuery } from "hooks/use-query";
 
-type TopItem = {
+export type TopItem = {
   name: string; // 'table_name', 'index_name', or 'view_name'
   size: number; // Size in bytes
   size_readable: string; // Human-readable size (e.g., '1.2 MB')
 };
 
-type SchemaItem = {
+export type SchemaItem = {
   schema_name: string;
+  description?: string;
   total_size_bytes: number; // Total schema size in bytes
   total_size_readable: string; // Total schema size in human-readable format
   tables_count: number; // Total number of tables
@@ -30,6 +31,7 @@ const GET_SCHEMAS = `
 WITH schema_info AS (
   SELECT
     n.nspname AS schema_name,
+    d.description AS schema_description,
     (
       SELECT SUM(pg_total_relation_size(c.oid))
       FROM pg_class c
@@ -162,11 +164,11 @@ WITH schema_info AS (
       WHERE p.pronamespace = n.oid
     ) AS total_functions
   FROM pg_namespace n
-  --WHERE n.nspname NOT LIKE 'pg\_%' ESCAPE '\'
-  --  AND n.nspname != 'information_schema'
+  LEFT JOIN pg_description d ON n.oid = d.objoid
 )
 SELECT
   schema_name,
+  schema_description,
   total_size AS total_size_bytes,
   CASE
     WHEN total_size < 1024 THEN
@@ -230,12 +232,15 @@ SELECT
 FROM schema_info;
 `;
 
-export const useSchemas = (conn: Connection): { items: SchemaItem[] } => {
-  const { data } = useQuery(conn, GET_SCHEMAS, []);
+export const useSchemas = (
+  conn: Connection
+): { items: SchemaItem[]; reload: () => void } => {
+  const { data, reload } = useQuery(conn, GET_SCHEMAS, []);
 
   // Map and transform the raw rows into the correct types
   const items: SchemaItem[] = (data?.rows || []).map((schema: any) => ({
     schema_name: schema.schema_name,
+    description: schema.schema_description,
     total_size_bytes: Number(schema.total_size_bytes),
     total_size_readable: schema.total_size_readable,
     tables_count: Number(schema.tables_count),
@@ -293,5 +298,5 @@ export const useSchemas = (conn: Connection): { items: SchemaItem[] } => {
     return a.schema_name.localeCompare(b.schema_name); // Alphabetical for others
   });
 
-  return { items: sortedItems };
+  return { items: sortedItems, reload };
 };

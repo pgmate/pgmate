@@ -3,23 +3,19 @@ import {
   Controller,
   Get,
   Post,
-  UseGuards,
-  Inject,
   Param,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { Pool } from 'pg';
 import { AdminGuard } from '../admin.guard';
-import { EncryptionService } from '../../shared/services/encryption.service';
+import { ClientInterceptor } from '../../database/client.interceptor';
 import { ConnectionsService } from '../services/connections.service';
 
 @UseGuards(AdminGuard)
+@UseInterceptors(ClientInterceptor)
 @Controller('connections')
 export class ConnectionsController {
-  constructor(
-    @Inject('PG_CONNECTION') private readonly pool: Pool,
-    private readonly encryptionService: EncryptionService,
-    private readonly connectionsService: ConnectionsService,
-  ) {}
+  constructor(private readonly connectionsService: ConnectionsService) {}
 
   @Get('')
   async getList() {
@@ -40,7 +36,13 @@ export class ConnectionsController {
 
   @Post('')
   async createConnection(
-    @Body() body: { name: string; desc?: string; conn: string; ssl: boolean },
+    @Body()
+    body: {
+      name: string;
+      desc?: string;
+      connectionString: string;
+      ssl: boolean;
+    },
   ): Promise<{
     success: boolean;
     name?: string;
@@ -49,7 +51,7 @@ export class ConnectionsController {
     try {
       await this.connectionsService.upsertConnection(
         body.name,
-        body.conn,
+        body.connectionString,
         body.ssl,
         body.desc,
       );

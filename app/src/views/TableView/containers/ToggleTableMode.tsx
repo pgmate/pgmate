@@ -20,8 +20,7 @@ const options = [
     icon: "edit",
   },
   {
-    mode: "dll",
-
+    mode: "ddl",
     label: "DDL View",
     icon: "code",
   },

@@ -4,19 +4,51 @@ interface ResultsTableProps {
   rows: any[];
 }
 
+const measureTextLength = (text: string) => {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return text.length * 15;
+  ctx.font = "15px Roboto";
+  return ctx.measureText(text).width + 40;
+};
+
 export const ResultsTable: React.FC<ResultsTableProps> = ({ rows }) => {
-  const gridColumns: GridColDef[] = Object.keys(rows[0]).map((c) => ({
-    field: c,
-    headerName: c,
-    editable: true,
-    // width: props.columnSize[c.column_name],
-    renderCell: (params: any) =>
-      typeof params.value === "object" && params.value !== null
-        ? JSON.stringify(params.value, null, 2) // Pretty print JSON
-        : params.value, // Render as-is for non-JSON
-  }));
+  try {
+    const gridColumns: GridColDef[] = Object.keys(rows[0]).map((c) => ({
+      field: c,
+      headerName: c,
+      width: measureTextLength(c),
+      editable: true,
+      renderCell: (params: any) => {
+        const value = params.value;
 
-  const gridRows: GridRowsProp = rows.map((r, i) => ({ id: i, ...r }));
+        // Handle boolean values
+        if (typeof value === "boolean") {
+          return value ? "true" : "false";
+        }
 
-  return <DataGrid rows={gridRows} columns={gridColumns} disableColumnMenu />;
+        // Handle objects (pretty-print JSON)
+        if (typeof value === "object" && value !== null) {
+          return JSON.stringify(value, null, 2);
+        }
+
+        // Render other types as-is
+        return value;
+      },
+    }));
+
+    const gridRows: GridRowsProp = rows.map((r, i) => ({ id: i, ...r }));
+
+    return (
+      <DataGrid
+        rows={gridRows}
+        columns={gridColumns}
+        disableColumnMenu
+        density="compact"
+      />
+    );
+  } catch (e) {
+    console.log("rows", rows);
+    return "failed rendering dataset";
+  }
 };

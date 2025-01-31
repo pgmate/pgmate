@@ -12,7 +12,16 @@ import { fillDefaults } from "./utils/fill-defaults";
 import { FormField, FormProps, FormFieldType } from "./types";
 
 export const Form = forwardRef(
-  ({ fields, defaultValues = {}, onSubmit, onCancel }: FormProps, ref) => {
+  (
+    {
+      fields,
+      defaultValues = {},
+      disableButtons,
+      onSubmit,
+      onCancel,
+    }: FormProps,
+    ref
+  ) => {
     const { control, reset, handleSubmit, getValues, trigger } = useForm({
       defaultValues: fillDefaults(fields, defaultValues),
     });
@@ -22,6 +31,7 @@ export const Form = forwardRef(
       () => ({
         getValues: () => getValues(),
         getValue: (fieldName: string) => getValues(fieldName),
+        reset: () => reset(fillDefaults(fields, defaultValues)),
         validate: async () => {
           return await trigger();
         },
@@ -53,7 +63,7 @@ export const Form = forwardRef(
 
     useEffect(() => {
       reset(fillDefaults(fields, defaultValues));
-    }, [fields, defaultValues, reset]);
+    }, [fields, JSON.stringify(defaultValues), reset]);
 
     return (
       <Box
@@ -69,7 +79,12 @@ export const Form = forwardRef(
         {fields.map((field) => renderField(field))}
 
         {(onCancel || onSubmit) && (
-          <Stack direction="row" spacing={2} justifyContent={"flex-end"}>
+          <Stack
+            direction="row"
+            spacing={2}
+            justifyContent={"flex-end"}
+            sx={{ display: disableButtons ? "none" : "flex" }}
+          >
             {onCancel && (
               <Button
                 type="reset"

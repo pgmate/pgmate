@@ -8,7 +8,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ panels }) => {
-  console.log("*****", panels);
+  // console.log("*****", panels);
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
       {panels.map((panel, index) => (

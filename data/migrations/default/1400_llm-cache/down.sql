@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS "pgmate"."llm_cache" CASCADE;

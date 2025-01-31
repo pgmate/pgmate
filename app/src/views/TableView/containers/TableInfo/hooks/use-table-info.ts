@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useURLConnection } from "hooks/use-connections";
 import { useDynamicQuery } from "hooks/use-query";
 
 const GET_STATS = `
@@ -77,25 +78,33 @@ interface Stats {
 }
 
 export const useTableInfo = () => {
-  const { conn, schema, table } = useParams<{
-    conn: string;
+  const conn = useURLConnection();
+  const { schema, table } = useParams<{
     schema: string;
     table: string;
   }>();
 
   const query = useDynamicQuery(conn!);
-
+  const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
     const run = async () => {
-      const [stats] = await query(GET_STATS, [schema, table]);
-      setStats(stats[0] as Stats);
+      try {
+        setLoading(true);
+        const [stats] = await query(GET_STATS, [schema, table]);
+        setStats(stats[0] as Stats);
+      } finally {
+        setLoading(false);
+      }
     };
     run();
   }, [conn, schema, table]);
 
   return {
+    loading,
+    schema,
+    table,
     stats,
   };
 };

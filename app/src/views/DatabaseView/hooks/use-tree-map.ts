@@ -105,16 +105,21 @@ WHERE "schema" NOT IN ('pg_toast1', 'pg_catalog1', 'information_schema1') -- Exc
 export const useTreeMap = (conn: Connection): { items: TreeNode } => {
   const { data } = useQuery(conn, SQL_QUERY, []);
 
-  const items = (data?.rows || []).map((row: any) => ({
-    schema: row.schema,
-    table_name: row.table_name,
-    type: row.type,
-    total_size: Number(row.total_size),
-    data_size: Number(row.data_size),
-    heap_size: Number(row.heap_size),
-    toast_size: Number(row.toast_size),
-    index_size: Number(row.index_size),
-  }));
+  const items = (data?.rows || [])
+    .filter(
+      (row: any) =>
+        row.schema !== "information_schema" && !row.schema.startsWith("pg_")
+    )
+    .map((row: any) => ({
+      schema: row.schema,
+      table_name: row.table_name,
+      type: row.type,
+      total_size: Number(row.total_size),
+      data_size: Number(row.data_size),
+      heap_size: Number(row.heap_size),
+      toast_size: Number(row.toast_size),
+      index_size: Number(row.index_size),
+    }));
 
   // console.log("items", items);
 
@@ -162,7 +167,7 @@ export const useTreeMap = (conn: Connection): { items: TreeNode } => {
             }
             // Add the partition as a child of the parent table
             parentTableNode.children?.push({
-              name: item.table_name,
+              name: `${item.schema}.${item.table_name}`,
               total_size: item.total_size,
               data_size: item.data_size,
               heap_size: item.heap_size,
@@ -173,7 +178,7 @@ export const useTreeMap = (conn: Connection): { items: TreeNode } => {
         } else {
           // Handle regular tables and materialized views
           schemaNode.children?.push({
-            name: item.table_name,
+            name: `${item.schema}.${item.table_name}`,
             total_size: item.total_size,
             data_size: item.data_size,
             heap_size: item.heap_size,

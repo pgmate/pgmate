@@ -1,17 +1,10 @@
-import { Module, OnApplicationShutdown, Inject } from '@nestjs/common';
-import { Pool } from 'pg';
-import { databaseProviders } from './database.providers';
+import { Module } from '@nestjs/common';
 import { MigrationService } from './migration.service';
+import { QueryService } from './query.service';
+import { ClientService } from './client.service';
 
 @Module({
-  providers: [...databaseProviders, MigrationService],
-  exports: [...databaseProviders],
+  providers: [ClientService, QueryService, MigrationService],
+  exports: [ClientService],
 })
-export class DatabaseModule implements OnApplicationShutdown {
-  constructor(@Inject('PG_CONNECTION') private readonly pool: Pool) {}
-
-  async onApplicationShutdown(signal?: string) {
-    await this.pool.end();
-    console.log('Database connection pool has been closed');
-  }
-}
+export class DatabaseModule {}

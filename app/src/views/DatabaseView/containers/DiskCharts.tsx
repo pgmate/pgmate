@@ -14,6 +14,8 @@ export const DiskCharts: React.FC<DiskChartsProps> = ({
   const navigate = useNavigate();
   const { items } = useTableSize(conn);
 
+  if (items.length === 0) return null;
+
   // Process data: Keep top 5 items, group the rest into "others"
   const processedData = (() => {
     // Sort items by total_size descending

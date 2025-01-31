@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState, useRef, useCallback } from "react";
-import axios from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { AuthContext } from "providers/AuthProvider";
 import { usePubSub } from "hooks/use-pubsub";
 
@@ -106,9 +106,16 @@ export const usePost = <TBody = any, TResponse = any>(
   });
 
   const fetch = useCallback(
-    async (body: TBody) => {
+    async (
+      body: TBody,
+      headers?: Record<string, string>,
+      additionalOptions?: AxiosRequestConfig
+    ): Promise<AxiosResponse | any> => {
       try {
-        const res = await axios.post(url, body);
+        const res = await axios.post(url, body, {
+          headers,
+          ...additionalOptions, // Spread additional Axios options here
+        });
         setState({ loading: false, data: res.data, error: null });
         return res;
       } catch (err) {
@@ -120,9 +127,13 @@ export const usePost = <TBody = any, TResponse = any>(
   );
 
   const refetch = useCallback(
-    (body: TBody) => {
+    (
+      body: TBody,
+      headers?: Record<string, string>,
+      additionalOptions?: AxiosRequestConfig
+    ) => {
       setState({ loading: true, data: null, error: null });
-      return fetch(body);
+      return fetch(body, headers, additionalOptions);
     },
     [fetch]
   );

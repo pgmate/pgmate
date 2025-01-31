@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import EventEmitter from "eventemitter3";
 export const bus = new EventEmitter();
 
@@ -26,6 +26,12 @@ export const useSubscribe = (
       bus.off(event, callback);
     };
   }, [event, callback]);
+};
+
+export const useEventData = <T = any>(event: string) => {
+  const [data, setData] = useState<T | null>(null);
+  useSubscribe(event, setData);
+  return data;
 };
 
 export const useEmit = (event: string, data: any, delay = 0) => {

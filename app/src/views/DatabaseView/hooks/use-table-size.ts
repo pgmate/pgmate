@@ -94,17 +94,22 @@ export const useTableSize = (conn: Connection): { items: TableSizeItem[] } => {
   const { data } = useQuery(conn, SQL_QUERY, []);
 
   // Map and transform the raw rows into the correct types
-  const items: TableSizeItem[] = (data?.rows || []).map((row: any) => ({
-    schema: row.schema, // Schema name
-    table_name: row.table_name, // Table name
-    type: row.type, // Table type (P, r, m)
-    total_size: Number(row.total_size), // Total size in bytes
-    data_size: Number(row.data_size), // Data size in bytes
-    heap_size: Number(row.heap_size), // Heap size in bytes
-    toast_size: Number(row.toast_size), // TOAST size in bytes
-    index_size: Number(row.index_size), // Index size in bytes
-    free_space: Number(row.free_space), // Free space in bytes
-  }));
+  const items: TableSizeItem[] = (data?.rows || [])
+    .filter(
+      (row: any) =>
+        row.schema !== "information_schema" && !row.schema.startsWith("pg_")
+    )
+    .map((row: any) => ({
+      schema: row.schema, // Schema name
+      table_name: row.table_name, // Table name
+      type: row.type, // Table type (P, r, m)
+      total_size: Number(row.total_size), // Total size in bytes
+      data_size: Number(row.data_size), // Data size in bytes
+      heap_size: Number(row.heap_size), // Heap size in bytes
+      toast_size: Number(row.toast_size), // TOAST size in bytes
+      index_size: Number(row.index_size), // Index size in bytes
+      free_space: Number(row.free_space), // Free space in bytes
+    }));
 
   return { items };
 };

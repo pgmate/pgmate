@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { EncryptionService } from '../shared/services/encryption.service';
 import { QueryService } from './query.service';
+import { RemoteDataService } from 'src/shared/services/remote-data.service';
 
 interface Fact {
   uuid: string;
@@ -24,6 +25,7 @@ export class MigrationService implements OnApplicationBootstrap {
     private readonly configService: ConfigService,
     private readonly encryptionService: EncryptionService,
     private readonly queryService: QueryService,
+    private readonly remoteData: RemoteDataService,
   ) {}
 
   async onApplicationBootstrap() {
@@ -32,7 +34,7 @@ export class MigrationService implements OnApplicationBootstrap {
       await this.prepMigrations();
       await this.runMigrations();
       await this.upsertConnection();
-      await this.loadFacts();
+      await Promise.all([this.loadArticles(), this.loadFacts()]);
     } catch (error) {
       this.logger.error('Error running migrations:', error.message);
       throw error;
@@ -124,60 +126,145 @@ export class MigrationService implements OnApplicationBootstrap {
       ( uuid, title, description, emoticon, publish_date, tags, relevant_links )
       VALUES
       ( $1, $2, $3, $4, $5, $6, $7 )
-      ON CONFLICT ON CONSTRAINT "facts_pkey" DO UPDATE SET
+      ON CONFLICT (uuid) DO UPDATE SET
         title = EXCLUDED.title,
         description = EXCLUDED.description,
         emoticon = EXCLUDED.emoticon,
         publish_date = EXCLUDED.publish_date,
         tags = EXCLUDED.tags,
         relevant_links = EXCLUDED.relevant_links,
-        updated_at = NOW()
+        updated_at = NOW();
     `;
 
-    const upsertFromJson = async (data: Fact[]) => {
-      try {
-        for (const fact of data) {
-          await this.queryService.query(INSERT_QUERY, [
-            fact.uuid,
-            fact.title,
-            fact.description,
-            fact.emoticon,
-            fact.publish_date,
-            fact.tags,
-            fact.relevant_links,
-          ]);
-        }
-      } catch (err) {
-        this.logger.error('Error upserting facts:', err.message);
-      }
-    };
-
-    // Load facts from remote JSON file
     try {
-      const remoteUrl =
-        'https://raw.githubusercontent.com/pgmate/contents/refs/heads/main/contents/facts.json';
-      this.logger.log(`Fetching remote facts from ${remoteUrl}`);
-
-      const response = await fetch(remoteUrl);
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch remote facts: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const remoteFacts = await response.json();
-      await upsertFromJson(remoteFacts);
-      this.logger.log('Remote facts loaded successfully');
-    } catch (error) {
-      // Fallback to local JSON file
-      this.logger.error(
-        'Error loading facts from remote URL. Falling back to local copy.',
-        error.message,
+      const data = await this.remoteData.getJSON<{
+        facts: {
+          uuid: string;
+          title: string;
+          description?: string;
+          emoticon: string;
+          publish_date: string;
+          tags: string[];
+          relevant_links: string[];
+        }[];
+      }>(
+        'https://raw.githubusercontent.com/pgmate/contents/refs/heads/main/contents/facts/facts.json',
+        'facts.json',
       );
 
-      const filePath = path.join(__dirname, '../../contents/facts.json');
-      const localContent = await fs.promises.readFile(filePath, 'utf-8');
-      await upsertFromJson(JSON.parse(localContent));
+      return Promise.all(
+        data.facts.map(($) =>
+          this.queryService.query(INSERT_QUERY, [
+            $.uuid,
+            $.title,
+            $.description,
+            $.emoticon,
+            $.publish_date,
+            $.tags,
+            $.relevant_links,
+          ]),
+        ),
+      );
+    } catch (error) {
+      this.logger.error(`Failed loading FACTS: ${error.message}`);
+    }
+  }
+
+  private async loadArticles() {
+    const INSERT_TAG = `
+      INSERT INTO pgmate.articles_tags (id, name, "desc", cover)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        "desc" = EXCLUDED."desc",
+        cover = EXCLUDED.cover;
+    `;
+
+    const INSERT_SOURCE = `
+      INSERT INTO pgmate.articles_sources (id, name, "desc", url, cover)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        "desc" = EXCLUDED."desc",
+        url = EXCLUDED.url,
+        cover = EXCLUDED.cover;
+    `;
+
+    const INSERT_ARTICLE = `
+    INSERT INTO pgmate.articles (id, cdate, media, url, title, cover, excerpt, sources, tags)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    ON CONFLICT (id) DO UPDATE SET
+      cdate = EXCLUDED.cdate,
+      media = EXCLUDED.media,
+      url = EXCLUDED.url,
+      title = EXCLUDED.title,
+      cover = EXCLUDED.cover,
+      excerpt = EXCLUDED.excerpt,
+      sources = EXCLUDED.sources,
+      tags = EXCLUDED.tags;
+    `;
+
+    try {
+      const data = await this.remoteData.getJSON<{
+        tags: {
+          id: string;
+          title: string;
+          desc?: string;
+          cover?: string;
+        }[];
+        sources: {
+          id: string;
+          title: string;
+          desc?: string;
+          url?: string;
+          cover?: string;
+        }[];
+        articles: {
+          id: string;
+          cdate: string;
+          media: string;
+          url: string;
+          title: string;
+          cover?: string;
+          excerpt?: string;
+          sources?: string[];
+          tags?: string[];
+        }[];
+      }>(
+        'https://raw.githubusercontent.com/pgmate/contents/refs/heads/main/contents/articles/articles.json',
+        'articles.json',
+        // true, // Remove in production
+      );
+
+      return Promise.all([
+        ...data.tags.map(($) =>
+          this.queryService.query(INSERT_TAG, [$.id, $.title, $.desc, $.cover]),
+        ),
+        ...data.sources.map(($) =>
+          this.queryService.query(INSERT_SOURCE, [
+            $.id,
+            $.title,
+            $.desc,
+            $.url,
+            $.cover,
+          ]),
+        ),
+        ...data.articles.map(($) =>
+          this.queryService.query(INSERT_ARTICLE, [
+            $.id,
+            $.cdate,
+            $.media,
+            $.url,
+            $.title,
+            $.cover,
+            $.excerpt,
+            $.sources,
+            $.tags,
+          ]),
+        ),
+      ]);
+    } catch (error) {
+      this.logger.error(`Failed loading ARTICLES: ${error.message}`);
     }
   }
 }

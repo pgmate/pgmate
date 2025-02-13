@@ -1,0 +1,126 @@
+{
+  "__desc": "Data source for displaying articles in PGMate",
+  "sources": [
+    {
+      "id": "pgmate",
+      "title": "PGMate",
+      "url": "https://pgmate.github.io"
+    }
+  ],
+  "tags": [
+    {
+      "id": "product-updates",
+      "title": "Product Updates",
+      "desc": "Follow the growth of PGMate"
+    },
+    {
+      "id": "reddit",
+      "title": "Reddit",
+      "desc": "Interesing discussions from Reddit"
+    },
+    {
+      "id": "tools",
+      "title": "Tools",
+      "desc": "Tools and resources for PostgreSQL developers"
+    }
+  ],
+  "articles": [
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174000",
+      "cdate": "2025-02-02",
+      "media": "reddit",
+      "url": "https://www.reddit.com/r/PostgreSQL/comments/1ig02hs/postgres_alternative_to_mongodb/",
+      "cover": "/img/covers/ivan-aleksic-8QgQnUhYs7w-unsplash.jpg",
+      "title": "Postgres alternative to MongoDB",
+      "tags": ["tools"]
+    },
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174001",
+      "cdate": "2025-02-03",
+      "media": "web",
+      "url": "https://www.instagres.com",
+      "cover": "/img/covers/egor-myznik-g9aY-TCfxF0-unsplash.jpg",
+      "title": "Free temporary PostgreSQL",
+      "excerpt": "Free service from Neon.tech that let you spin a temporary PostgreSQL database that is accessible over the Internet.",
+      "tags": ["tools"]
+    },
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174002",
+      "cdate": "2025-02-01",
+      "media": "web",
+      "url": "https://pgmate.github.io/blog/updates-week5",
+      "title": "PGMate Product Updates - Week 5",
+      "cover": "https://pgmate.github.io/assets/images/upstream-downstream-9f1acc2c182d1f57f8fb61b7251557a1.png",
+      "tags": ["product-updates"],
+      "sources": ["pgmate"]
+    },
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174003",
+      "cdate": "2025-01-25",
+      "media": "youtube",
+      "url": "https://youtu.be/hAvWcbox7BE",
+      "title": "PGMate Copilot POC",
+      "excerpt": "This is a proof of concept for PGMate Copilot - generate queries and evolve your database schema with context-aware AI",
+      "tags": ["product-updates"],
+      "sources": ["pgmate"]
+    },
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174004",
+      "cdate": "2025-02-04",
+      "media": "web",
+      "url": "https://explain.depesz.com/",
+      "cover": "/img/covers/priscilla-du-preez--mCXEsLd2sU-unsplash.jpg",
+      "title": "EXPLAIN Made Easy",
+      "excerpt": "Visual PostgreSQL EXPLAIN tool that helps you understand what's going on with your queries.",
+      "tags": ["tools"]
+    },
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174005",
+      "cdate": "2025-01-15",
+      "media": "web",
+      "url": "https://stokerpostgresql.blogspot.com/2025/01/how-does-postgresql-store-your-data.html",
+      "cover": "/img/covers/benjamin-lehman-GNyjCePVRs8-unsplash.jpg",
+      "title": "How Does PostgreSQL Store Your Data?",
+      "excerpt": "The following is peeking into the 'clockworks' to see how things are done.",
+      "tags": ["advanced"]
+    },
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174006",
+      "cdate": "2025-01-12",
+      "media": "youtube",
+      "url": "https://youtu.be/FyyL6KBbIno?si=KRD--hyPBRaCxKZt",
+      "title": "Reducing table size with optimal column ordering",
+      "excerpt": "In this video we discuss how to optimize the row size in Postgres to reduce the overall table size. Specifically, we take a look at how column ordering affects storage size, how you can play column tetris to optimize it, and the big benefits that array-based storage can yield for some workloads.",
+      "tags": ["advanced"]
+    },
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174007",
+      "cdate": "2023-11-23",
+      "media": "youtube",
+      "url": "https://youtu.be/0qs-isIR4-M?si=4UhjYdGscItDACNl",
+      "title": "How to use CREATE STATISTICS to improve a plan rows estimate",
+      "excerpt": "In this video we're going to talk about creating functional dependency statistics to improve plan cost estimates in Postgres. We’re looking at a problem that I myself encountered last week when I was trying to optimize the estimates we're getting for a particular query inside our own system.",
+      "tags": ["advanced"]
+    },
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174008",
+      "cdate": "2023-03-31",
+      "media": "medium",
+      "url": "https://medium.com/@mauricio/optimizing-ivfflat-indexing-with-pgvector-in-postgresql-755d142e54f5",
+      "cover": "/img/covers/tamanna-rumee-FtJEat_S7Q4-unsplash.jpg",
+      "title": "Understanding PostgreSQL pgvector Indexing with IVFFlat",
+      "excerpt": "In this tutorial, we will discuss how to optimize PostgreSQL's pgvector with IVFFlat indexing - Understanding the IVFFlat Index, Choosing the right nlist value for the index, Applying the chosen nlist value in pgvector, Indexing Small Datasets in pgvector.",
+      "tags": ["advanced", "ai", "vector", "embeddings"]
+    },
+    {
+      "id": "123e4567-e89b-12d3-a456-426614174009",
+      "cdate": "2025-02-10",
+      "media": "web",
+      "url": "https://www.cybertec-postgresql.com/en/prewarming-postgresql-i-o-caches/",
+      "cover": "/img/covers/mike-van-den-bos-jf1EomjlQi0-unsplash.jpg",
+      "title": "PG_PREWARM: preload data into shared buffers",
+      "excerpt": "This extension can help improve cold-query performances after server restarts or data reflow.",
+      "tags": ["extensions", "cache"]
+    }
+  ]
+}

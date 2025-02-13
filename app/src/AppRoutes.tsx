@@ -8,6 +8,7 @@ import { SchemaView } from "views/SchemaView";
 import { TableView } from "views/TableView";
 import { QueryView } from "views/QueryView";
 import { FactsView } from "views/FactsView";
+import { ArticlesView } from "views/ArticlesView";
 import { Text2SQLView } from "views/Text2SQLView";
 import { AskView } from "views/AskView";
 
@@ -27,6 +28,10 @@ const routesConfig: RouteObject[] = [
   {
     path: "/facts/:tag",
     element: <FactsView />,
+  },
+  {
+    path: "/articles/:sub?",
+    element: <ArticlesView />,
   },
   {
     path: "/:conn",

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useMatch } from "react-router-dom";
 import { useDynamicQuery } from "hooks/use-query";
 
-const BASE_ROUTES = ["", "home", "facts"];
+const BASE_ROUTES = ["", "home", "facts", "articles"];
 
 export const useConnectionParams = () => {
   const match = useMatch("/:conn/:db?/*");

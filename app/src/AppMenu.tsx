@@ -52,6 +52,15 @@ const primaryMenu = [
       };
     },
   },
+  {
+    label: "Articles",
+    icon: "local_library",
+    href: "/articles",
+    // useHidden: () => {
+    //   const connection = useURLConnection();
+    //   return connection !== undefined;
+    // },
+  },
 ];
 
 const secondaryMenu = [
